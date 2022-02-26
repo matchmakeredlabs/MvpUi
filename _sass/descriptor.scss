@@ -1,0 +1,9 @@
+@import "card";
+
+.mmc_descriptor {
+    @include mmx_card;
+
+    div.annotation {
+        float: right;
+    }
+}

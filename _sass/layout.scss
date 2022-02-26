@@ -1,0 +1,19 @@
+main {
+    height: calc(100vh - 9rem);
+}
+
+// Assign this to <main>
+.mm_columns {
+    display: flex;
+}
+
+.mm_columns>div {
+    flex: 1 1 0;
+    height: 100%;
+    overflow-y: auto;
+    margin-right: 0.25em;
+}
+
+.mm_columns>div:last-child {
+    margin-right: 0;
+}

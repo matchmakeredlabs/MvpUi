@@ -1,0 +1,5 @@
+@import "card";
+
+.mmc_competency {
+    @include mmx_card;
+}

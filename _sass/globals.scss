@@ -1,0 +1,27 @@
+// MatchMaker Colors
+$mm-red: #D9541E;
+$mm-green: #5D9732;
+$mm-blue: #0067B1;
+$mm-orange: #D18316;
+$mm-darkblue: #004374;
+$mm-lightblue: #006ebd;
+
+@mixin title2 {
+    margin: 0;
+    color: black;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+@mixin comp-label {
+    margin: 1.2em 0 0.5em 0;
+    padding: 0 0.5em;
+    line-height: 1.5em;
+    border-radius: 4px;
+    background-color: #e7e7e5;
+    width: fit-content;
+    font-size: inherit;
+    color: inherit;
+    font-weight: 200;
+    font-family: "Open Sans", sans-serif;
+}
