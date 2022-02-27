@@ -4,6 +4,12 @@
 <head>
 <title>{{ page.title }}</title>
 {% include head.html %}
+
+{% if page.autht != "anonymous" %}
+    <!-- Check for authentication at the beginning, before anything is rendered-->
+    <script src="/c/script/mmx_auth.js"></script>
+    <script>mmxAuth.requireAuthentication();</script>
+{% endif %}
 </head>
 
 <body>

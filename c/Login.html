@@ -1,0 +1,42 @@
+---
+title: Login
+autht: "anonymous"
+---
+
+<main>
+    <form class="mmc_form" onsubmit="submitLogin(event);">
+        <h2>Login</h2>
+        <div id="form_msg" class="message" style="visibility: hidden;"></div>
+        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autofill="username" /></p>
+        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autofill="password" /></p>
+        <p style="text-align: center;"><input type="submit" value="Login"/></p>
+    </form>
+</main>
+
+<script>
+    async function login(un, pw) {
+        let url = "/Login?username=" + encodeURIComponent(un)
+            + "&password=" + encodeURIComponent(pw);
+        console.log(url);
+        let response = await fetch(url);
+        if (response.ok) {
+            const query = new URLSearchParams(window.location.search);
+            let ret = query.get("returnTo");
+            if (!ret) ret = "/";
+            window.location.href = ret;
+        }
+        else {
+            let json = await response.json();
+            let msgEle = document.getElementById("form_msg");
+            msgEle.textContent = json.errors[0].detail;
+            msgEle.style.visibility = "visible";
+        }
+    }
+
+    function submitLogin() {
+        console.log("submitLogin");
+        event.preventDefault();
+        let formData = new FormData(event.target);
+        login(formData.get("username"), formData.get("password"));
+    }
+</script>

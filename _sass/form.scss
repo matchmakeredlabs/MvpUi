@@ -1,0 +1,21 @@
+@import "card";
+
+.mmc_form {
+    @include mmx_card;
+    max-width: max-content;
+    min-width: min-content;
+
+    h2 {
+        text-align: center;
+        margin: 0;
+    }
+
+    label {
+        display: inline-block;
+        min-width: 6em;
+    }
+
+    .message {
+        color: darkred;
+    }
+}
