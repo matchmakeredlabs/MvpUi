@@ -1,4 +1,6 @@
-﻿class MmFramework {
+﻿import bdoc from './bdoc.js';
+
+class MmFramework {
 
     static thisFramework;
 
@@ -69,7 +71,7 @@
 
         detail.appendChild(bdoc.newEle("h3", "Competency Statement"));
         detail.appendChild(bdoc.newEle("h2", stmt.name));
-        detail.appendChild(bdoc.newEle("section", stmt.abstract));
+        detail.appendChild(bdoc.newEle("section", bdoc.newPreText(stmt.abstract)));
         detail.appendChild(bdoc.newEle("h3", "Detail"));
 
         let dl = document.createElement("dl");
@@ -78,6 +80,8 @@
         addRow(dl, "EducationLevel", stmt.educationLevel);
         addRow(dl, "URI", stmt.url);
         detail.appendChild(dl);
+
+        detail.appendChild(bdoc.newEle("h3", "Links"));
 
         if (stmt.url) {
             fetch("/descriptors?uriExists=" + encodeURIComponent(stmt.url))
@@ -233,36 +237,5 @@ async function loadFramework(url) {
 
     console.log("sessionStorage=" + JSON.stringify(sessionStorage.phred));
 }
-
-
-class bdoc {
-    static newEle(tagName, ...children) {
-        let ele = document.createElement(tagName);
-        for (let cn of children) {
-            if (cn instanceof bdocAttribute) {
-                ele[cn.attrName] = cn.attrValue;
-            }
-            else if (cn instanceof Node) {
-                ele.appendChild(cn);
-            }
-            else {
-                ele.appendChild(document.createTextNode(cn));
-            }
-        }
-        return ele;
-    }
-
-    static newAttr(name, value) {
-        return new bdocAttribute(name, value);
-    }
-}
-
-function bdocAttribute(name, value) {
-    this.attrName = name;
-    this.attrValue = value;
-}
-
-
-
 
 loadFramework();
