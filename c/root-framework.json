@@ -1,0 +1,30 @@
+{
+  "statements": [
+    {
+      "id": 0,
+      "name": "Competency Frameworks",
+      "intHasPart": [ 1, 2, 3, 4, 5 ]
+    },
+    {
+      "id": 1,
+      "name": "<a href='?fwsrc=local://sample.json' target='_top'>Sample Framework</a>",
+      "abstract": "Sample framework demonstrating the browser functions."
+    },
+    {
+      "id": 2,
+      "name": "<a href='?fwsrc=http://asnstaticd2l.s3.amazonaws.com/data/rdf/D2365735.xml' target='_top'>ASN: AAAS Benchmarks for Science Literacy</a>"
+    },
+    {
+      "id": 3,
+      "name": "<a href='?fwsrc=http://asn.jesandco.org/resources/D10003FB_full.xml' target='_top'>ASN: Common Core State Standards for Mathematics</a>"
+    },
+    {
+      "id": 4,
+      "name": "<a href='?fwsrc=http://asn.jesandco.org/resources/D10003FC_full.xml' target='_top'>ASN: Common Core State Standards for English Language Arts & Literacy</a>"
+    },
+    {
+      "id": 5,
+      "name": "<a href='?fwsrc=http://asn.jesandco.org/resources/D10003E9_full.xml' target='_top'>ASN: ITEEA Standards for Technological Literacy: Content for the Study of Technology</a>"
+    }
+  ]
+}

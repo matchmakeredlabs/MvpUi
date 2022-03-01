@@ -9,7 +9,7 @@
     --svg-square-desc: #{url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.0' viewBox='0 0 100 100'%3E%3Cpolygon points='22,22 79,22 79,79 22,79' fill='black' stroke='black' stroke-width='8' stroke-opacity='1' /%3E%3C/svg%3E")};
 }
 
-.mmc_browsetree {
+#mmx_browse_tree {
     
     h2 {
         @include title2;
@@ -80,6 +80,3 @@
         background-color: lighten($mm-blue, 50%);
     }
 }
-
-
-
