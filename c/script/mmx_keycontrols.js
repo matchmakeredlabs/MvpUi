@@ -561,6 +561,8 @@ class Mmx {
         }
 
         let descriptor = bdoc.newEle("div", bdoc.class("mmc_descriptor"));
+        descriptor.mmxId = val.id;
+        descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
 
         if (val.matchIndex != undefined || matchButton) {
             let annotation = bdoc.newEle("div", bdoc.class("annotation"));
@@ -573,58 +575,14 @@ class Mmx {
 
             if (matchButton) {
                 let button = bdoc.newEle("button", "Find Matches");
-                if (button == "newPage") {
-                    button.onclick = function () {
-                        window.location.href = `/c/Match.htm?stmtId=${val.id}`;
-                    }
-                }
-                else {
-                    button.onclick = Mmx.MatchElement;
-                }
+                button.onclick = (matchButton == "newPage")
+                    ? Mmx.OnClickFindMatchesToMatchResult
+                    :  Mmx.OnClickFindMatchesToSearchResult;
                 annotation.appendChild(button);
             }
 
             descriptor.appendChild(annotation);
         }
-
-        /*
-            if (val.matchIndex != undefined || matchButton) {
-                let tr = document.createElement("tr");
-                let td = document.createElement("td");
-                td.colSpan = 2;
-                td.className = "mmx_descriptorHeader";
-
-                if (val.matchIndex != undefined) {
-                    let s = document.createElement('span');
-                    s.className = "mmx_label_matchindex";
-                    s.innerText = "MatchIndex: ";
-                    td.appendChild(s);
-                    s = document.createElement('span');
-                    s.className = "mmx_matchindex";
-                    s.innerText = val.matchIndex;
-                    td.appendChild(s);
-                }
-
-                if (matchButton) {
-                    let button = document.createElement("button");
-                    if (matchButton == "newPage") {
-                        button.onclick = function () {
-                            window.location.href = `/c/Match.htm?stmtId=${val.id}`;
-                        }
-                    }
-                    else {
-                        button.onclick = Mmx.MatchElement;
-                    }
-                    button.textContent = "Find Matches";
-                    button.style = "float: right;"
-                    td.appendChild(button);
-                }
-
-                tr.appendChild(td);
-                table.appendChild(tr);
-            }
-        */
-
 
         if (val.eleType) {
             descriptor.appendChild(bdoc.newEle("h3", this.EleTypeTranslate[val.eleType]));
@@ -768,47 +726,31 @@ class Mmx {
         row.remove();
     }
 
-    static MatchElement(event) {
-        // Get the whole table that desribes this element
-        let table = event.target.parentElement.parentElement.parentElement;
-        Mmx.MatchElementTable(table);
+    static OnClickFindMatchesToMatchResult(event) {
+        let descriptor = event.target.parentElement.parentElement;
+        window.location.href = `?stmtId=${descriptor.mmxId}`;
     }
 
-    static MatchElementTable(table) {
-        let sr = mmx_dict.keywordSearchResult;
+    static OnClickFindMatchesToSearchResult(event) {
+        Mmx.SelectAndMatchDescriptor(event.target.parentElement.parentElement);
+    }
 
-        // Unhighlight the first element (benign if it's not already highlighted)
-        {
-            let first = sr.firstElementChild;
-            if (first != undefined) {
-                first.classList.remove('mmx_matched');
-            }
+    static MatchFirstSearchResult() {
+        Mmx.SelectAndMatchDescriptor(mmx_dict.keywordSearchResult.firstElementChild);
+    }
+
+    static SelectAndMatchDescriptor(descriptor) {
+        // Deselect
+        if (mmx_dict.selectedDescriptor) {
+            mmx_dict.selectedDescriptor.classList.remove("mm_active")
         }
 
-        // Get the key
-        let key;
-        for (let row = table.firstElementChild; row != null; row = row.nextElementSibling) {
-            if (row.firstElementChild.textContent == Mmx.keyLabel) {
-                key = row.children[1].innerText;
-                break;
-            }
-        }
+        // Select new
+        mmx_dict.selectedDescriptor = descriptor;
+        descriptor.classList.add("mm_active");
 
-        // If this is not the first entry, make it the first
-        if (sr.firstElementChild != table) {
-            sr.removeChild(table);
-            sr.insertBefore(table, sr.firstElementChild);
-            table.scrollIntoView();
-        }
-
-        // Highlight it
-        table.classList.add('mmx_matched');
-
-        // Find the matches
-        Mmx.SearchDescriptorsByKey(Mmx.StripKeyPrefix(key));
-
-        // Scroll into view
-        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        // Search
+        Mmx.SearchDescriptorsByKey(descriptor.mmxKey);
     }
 
     static GenerateLrmiFromForm() {
@@ -1026,7 +968,7 @@ class Mmx {
             if (stmtId) {
 
                 mmx_dict.afterSearchDescriptorsById = function () {
-                    Mmx.MatchElementTable(mmx_dict.keywordSearchResult.firstElementChild);
+                    Mmx.MatchFirstSearchResult();
                     mmx_dict.afterSearchDescriptorsById = undefined;
                 }
 

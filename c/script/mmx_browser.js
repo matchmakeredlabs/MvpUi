@@ -99,7 +99,7 @@ class MmFramework {
         div.className = "mmb_descriptor_link";
         if (json.exists) {
             let a = document.createElement("a");
-            a.href = "/c/Match.htm?stmtId=" + encodeURIComponent(json.stmtId);
+            a.href = "/c/Match?stmtId=" + encodeURIComponent(json.stmtId);
             a.target = "_blank";
             a.textContent = "View descriptor and matches";
             div.appendChild(a);

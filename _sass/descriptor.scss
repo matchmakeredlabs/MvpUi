@@ -7,3 +7,7 @@
         float: right;
     }
 }
+
+.mmc_descriptor.mm_active {
+    border-color: $mm-red;
+}
