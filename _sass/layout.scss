@@ -2,7 +2,7 @@ main {
     height: calc(100vh - 9rem);
 }
 
-// Assign this to <main>
+// Assign this to <main> or something with a specified height.
 .mm_columns {
     display: flex;
 }
@@ -17,3 +17,12 @@ main {
 .mm_columns>div:last-child {
     margin-right: 0;
 }
+
+.mm_columns_header {
+    height: 8rem;
+}
+
+.mm_columns_body {
+    height: calc(100vh - 17rem);
+}
+

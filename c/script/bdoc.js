@@ -19,11 +19,15 @@ export default class bdoc {
         return ele;
     }
 
-    static newAttr(name, value) {
+    static attr(name, value) {
         return new bdocAttr(name, value);
     }
 
-    static newPreText(value) {
+    static class(className) {
+        return new bdocAttr("className", className);
+    }
+
+    static preText(value) {
         return new bdocPre(value);
     }
 }
@@ -41,7 +45,6 @@ class bdocAttr {
 
 class bdocPre {
     constructor(text) {
-        console.log(text);
         this.text = text;
     }
 

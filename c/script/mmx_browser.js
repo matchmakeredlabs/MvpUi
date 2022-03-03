@@ -39,7 +39,7 @@ class MmFramework {
 
             let val;
             if (label == "URI" && value.startsWith("http")) {
-                val = bdoc.newEle("a", bdoc.newAttr("href", value), value);
+                val = bdoc.newEle("a", bdoc.attr("href", value), value);
             }
             else {
                 val = value;
@@ -71,7 +71,7 @@ class MmFramework {
 
         detail.appendChild(bdoc.newEle("h3", "Competency Statement"));
         detail.appendChild(bdoc.newEle("h2", stmt.name));
-        detail.appendChild(bdoc.newEle("section", bdoc.newPreText(stmt.abstract)));
+        detail.appendChild(bdoc.newEle("section", bdoc.preText(stmt.abstract)));
         detail.appendChild(bdoc.newEle("h3", "Detail"));
 
         let dl = document.createElement("dl");
@@ -184,8 +184,8 @@ class MmFramework {
         let stmt = this.stmts[0];
         if (stmt && stmt.name) {
             let h2 = bdoc.newEle("h2",
-                bdoc.newAttr("feid", 0),
-                bdoc.newAttr("onclick", MmFramework.clickSelect),
+                bdoc.attr("feid", 0),
+                bdoc.attr("onclick", MmFramework.clickSelect),
                 stmt.name);
             element.appendChild(h2);
             this.select(h2);

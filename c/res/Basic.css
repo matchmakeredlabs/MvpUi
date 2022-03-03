@@ -1,0 +1,8 @@
+﻿/* Suppress certain statement properties */
+.mmx_col_central {
+    display: none;
+}
+
+.mmx_col_type {
+    display: none;
+}
