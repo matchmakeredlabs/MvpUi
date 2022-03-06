@@ -139,30 +139,33 @@ class Mmx {
         }
     }
 
-    static RenderStatementSearchForm(element) {
+    static RenderStatementSearch(element) {
         // Clear existing contents
         element.innerHTML = "";
 
         // Search bar
-        {
-            let searchBar = document.createElement("div");
-            searchBar.className = "mmx_searchBar";
+        element.appendChild(bdoc.newEle("div",
+            bdoc.class("mmx_searchBar"),
+            bdoc.newEle("input",
+                bdoc.attr("type", "search"),
+                bdoc.attr("id", "mmid_search"),
+                bdoc.class("mmc_stmtSearch"),
+                bdoc.attr("onsearch", Mmx.SearchStatements)),
+            bdoc.newEle("input",
+                bdoc.attr("type", "button"),
+                bdoc.class("mmc_stmtSearchButton"),
+                bdoc.attr("value", "\uD83D\uDD0D"),
+                bdoc.attr("onclick", Mmx.SearchStatements))));
 
-            let search = document.createElement("input");
-            search.type = "search";
-            search.id = "mmid_search";
-            search.style.width = "90%";
-            search.onsearch = Mmx.SearchStatements;
-            searchBar.appendChild(search);
+        // Results header
+        element.appendChild(bdoc.newEle("div",
+            bdoc.class("mm_stmtHead"),
+            bdoc.newEle("span", bdoc.class("mm_stmtAdd"), "Add"),
+            bdoc.newEle("span", bdoc.class("mm_stmtId"), "Id"),
+            bdoc.newEle("span", bdoc.class("mm_stmtType"), "Type"),
+            bdoc.newEle("span", bdoc.class("mm_stmtText"), "Statement")));
 
-            let button = document.createElement("input");
-            button.type = "button";
-            button.value = "\uD83D\uDD0D";
-            button.onclick = Mmx.SearchStatements;
-            searchBar.appendChild(button);
-
-            element.appendChild(searchBar);
-        }
+        element.appendChild(bdoc.newEle("hr", bdoc.class("mm_listHr")));
 
         // Search results
         {
@@ -929,7 +932,7 @@ class Mmx {
         }
 
         for (ele of document.getElementsByClassName("mmx_statementSearch")) {
-            Mmx.RenderStatementSearchForm(ele);
+            Mmx.RenderStatementSearch(ele);
         }
 
         for (ele of document.getElementsByClassName("mmx_lrmiCompose")) {

@@ -1,0 +1,88 @@
+$w_add: 3em;
+$w_id: 4em;
+$w_type: 4em;
+
+.mm_descColumns {
+    display: flex;
+}
+
+.mm_descColumns>div {
+    flex: 1 1 0;
+    height: 100%;
+    overflow-y: visible;
+    margin-right: 1em;
+}
+
+.mm_descColumns>div:last-child {
+    margin-right: 0;
+}
+
+.mmx_statementSearch {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.mmx_statementSearch>div {
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: fit-content;
+}
+
+.mmx_statementSearch>.mmx_searchBar {
+    margin-bottom: 0.5em;
+}
+
+
+.mmc_stmtSearch {
+    width: calc(100% - 3em);
+}
+
+.mmc_stmtSearchButton {
+    width: 3em;
+}
+
+.mmx_statementSearchForm {
+    height: 3em;
+}
+
+.mmx_statementSearchDisplay {
+    height: calc(100% - 7.1em);
+    overflow-y: auto;
+}
+
+.mm_listHr {
+    border: 0;
+    height: 4px;
+    width: 100%;
+    background-color: $mm-darkblue;
+    background-image: none;
+}
+
+.mm_stmtHead {
+    font-weight: bold;
+    padding-left: 0.25em;
+}
+
+.mm_stmtList {
+    overflow-y: auto;
+}
+
+.mm_stmtAdd {
+    display: inline-block;
+    width: $w_add;
+}
+
+.mm_stmtId {
+    display: inline-block;
+    width: $w_id;
+}
+
+.mm_stmtType {
+    display: inline-block;
+    width: $w_type;
+}
+
+.mm_stmtText {
+    display: inline-block;
+}
