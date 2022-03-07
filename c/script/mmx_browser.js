@@ -39,15 +39,15 @@ class MmFramework {
 
             let val;
             if (label == "URI" && value.startsWith("http")) {
-                val = bdoc.newEle("a", bdoc.attr("href", value), value);
+                val = bdoc.ele("a", bdoc.attr("href", value), value);
             }
             else {
                 val = value;
             }
 
-            dl.appendChild(bdoc.newEle("div",
-                bdoc.newEle("dt", label),
-                bdoc.newEle("dd", val)));
+            dl.appendChild(bdoc.ele("div",
+                bdoc.ele("dt", label),
+                bdoc.ele("dd", val)));
         }
 
         while (ele && ele.feid == undefined) {
@@ -69,10 +69,10 @@ class MmFramework {
         detail.innerHTML = "";
         detail.className = "mmc_competency";
 
-        detail.appendChild(bdoc.newEle("h3", "Competency Statement"));
-        detail.appendChild(bdoc.newEle("h2", stmt.name));
-        detail.appendChild(bdoc.newEle("section", bdoc.preText(stmt.abstract)));
-        detail.appendChild(bdoc.newEle("h3", "Detail"));
+        detail.appendChild(bdoc.ele("h3", "Competency Statement"));
+        detail.appendChild(bdoc.ele("h2", stmt.name));
+        detail.appendChild(bdoc.ele("section", bdoc.preText(stmt.abstract)));
+        detail.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
         addRow(dl, "Identifier", stmt.identifier);
@@ -81,7 +81,7 @@ class MmFramework {
         addRow(dl, "URI", stmt.url);
         detail.appendChild(dl);
 
-        detail.appendChild(bdoc.newEle("h3", "Links"));
+        detail.appendChild(bdoc.ele("h3", "Links"));
 
         if (stmt.url) {
             fetch("/descriptors?uriExists=" + encodeURIComponent(stmt.url))
@@ -179,11 +179,11 @@ class MmFramework {
     attachTo(element) {
         MmFramework.thisFramework = this;
 
-        element.appendChild(bdoc.newEle("h3", "Framework"));
+        element.appendChild(bdoc.ele("h3", "Framework"));
 
         let stmt = this.stmts[0];
         if (stmt && stmt.name) {
-            let h2 = bdoc.newEle("h2",
+            let h2 = bdoc.ele("h2",
                 bdoc.attr("feid", 0),
                 bdoc.attr("onclick", MmFramework.clickSelect),
                 stmt.name);

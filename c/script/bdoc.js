@@ -1,5 +1,5 @@
 export default class bdoc {
-    static newEle(tagName, ...children) {
+    static ele(tagName, ...children) {
         let ele = document.createElement(tagName);
         for (let cn of children) {
             if (cn === undefined || cn === null) {

@@ -144,28 +144,28 @@ class Mmx {
         element.innerHTML = "";
 
         // Search bar
-        element.appendChild(bdoc.newEle("div",
+        element.appendChild(bdoc.ele("div",
             bdoc.class("mmx_searchBar"),
-            bdoc.newEle("input",
+            bdoc.ele("input",
                 bdoc.attr("type", "search"),
                 bdoc.attr("id", "mmid_search"),
                 bdoc.class("mmc_stmtSearch"),
                 bdoc.attr("onsearch", Mmx.SearchStatements)),
-            bdoc.newEle("input",
+            bdoc.ele("input",
                 bdoc.attr("type", "button"),
                 bdoc.class("mmc_stmtSearchButton"),
                 bdoc.attr("value", "\uD83D\uDD0D"),
                 bdoc.attr("onclick", Mmx.SearchStatements))));
 
         // Results header
-        element.appendChild(bdoc.newEle("div",
+        element.appendChild(bdoc.ele("div",
             bdoc.class("mm_stmtHead"),
-            bdoc.newEle("span", bdoc.class("mm_stmtAdd"), "Add"),
-            bdoc.newEle("span", bdoc.class("mm_stmtId"), "Id"),
-            bdoc.newEle("span", bdoc.class("mm_stmtType"), "Type"),
-            bdoc.newEle("span", bdoc.class("mm_stmtText"), "Statement")));
+            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "Add"),
+            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+            bdoc.ele("span", bdoc.class("mm_stmtText"), "Statement")));
 
-        element.appendChild(bdoc.newEle("hr", bdoc.class("mm_listHr")));
+        element.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
         // Search results
         {
@@ -558,26 +558,26 @@ class Mmx {
     static RenderDescriptor(val, matchButton) {
         function addRow(dl, label, value) {
             if (!(value)) return;
-            dl.appendChild(bdoc.newEle("div",
-                bdoc.newEle("dt", label),
-                bdoc.newEle("dd", value)));
+            dl.appendChild(bdoc.ele("div",
+                bdoc.ele("dt", label),
+                bdoc.ele("dd", value)));
         }
 
-        let descriptor = bdoc.newEle("div", bdoc.class("mmc_descriptor"));
+        let descriptor = bdoc.ele("div", bdoc.class("mmc_descriptor"));
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
 
         if (val.matchIndex != undefined || matchButton) {
-            let annotation = bdoc.newEle("div", bdoc.class("annotation"));
+            let annotation = bdoc.ele("div", bdoc.class("annotation"));
 
             if (val.matchIndex != undefined) {
-                annotation.appendChild(bdoc.newEle("div",
+                annotation.appendChild(bdoc.ele("div",
                     bdoc.class("mmc_matchindex"),
                      "MatchIndex: " + val.matchIndex));
             }
 
             if (matchButton) {
-                let button = bdoc.newEle("button", "Find Matches");
+                let button = bdoc.ele("button", "Find Matches");
                 button.onclick = (matchButton == "newPage")
                     ? Mmx.OnClickFindMatchesToMatchResult
                     :  Mmx.OnClickFindMatchesToSearchResult;
@@ -588,18 +588,18 @@ class Mmx {
         }
 
         if (val.eleType) {
-            descriptor.appendChild(bdoc.newEle("h3", this.EleTypeTranslate[val.eleType]));
+            descriptor.appendChild(bdoc.ele("h3", this.EleTypeTranslate[val.eleType]));
         }
-        descriptor.appendChild(bdoc.newEle("h2", val.name));
+        descriptor.appendChild(bdoc.ele("h2", val.name));
         if (val.abstract) {
-            descriptor.appendChild(bdoc.newEle("section", bdoc.preText(val.abstract)));
+            descriptor.appendChild(bdoc.ele("section", bdoc.preText(val.abstract)));
         }
-        descriptor.appendChild(bdoc.newEle("h3", "Detail"));
+        descriptor.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
 
         if (val.url) {
-            addRow(dl, "URL", bdoc.newEle("a",
+            addRow(dl, "URL", bdoc.ele("a",
                 bdoc.attr("href", val.url),
                 bdoc.attr("target", "_blank"),
                 val.url));
@@ -612,7 +612,7 @@ class Mmx {
         addRow(dl, "Provenance", val.provenance);
 
         if (val.key) {
-            addRow(dl, "Key", bdoc.newEle("a",
+            addRow(dl, "Key", bdoc.ele("a",
                 bdoc.attr("href", Mmx.keyLinkPrefix + Mmx.StripKeyPrefix(val.key)),
                 bdoc.attr("target", "_blank"),
                 Mmx.StripKeyPrefix(val.key)));
@@ -632,7 +632,7 @@ class Mmx {
         }
 
         if (count == 0) {
-            ele.appendChild(bdoc.newEle("div", "No descriptions found to match search key."));
+            ele.appendChild(bdoc.ele("div", "No descriptions found to match search key."));
         }
     }
 
