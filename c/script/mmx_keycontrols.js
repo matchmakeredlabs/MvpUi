@@ -328,6 +328,7 @@ class Mmx {
         // Element type
         form.appendChild(bdoc.ele("select",
             bdoc.attr("name", "eleType"),
+            bdoc.attr("id", "p_eleType"),
             bdoc.ele("option", bdoc.attr("value", "o"), "Other"),
             bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
             bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
@@ -839,25 +840,19 @@ class Mmx {
 
         for (let e of Mmx.descProps) {
             let ele = document.getElementById("p_" + e.prop);
-            let val;
             if (ele instanceof HTMLSelectElement) {
                 ele.value = "o";
             }
-            else {
+            else if (ele) {
                 ele.contentEditable = true;
                 ele.textContent = "";
             }
-        }
-
-        {
-            let headerRow = mmx_dict.keyTable.firstElementChild;
-            for (; ;) {
-                let keyRow = headerRow.nextElementSibling;
-                if (keyRow == null) break;
-                mmx_dict.keyTable.removeChild(keyRow);
+            else {
+                console.log(e.prop);
             }
         }
 
+        mmx_dict.keyTable.innerHTML = "";
     }
 
     static SaveDescriptor() {
