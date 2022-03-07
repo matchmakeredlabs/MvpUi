@@ -1,4 +1,5 @@
 $w_add: 3em;
+$w_central: 3em;
 $w_id: 4em;
 $w_type: 4em;
 
@@ -17,22 +18,14 @@ $w_type: 4em;
     margin-right: 0;
 }
 
-.mmx_statementSearch {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.mmx_statementSearch>div {
-    flex-grow: 0;
-    flex-shrink: 0;
-    height: fit-content;
-}
-
-.mmx_statementSearch>.mmx_searchBar {
+.mmx_stmtSearchBar {
     margin-bottom: 0.5em;
 }
 
+.mmx_stmtSearchBar input {
+    height: 2em;
+    vertical-align: top;
+}
 
 .mmc_stmtSearch {
     width: calc(100% - 3em);
@@ -42,12 +35,17 @@ $w_type: 4em;
     width: 3em;
 }
 
-.mmx_statementSearchForm {
-    height: 3em;
+.mmc_stmtSearchResult {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 0;
+    overflow-y: auto;
 }
 
-.mmx_statementSearchDisplay {
-    height: calc(100% - 7.1em);
+.mmx_lrmiCompose {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 0;
     overflow-y: auto;
 }
 
@@ -64,25 +62,79 @@ $w_type: 4em;
     padding-left: 0.25em;
 }
 
-.mm_stmtList {
-    overflow-y: auto;
+.mm_stmt {
+    padding-left: 0.25em;
+    margin-bottom: 1em;
 }
 
 .mm_stmtAdd {
     display: inline-block;
+    vertical-align: top;
     width: $w_add;
+}
+
+.mm_stmtCentral {
+    display: inline-block;
+    vertical-align: top;
+    width: $w_central;
 }
 
 .mm_stmtId {
     display: inline-block;
+    vertical-align: top;
     width: $w_id;
 }
 
 .mm_stmtType {
     display: inline-block;
+    vertical-align: top;
     width: $w_type;
 }
 
 .mm_stmtText {
     display: inline-block;
+    vertical-align: top;
+    width: calc(100% - #{$w_add + $w_id + $w_type + 0.25em});
 }
+
+.mm_stmtKeyText {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - #{$w_add + $w_central + $w_id + $w_type + 0.25em});
+}
+
+.mmc_lrmiForm {
+    @include mmx_card;
+
+    div.annotation {
+        float: right;
+    }
+}
+
+.mmc_editable {
+    margin-top: 0.2em !important;
+    border-color: lightgray !important;
+    border-style: dashed;
+    border-width: 1px;
+    min-width: 4em;
+    margin-top: 1em;
+    outline: none !important; // Suppress built-in navigation highlighting
+}
+
+#p_name:empty::before {
+    content: "Name";
+    color:gray;
+}
+
+#p_abstract:empty::before {
+    content: "Abstract";
+    color:gray;
+}
+
+/*
+.mmc_editable:active,
+.mmc_editable:focus {
+    padding-left: 2px;
+    outline: none;
+}
+*/

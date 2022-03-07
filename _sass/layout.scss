@@ -26,3 +26,18 @@ main {
     height: calc(100vh - 17rem);
 }
 
+.mm_flex_vert {
+    display: flex;
+    flex-direction: column;
+}
+
+.mm_flex_vert>* {
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: fit-content;
+}
+
+.mm_flex_grow1 {
+    flex-grow: 1;
+    flex-shrink: 1;
+}

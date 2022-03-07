@@ -3,23 +3,14 @@ title: Describe Item
 ---
 
 <main class="mm_descColumns">
-    <div>
+    <div class="mm_flex_vert">
         <h1>Select Statements</h1>
         <div class="mmx_statementSearch">Loading...</div>
     </div>
-    <div>
-        <div>
-            <button onclick="Mmx.ClearDescriptor()">Clear</button>
-            <!--
-            <button onclick="Mmx.LoadDescriptorFromQueue()">Next From Queue</button>
-            -->
-            <button onclick="Mmx.SaveDescriptor()">Save</button>
-        </div>
-        <div id="mmx_status"></div>
+    <div class="mm_flex_vert">
         <h1>Descriptor</h1>
+        <div id="mmx_status"></div>
         <div class="mmx_lrmiCompose">Loading...</div>
-        <h1>Key</h1>
-        <div class="mmx_keyCompose">Loading...</div>
     </div>
 </main>
 <script type="module" src="/c/script/mmx_keycontrols.js"></script>

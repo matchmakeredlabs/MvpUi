@@ -140,12 +140,16 @@ class Mmx {
     }
 
     static RenderStatementSearch(element) {
-        // Clear existing contents
-        element.innerHTML = "";
+        // Search replaces this element rather than going into it
+        // This won't work when we make search into a webElement
+        // but we'll cross that bridge later.
+        
+        let parent = element.parentElement;
+        parent.removeChild(element);
 
         // Search bar
-        element.appendChild(bdoc.ele("div",
-            bdoc.class("mmx_searchBar"),
+        parent.appendChild(bdoc.ele("div",
+            bdoc.class("mmx_stmtSearchBar"),
             bdoc.ele("input",
                 bdoc.attr("type", "search"),
                 bdoc.attr("id", "mmid_search"),
@@ -157,38 +161,25 @@ class Mmx {
                 bdoc.attr("value", "\uD83D\uDD0D"),
                 bdoc.attr("onclick", Mmx.SearchStatements))));
 
+        // The remainder gets
+
         // Results header
-        element.appendChild(bdoc.ele("div",
+        parent.appendChild(bdoc.ele("div",
             bdoc.class("mm_stmtHead"),
-            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "Add"),
+            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "+"),
             bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
             bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
             bdoc.ele("span", bdoc.class("mm_stmtText"), "Statement")));
 
-        element.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
+        parent.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
-        // Search results
-        {
-            let resultsTable = document.createElement("table");
-            resultsTable.className = "mmx_table_statement";
-            mmx_dict.resultsTable = resultsTable;
-            Mmx.ResetStatementSearchResult();
-            element.appendChild(resultsTable);
-        }
+        mmx_dict.stmtSearchResult = bdoc.ele("div", bdoc.class("mmc_stmtSearchResult"));
+        parent.appendChild(mmx_dict.stmtSearchResult);
     }
 
     static ResetStatementSearchResult() {
         // Clear existing contents
-        mmx_dict.resultsTable.innerHTML = "";
-
-        // Add header row
-        let row = document.createElement("tr");
-        Mmx.AddTh(row, "mmx_col_ctrl", "");
-        Mmx.AddTh(row, "mmx_col_central", "");
-        Mmx.AddTh(row, "mmx_col_id", "Id");
-        Mmx.AddTh(row, "mmx_col_type", "Type");
-        Mmx.AddTh(row, "mmx_col_stmt", "Statement");
-        mmx_dict.resultsTable.appendChild(row);
+        mmx_dict.stmtSearchResult.innerHTML = "";
     }
 
     static RenderKeyComposeForm(element) {
@@ -197,7 +188,7 @@ class Mmx {
 
         let keyTable = document.createElement("table");
         keyTable.className = "mmx_table_statement";
-        mmx_dict.keyTable = keyTable;
+        //mmx_dict.keyTable = keyTable;
 
         // Add header row
         let row = document.createElement("tr");
@@ -304,50 +295,79 @@ class Mmx {
     }
 
     static RenderLrmiForm(element) {
+
+
+        function addRow(dl, label, id) {
+            dl.appendChild(bdoc.ele("div",
+                bdoc.ele("dt", label),
+                bdoc.ele("dd",
+                    bdoc.class("mmc_editable"),
+                    bdoc.attr("contentEditable", "true"),
+                    bdoc.attr("id", id))));
+        }
+
         element.innerHTML = "";
 
-        let lrmiTable = document.createElement("table");
-        lrmiTable.className = "mmx_table_lrmi";
-        mmx_dict.lrmiTable = lrmiTable;
+        var form = bdoc.ele("div", bdoc.class("mmc_lrmiForm"));
 
-        // Set up column styles so that we can manage width
         {
-            let cg = document.createElement("colgroup");
-            let col = document.createElement("col");
-            col.className = "mmx_col_lrmiLabel";
-            cg.appendChild(col);
-
-            col = document.createElement("col");
-            col.className = "mmx_col_lrmiValue";
-            cg.appendChild(col);
-
-            lrmiTable.appendChild(cg);
+            let annotation = bdoc.ele("div", bdoc.class("annotation"));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clear"));
+            annotation.appendChild(document.createTextNode(" "));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
+            /*
+            annotation.appendChild(bdoc.ele("br"));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.LoadDescriptor), "Next From queue"));
+            */
+            form.appendChild(annotation);
         }
 
+        // Element type
+        form.appendChild(bdoc.ele("select",
+            bdoc.attr("name", "eleType"),
+            bdoc.ele("option", bdoc.attr("value", "o"), "Other"),
+            bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
+            bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
+            bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum")));
 
-        for (let e of Mmx.descProps) {
-            let row = document.createElement("tr");
-            let cell = document.createElement("td");
-            cell.className = "mmx_cell_lrmiLabel";
-            cell.textContent = e.label;
-            row.appendChild(cell);
+        form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
+            bdoc.attr("id", "p_name"),
+            bdoc.attr("contentEditable", "true")));
+        
+        form.appendChild(bdoc.ele("section", bdoc.class("mmc_editable"),
+            bdoc.attr("id", "p_abstract"),
+            bdoc.attr("contentEditable", "true")));
 
-            cell = document.createElement("td");
-            cell.className = "mmx_cell_lrmiValue";
-            if (e.inner == undefined) {
-                cell.contentEditable = true;
-                cell.id = "p_" + e.prop;
-            }
-            else {
-                cell.innerHTML = e.inner;
-                cell.firstElementChild.id = "p_" + e.prop;
-            }
-            row.appendChild(cell);
+        form.appendChild(bdoc.ele("h3", "Detail"));
 
-            lrmiTable.appendChild(row);
-        }
+        let dl = document.createElement("dl");
+        addRow(dl, "URL", "p_url");
+        addRow(dl, "About", "p_about");
+        addRow(dl, "Identifier", "p_identifier");
+        addRow(dl, "Educational Level", "p_educationalLevel");
+        addRow(dl, "Creator", "p_creator");
+        addRow(dl, "Provenance", "p_provenance");
+        form.appendChild(dl);
 
-        element.appendChild(lrmiTable);
+        form.appendChild(bdoc.ele("h3", "Key"));
+
+        form.appendChild(bdoc.ele("div",
+            bdoc.class("mm_stmtHead"),
+            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "\u2212"), // Minus sign
+            bdoc.ele("span", bdoc.class("mm_stmtCentral"), "Cen"),
+            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+            bdoc.ele("span", bdoc.class("mm_stmtKeyText"), "Statement")));
+
+        form.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
+
+        mmx_dict.keyTable = bdoc.ele("div", bdoc.class("mmc_stmtKeyCompose"));
+        form.appendChild(mmx_dict.keyTable);
+
+        element.appendChild(form);
     }
 
     static RenderSaveButton(element) {
@@ -439,7 +459,6 @@ class Mmx {
     }
 
 
-
     // === Search Actions =======
 
     static SearchStatements() {
@@ -452,44 +471,23 @@ class Mmx {
         Mmx.ResetStatementSearchResult();
 
         let count = 0;
-        let val;
-        for (val of result.statements) {
-            let row = document.createElement("tr");
-
-            {
-                let cell = document.createElement("td");
-                cell.className = "mmx_col_select";
-                let button = document.createElement("input");
-                button.type = "button";
-                button.value = "+";
-                button.onclick = Mmx.AddStatementToKey;
-                cell.appendChild(button);
-                row.appendChild(cell);
-            }
-
-            function addTd(row, cls, value) {
-                let td = document.createElement("td");
-                td.className = cls;
-                td.textContent = value;
-                row.appendChild(td);
-            }
-
-            addTd(row, "mmx_col_central", "");
-            addTd(row, "mmx_col_id", val.id);
-            addTd(row, "mmx_col_type", val.stmtType);
-            addTd(row, "mmx_col_stmt", val.statement);
-
-            mmx_dict.resultsTable.appendChild(row);
+        for (let val of result.statements) {
+            mmx_dict.stmtSearchResult.appendChild(
+                bdoc.ele("div", bdoc.class("mm_stmt"),
+                    bdoc.ele("span", bdoc.class("mm_stmtAdd"),
+                        bdoc.ele("input",
+                            bdoc.attr("type", "button"),
+                            bdoc.attr("value", "+"),
+                            bdoc.attr("onclick", Mmx.AddStatementToKey))),
+                    bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
+                    bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
+                    bdoc.ele("span", bdoc.class("mm_stmtText"), val.statement)));
             ++count;
         }
 
         if (count == 0) {
-            let row = document.createElement("tr");
-            let cell = document.createElement("td");
-            cell.colSpan = 5;
-            cell.textContent = "No statements found to match search terms.";
-            row.appendChild(cell);
-            mmx_dict.resultsTable.appendChild(row);
+            mmx_dict.stmtSearchResult.appendChild(
+                bdoc.ele("div", "No statements found to match search terms."));
         }
     }
 
@@ -703,16 +701,32 @@ class Mmx {
 
     static AddStatementToKey(event) {
         let row = event.target.parentElement.parentElement.cloneNode(true);
-        let cell1 = row.firstElementChild;
-        let cell2 = cell1.nextElementSibling;
+        let cellAdd = row.firstElementChild;
+        let cellId = cellAdd.nextElementSibling;
+        let cellStmt = cellId.nextElementSibling.nextElementSibling;
 
-        cell1.innerHTML = "";
-        let input = document.createElement("input");
-        input.type = "button";
-        input.value = "\u2212";
-        input.onclick = Mmx.RemoveStatementFromKey;
-        cell1.append(input);
+        // Convert first cell to remove
+        cellAdd.innerHTML = "";
+        cellAdd.appendChild(bdoc.ele("input", bdoc.attr("type", "button"),
+            bdoc.attr("value", "\u2212"), // Minus sign
+            bdoc.attr("onclick", Mmx.RemoveStatementFromKey)));
 
+        // Insert central cell
+        row.insertBefore(
+            bdoc.ele("span", 
+                bdoc.class("mm_stmtCentral"),
+                bdoc.ele("input",
+                    bdoc.attr("type", "checkbox"),
+                    bdoc.attr("textContent", "Central"),
+                    bdoc.attr("checked", true))),
+            cellId);
+
+        // Change class of last element
+        cellStmt.className = "mm_stmtKeyText";
+
+        mmx_dict.keyTable.appendChild(row);
+
+        /*
         input = document.createElement("input");
         input.type = "checkbox";
         input.textContent = "Central";
@@ -722,6 +736,7 @@ class Mmx {
         cell2.style.textAlign = "center";
         cell2.append(input);
         mmx_dict.keyTable.appendChild(row);
+        */
     }
 
     static RemoveStatementFromKey(event) {
