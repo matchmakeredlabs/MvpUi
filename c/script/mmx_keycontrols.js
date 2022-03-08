@@ -308,10 +308,13 @@ class Mmx {
         {
             let annotation = bdoc.ele("div", bdoc.class("annotation"));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clear"));
+                bdoc.attr("onclick", Mmx.MatchDescriptor), "Match"));
             annotation.appendChild(document.createTextNode(" "));
             annotation.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
+            annotation.appendChild(document.createTextNode(" "));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clear"));
             /*
             annotation.appendChild(bdoc.ele("br"));
             annotation.appendChild(bdoc.ele("button",
@@ -648,8 +651,8 @@ class Mmx {
     }
 
     static LoadLrmiForm(value) {
-        console.log(JSON.stringify(value));
-        console.log(value.id);
+        //console.log(JSON.stringify(value));
+        //console.log(value.id);
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
             if (ele) {
@@ -873,6 +876,14 @@ class Mmx {
         xhr.send(json);
     }
 
+    static MatchDescriptor() {
+        let record = Mmx.GenerateLrmiFromForm();
+        record.key = Mmx.GenerateKeyFromForm();
+
+        sessionStorage.matchDescriptor = JSON.stringify(record);
+        window.open("/c/Match?src=dynamic", "_blank");
+    }
+
     // === Initialization ===================
 
     static getCookie(cname) {
@@ -960,13 +971,22 @@ class Mmx {
             let query = new URLSearchParams(window.location.search);
             let stmtId = query.get("stmtId");
             if (stmtId) {
-
                 mmx_dict.afterSearchDescriptorsById = function () {
                     Mmx.MatchFirstSearchResult();
                     mmx_dict.afterSearchDescriptorsById = undefined;
                 }
 
                 Mmx.SearchDescriptorsById(stmtId);
+            }
+            else if (query.get("src") == "dynamic") {
+                console.log("dynamic");
+                if (sessionStorage.matchDescriptor) {
+                    console.log(sessionStorage.matchDescriptor);
+                    let val = JSON.parse(sessionStorage.matchDescriptor);
+                    mmx_dict.keywordSearchResult.appendChild(
+                        Mmx.RenderDescriptor(val, true));
+                    Mmx.MatchFirstSearchResult();
+                }
             }
         }
 
