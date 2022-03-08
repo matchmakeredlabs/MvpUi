@@ -780,7 +780,6 @@ class Mmx {
         let keyArray = [];
         let keyTable = mmx_dict.keyTable;
         let keyRow = keyTable.firstElementChild;
-        keyRow = keyRow.nextElementSibling;
         while (keyRow != null) {
             let data = {
                 rel: keyRow.children[1].firstElementChild.checked ? "C" : "P",
