@@ -1,0 +1,80 @@
+---
+title: Match Detail
+---
+
+<main>
+    <h1>Matches from</h1>
+    <p>
+        <span id="matchKey"></span>
+    </p>
+
+    <div id="matchResult">
+    </div>
+</main>
+
+<script type="module" src="/c/script/mmx_keycontrols.js"></script>
+
+<script>
+    async function loadDetail() {
+        console.log("loadDetail");
+        let query = new URLSearchParams(window.location.search);
+        let key = query.get("matchKey");
+        if (!key) return;
+
+        let eleType = query.get("eletype");
+        if (!eleType) eleType = "any";
+
+        document.getElementById("matchKey").textContent = key;
+
+        let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&algDetail`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        let ele = document.getElementById("matchResult");
+        ele.innerHTML = "";
+
+        if (result.descriptors.length == 0) {
+            ele.textContent = "No matches found.";
+            return;
+        }
+
+        let table = document.createElement("table");
+
+        let tr = document.createElement("tr");
+        {
+            let th = document.createElement("th");
+            th.textContent = "Key";
+            tr.appendChild(th);
+        }
+
+        let alg = result.descriptors[0].algorithms;
+        for (let val of result.descriptors[0].algorithms) {
+            let th = document.createElement("th");
+            th.textContent = val.alg;
+            tr.appendChild(th);
+        }
+        table.appendChild(tr);
+
+        for (let desc of result.descriptors) {
+            tr = document.createElement("tr");
+            let td = document.createElement("td");
+            td.textContent = StripKeyPrefix(desc.key);
+            tr.appendChild(td);
+            for (let val of desc.algorithms) {
+                td = document.createElement("td");
+                td.style = "text-align: right;";
+                td.textContent = val.score;
+                tr.appendChild(td);
+            }
+            table.appendChild(tr);
+        }
+        ele.appendChild(table);
+    }
+
+    function StripKeyPrefix(key) {
+        let slash = key.lastIndexOf("/");
+        return (slash >= 0) ? key.substring(slash + 1) : key;
+    }
+
+window.addEventListener("load", loadDetail);
+</script>
