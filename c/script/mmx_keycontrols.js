@@ -177,11 +177,6 @@ class Mmx {
         parent.appendChild(mmx_dict.stmtSearchResult);
     }
 
-    static ResetStatementSearchResult() {
-        // Clear existing contents
-        mmx_dict.stmtSearchResult.innerHTML = "";
-    }
-
     static RenderKeyComposeForm(element) {
         // Clear existing contents
         element.innerHTML = "";
@@ -371,16 +366,6 @@ class Mmx {
         element.appendChild(form);
     }
 
-    static RenderSaveButton(element) {
-        element.innerHTML = "";
-
-        let button = document.createElement("input");
-        button.type = "button";
-        button.value = "Save";
-        button.onclick = Mmx.SaveDescriptor;
-        element.appendChild(button);
-    }
-
     static RenderSearchButton(element) {
         element.innerHTML = "";
 
@@ -469,7 +454,8 @@ class Mmx {
     }
 
     static SearchStatements_Callback(result) {
-        Mmx.ResetStatementSearchResult();
+        // Clear existing contents
+        mmx_dict.stmtSearchResult.innerHTML = "";
 
         let count = 0;
         for (let val of result.statements) {
@@ -957,10 +943,6 @@ class Mmx {
 
         for (ele of document.getElementsByClassName("mmx_descriptorSearchDisplay")) {
             Mmx.RenderDescriptorSearchDisplay(ele);
-        }
-
-        for (ele of document.getElementsByClassName("mmx_saveButton")) {
-            Mmx.RenderSaveButton(ele);
         }
 
         for (ele of document.getElementsByClassName("mmx_searchButton")) {
