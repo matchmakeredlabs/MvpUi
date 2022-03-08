@@ -1,4 +1,13 @@
-.mmx_searchBar input {
+.mmx_descSearchBar input {
     height: 2em;
     vertical-align: top;
 }
+
+.mmc_descSearch {
+    width: calc(100% - 3em);
+}
+
+.mmc_descSearchButton {
+    width: 3em;
+}
+

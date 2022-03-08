@@ -201,44 +201,38 @@ class Mmx {
         // Clear existing contents
         element.innerHTML = "";
 
-        // Search bar
-        let searchBar = document.createElement("div");
-        searchBar.className = "mmx_searchBar";
-
-        let search = document.createElement("input");
-        search.type = "search";
-        search.style.width = "90%";
-        search.onsearch = Mmx.SearchDescriptorsByKeywords;
-        searchBar.appendChild(search);
-
-        let button = document.createElement("input");
-        button.type = "button";
-        button.value = "\uD83D\uDD0D";
-        button.onclick = Mmx.SearchDescriptorsByKeywords;
-        searchBar.appendChild(button);
-
-        searchBar.appendChild(document.createElement("br"));
-
-        let typeSelect = document.createElement("select");
-        typeSelect.name = "eleType";
+        let typeSelect = bdoc.ele("select",
+            bdoc.attr("name", "eleType"));
         for (let key in Mmx.EleTypeTranslate) {
-            let opt = document.createElement("option");
-            opt.value = key;
-            opt.textContent = Mmx.EleTypeTranslate[key];
-            typeSelect.appendChild(opt);
+            typeSelect.appendChild(bdoc.ele("option",
+                bdoc.attr("value", key),
+                bdoc.attr("textContent", Mmx.EleTypeTranslate[key])));
         }
+
         typeSelect.onchange = function (event) {
             if (mmx_dict.searchKeywords != null && mmx_dict.searchKeywordsEleType != event.target.value) {
                 Mmx.SearchDescriptorsByKeywords();
             }
         }
 
-        searchBar.appendChild(typeSelect);
+        let search = bdoc.ele("input",
+            bdoc.attr("type", "search"),
+            bdoc.class("mmc_descSearch"),
+            bdoc.attr("onsearch", Mmx.SearchDescriptorsByKeywords));
+        
+        // Search bar
+        element.appendChild(bdoc.ele("div", bdoc.class("mmx_descSearchBar"),
+            search,
+            bdoc.ele("input",
+                bdoc.attr("type", "button"),
+                bdoc.attr("value", "\uD83D\uDD0D"),
+                bdoc.class("mmc_descSearchButton"),
+                bdoc.attr("onclick", Mmx.SearchDescriptorsByKeywords)),
+            bdoc.ele("br"),
+            typeSelect));
 
-        mmx_dict.descriptorKeywords = search;
-        mmx_dict.descriptorType = typeSelect;
-
-        element.appendChild(searchBar);
+        mmx_dict.descriptorKeywords = search;   
+        mmx_dict.descriptorType = typeSelect;   
     }
 
     static RenderDescriptorSearchDisplay(element) {
