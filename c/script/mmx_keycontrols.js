@@ -27,7 +27,7 @@ class Mmx {
     ];
 
     static keyLabel = "Key";
-    static keyLinkPrefix = "/c/ShowKey?key=";
+    static keyLinkPrefix = "/c/Palet?key=";
 
     // === Support Functions =======
 
@@ -112,30 +112,24 @@ class Mmx {
     {
         element.innerHTML = "";
 
-        let table = document.createElement("table");
-        table.className = "mmx_table_key";
-        let row = document.createElement("tr");
-        Mmx.AddTh(row, "mmx_col_id", "Id");
-        Mmx.AddTh(row, "mmx_col_central", "Rel");
-        Mmx.AddTh(row, "mmx_col_type", "Type");
-        Mmx.AddTh(row, "mmx_col_stmt", "Statement");
-        table.appendChild(row);
-        element.appendChild(table);
+        console.log("whatever");
 
-        function addTd(row, cls, value) {
-            let td = document.createElement("td");
-            td.className = cls;
-            td.textContent = value;
-            row.appendChild(td);
-        }
+        element.appendChild(bdoc.ele("div",
+            bdoc.class("mm_stmtHead"),
+            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+            bdoc.ele("span", bdoc.class("mm_stmtCentralWide"), "Rel"),
+            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+            bdoc.ele("span", bdoc.class("mm_stmtWideText"), "Statement")));
+
+        element.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
         for (let val of jskey.statements) {
-            row = document.createElement("tr");
-            addTd(row, "mmx_col_id", val.id);
-            addTd(row, "mmx_col_central", val.rel);
-            addTd(row, "mmx_col_type", val.stmtType);
-            addTd(row, "mmx_col_stmt", val.statement);
-            table.appendChild(row);
+           element.appendChild(
+                bdoc.ele("div", bdoc.class("mm_stmt"),
+                    bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
+                    bdoc.ele("span", bdoc.class("mm_stmtCentralWide"), val.rel),
+                    bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
+                    bdoc.ele("span", bdoc.class("mm_stmtWideText"), val.statement)));
         }
     }
 
@@ -484,7 +478,7 @@ class Mmx {
 
         for (let ele of document.getElementsByClassName("mmx_descriptorMatchKey")) {
             let a = document.createElement("a");
-            a.href = `/c/ShowKey?key=${k}`;
+            a.href = `/c/Palet?key=${k}`;
             a.target = "_blank";
             a.textContent = k;
             ele.appendChild(a);

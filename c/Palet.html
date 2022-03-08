@@ -1,0 +1,40 @@
+---
+title: Palet Key
+---
+
+<main>
+    <article>
+        <h1>Palet Key</h1>
+        <div class="key mmx_key" data-mmx-key="urlKey">Loading...</div>
+        <div>Analyze Matches: <span id="analyze"></span></div>
+        <div>Match Console: <span id="console"></span></div>
+    </article>
+</main>
+<script type="module" src="/c/script/mmx_keycontrols.js"></script>
+
+<script>
+    function loadDetail() {
+        let query = new URLSearchParams(window.location.search);
+        let key = query.get("key");
+        if (key) {
+
+            let ele = document.getElementById("analyze");
+            ele.innerHtml = "";
+            let a = document.createElement("a");
+            a.href = `/c/MatchDetail?matchKey=${key}`;
+            a.target = "_blank";
+            a.textContent = key;
+            ele.appendChild(a);
+
+            ele = document.getElementById("console");
+            ele.innerHtml = "";
+            a = document.createElement("a");
+            a.href = `/c/MatchConsole?matchKey=${key}`;
+            a.target = "_blank";
+            a.textContent = key;
+            ele.appendChild(a);
+        }
+    }
+
+    window.addEventListener("load", loadDetail);
+</script>
