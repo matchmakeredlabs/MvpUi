@@ -931,7 +931,10 @@ class Mmx {
 
         for (ele of document.getElementsByClassName("mmx_lrmiCompose")) {
             Mmx.RenderLrmiForm(ele);
-            Mmx.LoadLrmiFormFromStorage();
+            if (query.get("src") == "dynamic")
+            {
+                Mmx.LoadLrmiFormFromStorage();
+            }
         }
 
         for (ele of document.getElementsByClassName("mmx_descriptorSearchForm")) {
@@ -956,7 +959,6 @@ class Mmx {
         }
 
         if (hasFindDescriptor) {
-            let query = new URLSearchParams(window.location.search);
             let stmtId = query.get("stmtId");
             if (stmtId) {
                 mmx_dict.afterSearchDescriptorsById = function () {

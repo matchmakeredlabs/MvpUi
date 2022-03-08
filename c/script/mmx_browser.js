@@ -212,7 +212,7 @@ class MmFramework {
 
     static clickDescribe() {
         sessionStorage.describeStmt = JSON.stringify(MmFramework.thisFramework.selStmt);
-        window.open("/c/Describe", "_blank");
+        window.open("/c/Describe?src=dynamic", "_blank");
     }
 }
 
