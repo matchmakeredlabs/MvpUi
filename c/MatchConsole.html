@@ -1,0 +1,102 @@
+---
+title: Match Console
+---
+
+<div class="mm_flex_vert">
+    <form id="algForm">
+        <div class="con-row"><span class="con-col1 con-heading">Match</span><span class="con-col2 con-heading">Weight</span><span class="con-col3 con-heading">Threshold</span></div>
+        <div class="con-row"><span class="con-col1">Central-Central</span><mm-range name="alg-w-cc" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-cc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Central-Peripheral</span><mm-range name="alg-w-cp" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-cp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Peripheral-Central</span><mm-range name="alg-w-pc" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-pc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Peripheral-Peripheral</span><mm-range name="alg-w-pp" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-pp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row" style="margin-top: 0.75em;"><span class="con-col1 con-heading">Statement Type</span><span class="con-col2 con-heading">Weight</span><span class="con-col3 con-heading">Threshold</span></div>
+        <div class="con-row"><span class="con-col1">Knowledge (STFk)</span><mm-range name="alg-w-k" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-k" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Conceptual Understanding</span><mm-range name="alg-w-c" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-c" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Process</span><mm-range name="alg-w-p" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-p" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row"><span class="con-col1">Pedagogy</span><mm-range name="alg-w-d" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range><mm-range name="alg-t-d" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
+        <div class="con-row" style="margin-top: 0.75em;"><span class="con-colspan"><button>Match</button></span></div>
+    </form>
+    <hr />
+    <h2>Matches from</h2>
+    <p>
+        <span id="matchKey"></span>
+    </p>
+
+    <div id="matchResult">
+    </div>
+</div>
+
+<script src="/c/script/mm-range.js"></script>
+<!--<script type="module" src="/c/script/bdoc.js"></script>-->
+
+<script type="module">
+    import bdoc from "/c/script/bdoc.js";
+
+    function on_load() {
+        let form = document.getElementById("algForm");
+        if (form) {
+            form.onsubmit = on_alg_submit;
+        }
+        
+        let key = new URLSearchParams(window.location.search).get("matchKey");
+        if (key) {
+            document.getElementById("matchKey").textContent = key;
+        }
+    }
+
+    async function on_alg_submit(event) {
+        event.preventDefault();
+
+        // Get the algorithm weights
+        let weights = new URLSearchParams(new FormData(event.currentTarget)).toString();
+
+        // Get the key
+        let key = document.getElementById("matchKey").textContent;
+
+        if (!key) return;
+
+        let eleType = "any";
+        let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&${weights}`;
+        console.log(url);
+
+        const response = await fetch(url);
+        const result = await response.json();
+
+        let ele = document.getElementById("matchResult");
+
+        for (;;) {
+            let next = ele.nextElementSibling;
+            if (!next) break;
+            next.parentElement.removeChild(next);
+        }
+        ele = ele.parentElement;
+
+        ele.appendChild(bdoc.ele("div", bdoc.class("con_matchHead"),
+            bdoc.ele("span", bdoc.class("con_matchIndex"), "Index"),
+            bdoc.ele("span", bdoc.class("con_matchKey"), "Key")));
+
+        ele.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
+
+        if (result.descriptors.length == 0) {
+            ele.textContent = "No matches found.";
+            return;
+        }
+
+        let matches = bdoc.ele("div", bdoc.class("con_matches"));
+       
+        for (let desc of result.descriptors) {
+            matches.appendChild(bdoc.ele("div", bdoc.class("con_match"),
+                bdoc.ele("span", bdoc.class("con_matchIndex"), desc.matchIndex),
+                bdoc.ele("span", bdoc.class("con_matchKey"), StripKeyPrefix(desc.key))));
+        }
+
+        ele.appendChild(matches);
+    }
+
+    function StripKeyPrefix(key) {
+        let slash = key.lastIndexOf("/");
+        return (slash >= 0) ? key.substring(slash + 1) : key;
+    }
+
+    window.addEventListener("load", on_load);
+</script>

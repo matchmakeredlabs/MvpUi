@@ -29,6 +29,7 @@ main {
 .mm_flex_vert {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .mm_flex_vert>* {

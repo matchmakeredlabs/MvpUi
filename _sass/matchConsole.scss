@@ -1,0 +1,54 @@
+$w_matchIndex: 6em;
+
+.con-row {
+    display: flex;
+}
+.con-heading {
+    font-weight: bold;
+}
+.con-col1 {
+    width: 14em;
+}
+.con-col2 {
+    width: 12em;
+}
+.con-col3 {
+    width: 12em;
+}
+.con-colspan {
+    width: 38em;
+    text-align: center;
+}
+
+.con-main {
+    
+}
+
+.con_matchHead {
+    padding-left: 0.25em;
+    font-weight: bold;
+}
+
+.con_matches {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 0em;
+    overflow-y: auto;
+}
+
+.con_match {
+    padding-left: 0.25em;
+    margin-bottom: 1em;
+}
+
+.con_matchIndex {
+    display: inline-block;
+    vertical-align: top;
+    width: $w_matchIndex;
+}
+
+.con_matchKey {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - #{$w_matchIndex + 0.25em});
+}
