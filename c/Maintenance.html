@@ -1,0 +1,21 @@
+---
+title: Maintenance
+---
+
+<h1>Maintenance</h1>
+<ul>
+    <li><a href="#" onclick="DeleteDemoDescriptors()">Delete Demo Descriptors</a></li>
+</ul>
+<div id="result"></div>
+
+<script>
+    async function DeleteDemoDescriptors() {
+        let res = await fetch("/Descriptors?provenance=Demo", {
+            method: "DELETE"
+        });
+        console.log("Delete called.")
+        if (res.ok) {
+            document.getElementById("result").textContent = await res.text();
+        }
+    }
+</script>

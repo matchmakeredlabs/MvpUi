@@ -1,0 +1,41 @@
+---
+title: Status
+autht: anonymous
+---
+
+<h1>Status</h1>
+<p id="status"></p>
+
+<script>
+
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+    
+    function statusOnLoad()
+    {
+        let query = new URLSearchParams(getCookie("MMT"));
+    
+        let status = document.getElementById("status");
+    
+        for (const prop of query.entries()) {
+            let div = document.createElement("div");
+            div.textContent = prop[0] + '=' + prop[1];
+            status.appendChild(div);
+        }
+    }
+    
+    window.addEventListener("load", statusOnLoad);
+</script>
