@@ -470,30 +470,16 @@ class Mmx {
     }
 
     static SearchDescriptorsByComposedKey() {
-        Mmx.SearchDescriptorsByKey(Mmx.GenerateKeyFromForm());
+        Mmx.SearchDescriptorsByKey(Mmx.GenerateKeyFromForm(), null);
     }
 
-    static SearchDescriptorsByKey(key) {
+    static SearchDescriptorsByKey(key, suppressId) {
         let k = Mmx.StripKeyPrefix(key);
-
-        for (let ele of document.getElementsByClassName("mmx_descriptorMatchKey")) {
-            let a = document.createElement("a");
-            a.href = `/c/Palet?key=${k}`;
-            a.target = "_blank";
-            a.textContent = k;
-            ele.appendChild(a);
-        }
-
-        for (let ele of document.getElementsByClassName("mmx_matchConsoleLink")) {
-            let a = document.createElement("a");
-            a.href = `/c/MatchConsole?matchKey=${k}`;
-            a.textContent = "Match Console";
-            ele.appendChild(a);
-        }
 
         let eleType = mmx_dict.descriptorTypeFilter.value;
         mmx_dict.searchKey = key;
         mmx_dict.searchEleType = eleType;
+        if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}`;
         Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsByKey_Callback);
     }
@@ -603,8 +589,10 @@ class Mmx {
 
         let count = 0;
         for (let val of result.descriptors) {
-            ele.appendChild(this.RenderDescriptor(val, matchButton));
-            ++count;
+            if (val.id != mmx_dict.searchSuppressId) {
+                ele.appendChild(this.RenderDescriptor(val, matchButton));
+                ++count;
+            }
         }
 
         if (count == 0) {
@@ -746,7 +734,7 @@ class Mmx {
         descriptor.classList.add("mm_active");
 
         // Search
-        Mmx.SearchDescriptorsByKey(descriptor.mmxKey);
+        Mmx.SearchDescriptorsByKey(descriptor.mmxKey, descriptor.mmxId);
     }
 
     static GenerateLrmiFromForm() {
