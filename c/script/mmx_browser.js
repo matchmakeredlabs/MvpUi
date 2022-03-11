@@ -168,7 +168,7 @@ class MmFramework {
             if (ele.classList.contains("mmb_expanded")) {
                 ele.classList.remove("mmb_expanded");
             }
-            else if (ele.classList.contains("mmb_list")) {
+            else if (ele.tagName == "UL") {
                 parentEle.removeChild(ele);
                 break;
             }
