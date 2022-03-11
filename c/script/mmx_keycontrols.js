@@ -296,7 +296,7 @@ class Mmx {
         {
             let annotation = bdoc.ele("div", bdoc.class("annotation"));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.MatchDescriptor), "Match"));
+                bdoc.attr("onclick", Mmx.MatchDescriptor), "Find Matches"));
             annotation.appendChild(document.createTextNode(" "));
             annotation.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
@@ -315,10 +315,11 @@ class Mmx {
         form.appendChild(bdoc.ele("select",
             bdoc.attr("name", "eleType"),
             bdoc.attr("id", "p_eleType"),
-            bdoc.ele("option", bdoc.attr("value", "o"), "Other"),
+            bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
             bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
             bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
-            bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum")));
+            bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
+            bdoc.ele("option", bdoc.attr("value", "o"), "Other")));
 
         form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
             bdoc.attr("id", "p_name"),
@@ -552,7 +553,12 @@ class Mmx {
         if (val.eleType) {
             descriptor.appendChild(bdoc.ele("h3", this.EleTypeTranslate[val.eleType]));
         }
-        descriptor.appendChild(bdoc.ele("h2", val.name));
+        if (val.name) {
+            descriptor.appendChild(bdoc.ele("h2", val.name));
+        }
+        else {
+            descriptor.appendChild(bdoc.ele("h2", "Unnamed"));
+        }
         if (val.abstract) {
             descriptor.appendChild(bdoc.ele("section", bdoc.preText(val.abstract)));
         }
@@ -826,6 +832,13 @@ class Mmx {
         if (record.key == Mmx.keyPrefix) {
             let status = document.getElementById("mmx_status");
             status.textContent = "Please select at least one statement for the key.";
+            status.style.color = "darkred";
+            return;
+        }
+
+        if (!record.eleType) {
+            let status = document.getElementById("mmx_status");
+            status.textContent = "Please select an element type.";
             status.style.color = "darkred";
             return;
         }
