@@ -296,13 +296,19 @@ class Mmx {
         {
             let annotation = bdoc.ele("div", bdoc.class("annotation"));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.MatchDescriptor), "Find Matches"));
+                bdoc.attr("onclick", Mmx.MatchDescriptor), "Matches"));
+            annotation.appendChild(document.createTextNode(" "));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clr"));
             annotation.appendChild(document.createTextNode(" "));
             annotation.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
             annotation.appendChild(document.createTextNode(" "));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clear"));
+                bdoc.attr("onclick", Mmx.NextDescriptor), "Next"));
+            annotation.appendChild(document.createTextNode(" "));
+            annotation.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.NextUndDescriptor), "NxtUnd"));
             /*
             annotation.appendChild(bdoc.ele("br"));
             annotation.appendChild(bdoc.ele("button",
@@ -339,6 +345,10 @@ class Mmx {
         addRow(dl, "Creator", "p_creator");
         addRow(dl, "Provenance", "p_provenance");
         form.appendChild(dl);
+
+        form.appendChild(bdoc.ele("div",
+            bdoc.attr("style", "display: none; visibility: hidden;"),
+            bdoc.attr("id", "p_framework")));
 
         form.appendChild(bdoc.ele("h3", "Key"));
 
@@ -871,6 +881,34 @@ class Mmx {
 
         sessionStorage.matchDescriptor = JSON.stringify(record);
         window.open("/c/Match?src=dynamic", "_blank");
+    }
+
+    static NextDescriptor() {
+        Mmx.LoadNextDescriptor(false);
+    }
+ 
+    // Next undescribed descriptor
+    static NextUndDescriptor() {
+        Mmx.LoadNextDescriptor(true);
+    }
+
+    static LoadNextDescriptor(skipDescribed) {
+        let framework = document.getElementById("p_framework").innerText;
+        let url = document.getElementById("p_url").innerText;
+        console.log("LoadNext: " + framework + " " + url + " " + skipDescribed);
+
+        this.LoadJsonAsync("/frameworks?src=" + encodeURIComponent(framework) + "&descriptorAfter=" + encodeURIComponent(url) + "&skipDescribed=" + skipDescribed,
+            this.LoadLrmiFormFromNext);
+    }
+
+    static LoadLrmiFormFromNext(stmt) {
+        if (!(stmt.provenance)) {
+            var provenance = sessionStorage.provenance;
+            if (!provenance) provenance = "Demo";
+            stmt.provenance = provenance;
+        }
+
+        Mmx.LoadLrmiForm(stmt);
     }
 
     // === Initialization ===================
