@@ -678,6 +678,13 @@ class Mmx {
         }
     }
 
+    static async LoadLrmiFormFromDatabase(id) {
+        let response = await fetch("/api/descriptors/" + id);
+        let data = await response.json();
+        let desc = data.descriptors[0];
+        this.LoadLrmiForm(desc);
+    }
+
 
     // === Form and Function ==============
 
@@ -973,6 +980,12 @@ class Mmx {
             if (query.get("src") == "dynamic")
             {
                 Mmx.LoadLrmiFormFromStorage();
+            }
+            else {
+                const descId = query.get("id");
+                if (descId) {
+                    Mmx.LoadLrmiFormFromDatabase(descId);
+                }
             }
         }
 
