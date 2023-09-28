@@ -279,7 +279,6 @@ class Mmx {
 
     static RenderLrmiForm(element) {
 
-
         function addRow(dl, label, id) {
             dl.appendChild(bdoc.ele("div",
                 bdoc.ele("dt", label),
@@ -305,10 +304,14 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
             annotation.appendChild(document.createTextNode(" "));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.NextDescriptor), "Next"));
-            annotation.appendChild(document.createTextNode(" "));
+                bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
+            annotation.appendChild(document.createTextNode(" All"));
+            annotation.appendChild(bdoc.ele("input", bdoc.attr("type", "checkbox"),
+                bdoc.attr("id", "input_nokey"),
+                bdoc.class("toggle-switch")));
+            annotation.appendChild(document.createTextNode(" NoKey "));
             annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.NextUndDescriptor), "NxtUnd"));
+                bdoc.attr("onclick", Mmx.NextDescriptor), "\u23F5"));
             /*
             annotation.appendChild(bdoc.ele("br"));
             annotation.appendChild(bdoc.ele("button",
@@ -349,6 +352,10 @@ class Mmx {
         form.appendChild(bdoc.ele("div",
             bdoc.attr("style", "display: none; visibility: hidden;"),
             bdoc.attr("id", "p_framework")));
+
+        form.appendChild(bdoc.ele("div",
+            bdoc.attr("style", "display: none; visibility: hidden;"),
+            bdoc.attr("id", "p_id")));
 
         form.appendChild(bdoc.ele("h3", "Key"));
 
@@ -685,7 +692,6 @@ class Mmx {
         this.LoadLrmiForm(desc);
     }
 
-
     // === Form and Function ==============
 
     static AddStatementToKey(event) {
@@ -891,33 +897,24 @@ class Mmx {
     }
 
     static NextDescriptor() {
-        Mmx.LoadNextDescriptor(false);
+        Mmx.NextPrevDescriptor(true);
+    }
+
+    static PrevDescriptor() {
+        Mmx.NextPrevDescriptor(false);
+    }
+
+    static async NextPrevDescriptor(nextPrev) {
+        const nokey = document.getElementById("input_nokey").checked;
+        console.log(nokey);
+        const id = document.getElementById("p_id").innerText;
+        const response = await fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
+        const data = await response.json();
+        if (data.success) {
+            Mmx.LoadLrmiFormFromDatabase(data.id);
+        }
     }
  
-    // Next undescribed descriptor
-    static NextUndDescriptor() {
-        Mmx.LoadNextDescriptor(true);
-    }
-
-    static LoadNextDescriptor(skipDescribed) {
-        let framework = document.getElementById("p_framework").innerText;
-        let url = document.getElementById("p_url").innerText;
-        console.log("LoadNext: " + framework + " " + url + " " + skipDescribed);
-
-        this.LoadJsonAsync("/frameworks?src=" + encodeURIComponent(framework) + "&descriptorAfter=" + encodeURIComponent(url) + "&skipDescribed=" + skipDescribed,
-            this.LoadLrmiFormFromNext);
-    }
-
-    static LoadLrmiFormFromNext(stmt) {
-        if (!(stmt.provenance)) {
-            var provenance = sessionStorage.provenance;
-            if (!provenance) provenance = "Demo";
-            stmt.provenance = provenance;
-        }
-
-        Mmx.LoadLrmiForm(stmt);
-    }
-
     // === Initialization ===================
 
     static getCookie(cname) {
