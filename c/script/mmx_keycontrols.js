@@ -293,31 +293,28 @@ class Mmx {
         var form = bdoc.ele("div", bdoc.class("mmc_lrmiForm"));
 
         {
-            let annotation = bdoc.ele("div", bdoc.class("annotation"));
-            annotation.appendChild(bdoc.ele("button",
+            let controlsLeft = bdoc.ele("span", bdoc.class("controls_left"));
+            let controlsRight = bdoc.ele("span", bdoc.class("controls_right"));
+            let controls = bdoc.ele("div", bdoc.class("controls"), controlsLeft, controlsRight);
+            controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.MatchDescriptor), "Matches"));
-            annotation.appendChild(document.createTextNode(" "));
-            annotation.appendChild(bdoc.ele("button",
+            controlsLeft.appendChild(document.createTextNode(" "));
+            controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.ClearDescriptor), "Clr"));
-            annotation.appendChild(document.createTextNode(" "));
-            annotation.appendChild(bdoc.ele("button",
+            controlsLeft.appendChild(document.createTextNode(" "));
+            controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
-            annotation.appendChild(document.createTextNode(" "));
-            annotation.appendChild(bdoc.ele("button",
+
+            controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
-            annotation.appendChild(document.createTextNode(" All"));
-            annotation.appendChild(bdoc.ele("input", bdoc.attr("type", "checkbox"),
+            controlsRight.appendChild(document.createTextNode(" All"));
+            controlsRight.appendChild(bdoc.ele("input", bdoc.attr("type", "checkbox"),
                 bdoc.attr("id", "input_nokey"),
                 bdoc.class("toggle-switch")));
-            annotation.appendChild(document.createTextNode(" NoKey "));
-            annotation.appendChild(bdoc.ele("button",
+            controlsRight.appendChild(document.createTextNode(" NoKey "));
+            controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.NextDescriptor), "\u23F5"));
-            /*
-            annotation.appendChild(bdoc.ele("br"));
-            annotation.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.LoadDescriptor), "Next From queue"));
-            */
-            form.appendChild(annotation);
+            form.appendChild(controls);
         }
 
         // Element type

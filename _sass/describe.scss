@@ -119,8 +119,18 @@ $w_type: 4em;
 .mmc_lrmiForm {
     @include mmx_card;
 
-    div.annotation {
-        float: right;
+    div.controls {
+        display: flex;
+        flex-wrap: wrap-reverse;
+        justify-content: space-between;
+    }
+
+    div.controls_left {
+        display: block;
+    }
+
+    div.controls_right {
+        display: block;
     }
 }
 
