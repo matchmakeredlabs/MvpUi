@@ -383,73 +383,22 @@ class Mmx {
     }
 
     // Render an intermediary key into the key composition section
-    static LoadKeyIntoDescriptorSearchForm(key) {
-        console.log("LoadKeyIntoDescriptorSearchForm");
-        Mmx.LoadJsonAsync("/key/" + Mmx.StripKeyPrefix(key), Mmx.LoadKey_Callback)
-    }
+    static async LoadKeyIntoDescriptorSearchForm(key) {
+        mmx_dict.keyTable.innerHTML = "";
+        if (!key) return;
+        const response = await fetch("/key/" + Mmx.StripKeyPrefix(key));
+        const data = await response.json();
 
-    static LoadKey_Callback(jskey) {
-
-        function addTd(row, cls, value) {
-            let td = document.createElement("td");
-            td.className = cls;
-            td.textContent = value;
-            row.appendChild(td);
+        for (let val of data.statements) {
+            mmx_dict.keyTable.appendChild(bdoc.ele("div", bdoc.class("mm_stmt"),
+                bdoc.ele("span", bdoc.class("mm_stmtAdd"), bdoc.ele("input", bdoc.attr("type", "button"), bdoc.attr("value", "\u2212"))),
+                bdoc.ele("span", bdoc.class("mm_stmtCentral"), bdoc.ele("input", bdoc.attr("type", "checkbox"),
+                    bdoc.attr("checked", val.rel == "Central"))),
+                bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
+                bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
+                bdoc.ele("span", bdoc.class("mm_stmtKeyText"), val.statement)));
         }
-
-        for (let val of jskey.statements) {
-            let row = document.createElement("tr");
-
-            // "Remove" button in first column
-            {
-                let cell = document.createElement("td");
-                cell.className = "mmx_col_select";
-
-                let input = document.createElement("input");
-                input.type = "button";
-                input.value = "\u2212";
-                input.onclick = Mmx.RemoveStatementFromKey;
-                cell.appendChild(input);
-                row.appendChild(cell);
-            }
-
-            // "Central/Peripheral" in second column
-            {
-                let cell = document.createElement("td");
-                cell.className = "mmx_col_central";
-
-                let input = document.createElement("input");
-                input.type = "checkbox";
-                input.textContent = "Central";
-                input.checked = val.rel == "Central";
-                input.style.height = "1.5em";
-                input.style.width = "1.5em";
-                cell.style.textAlign = "center";
-                cell.appendChild(input);
-                row.appendChild(cell);
-            }
-
-            addTd(row, "mmx_col_id", val.id);
-            addTd(row, "mmx_col_type", val.stmtType);
-            addTd(row, "mmx_col_stmt", val.statement);
-
-            mmx_dict.keyTable.appendChild(row);
-        }
-
-
-        element.innerHTML = "";
-
-        let table = document.createElement("table");
-        table.className = "mmx_table_key";
-        let row = document.createElement("tr");
-        Mmx.AddTh(row, "mmx_col_id", "Id");
-        Mmx.AddTh(row, "mmx_col_central", "Rel");
-        Mmx.AddTh(row, "mmx_col_type", "Type");
-        Mmx.AddTh(row, "mmx_col_stmt", "Statement");
-        table.appendChild(row);
-        element.appendChild(table);
     }
-
 
     // === Search Actions =======
 
@@ -664,6 +613,9 @@ class Mmx {
                 }
             }
         }
+
+        // Load Key
+        Mmx.LoadKeyIntoDescriptorSearchForm(value.key);
     }
 
     static LoadLrmiFormFromStorage() {
@@ -903,7 +855,6 @@ class Mmx {
 
     static async NextPrevDescriptor(nextPrev) {
         const nokey = document.getElementById("input_nokey").checked;
-        console.log(nokey);
         const id = document.getElementById("p_id").innerText;
         const response = await fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
         const data = await response.json();
