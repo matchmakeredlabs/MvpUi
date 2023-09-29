@@ -569,32 +569,6 @@ class Mmx {
         }
     }
 
-    static LoadDescriptorFormFromSearchResult(result) {
-        Mmx.ClearDescriptor();
-
-        if (result.descriptors.length > 0) {
-            let descriptor = result.descriptors[0];
-
-            for (let p of Mmx.descProps) {
-                let ele = document.getElementById("p_" + p.prop);
-                if (ele instanceof HTMLSelectElement) {
-                    ele.value = descriptor[p.prop];
-                }
-                else if (p.prop == "url")
-                {
-                    ele.contentEditable = false;
-                    ele.innerHTML = "<a href='" + descriptor["url"] + "' target='_blank'>" + descriptor["url"] + "</a>";
-                }
-                else {
-                    ele.textContent = descriptor[p.prop];
-                }
-            }
-        }
-        else {
-            document.getElementById("mmx_status").textContent = "Queue is empty.";
-        }
-    }
-
     static LoadLrmiForm(value) {
         //console.log(JSON.stringify(value));
         //console.log(value.id);
@@ -764,16 +738,6 @@ class Mmx {
         }
 
         return key;
-    }
-
-    static LoadDescriptorFromQueue() {
-        let urlQuery = new URLSearchParams(window.location.search);
-        let eleType = urlQuery.get('eletype');
-        let url = "/descriptors?nextFromQueue";
-        if (eleType) {
-            url += "&eletype=" + eleType;
-        }
-        Mmx.LoadJsonAsync(url, Mmx.LoadDescriptorFormFromSearchResult);
     }
 
     static ClearDescriptor() {
