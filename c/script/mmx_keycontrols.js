@@ -297,21 +297,21 @@ class Mmx {
             let controlsRight = bdoc.ele("span", bdoc.class("controls_right"));
             let controls = bdoc.ele("div", bdoc.class("controls"), controlsLeft, controlsRight);
             controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.MatchDescriptor), "Matches"));
+                bdoc.attr("onclick", Mmx.MatchDescriptor), "Match"));
             controlsLeft.appendChild(document.createTextNode(" "));
             controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.ClearLrmiForm), "Clr"));
+                bdoc.attr("onclick", Mmx.ClearLrmiForm), "Clear"));
             controlsLeft.appendChild(document.createTextNode(" "));
             controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
 
-            controlsRight.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
             controlsRight.appendChild(document.createTextNode(" All"));
             controlsRight.appendChild(bdoc.ele("input", bdoc.attr("type", "checkbox"),
                 bdoc.attr("id", "input_nokey"),
                 bdoc.class("toggle-switch")));
             controlsRight.appendChild(document.createTextNode(" NoKey "));
+            controlsRight.appendChild(bdoc.ele("button",
+                bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
             controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.NextDescriptor), "\u23F5"));
             form.appendChild(controls);
