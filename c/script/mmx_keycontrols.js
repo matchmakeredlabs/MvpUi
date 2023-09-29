@@ -385,7 +385,9 @@ class Mmx {
 
         for (let val of data.statements) {
             mmx_dict.keyTable.appendChild(bdoc.ele("div", bdoc.class("mm_stmt"),
-                bdoc.ele("span", bdoc.class("mm_stmtAdd"), bdoc.ele("input", bdoc.attr("type", "button"), bdoc.attr("value", "\u2212"))),
+                bdoc.ele("span", bdoc.class("mm_stmtAdd"), bdoc.ele("input", bdoc.attr("type", "button"),
+                    bdoc.attr("value", "\u2212"),
+                    bdoc.attr("onclick", Mmx.RemoveStatementFromKey))),
                 bdoc.ele("span", bdoc.class("mm_stmtCentral"), bdoc.ele("input", bdoc.attr("type", "checkbox"),
                     bdoc.attr("checked", val.rel == "Central"))),
                 bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
