@@ -290,7 +290,7 @@ class Mmx {
 
         element.innerHTML = "";
 
-        var form = bdoc.ele("div", bdoc.class("mmc_lrmiForm"));
+        var form = bdoc.ele("div", bdoc.class("mmc_lrmiForm"), bdoc.attr("id", "p_lrmiForm"));
 
         {
             let controlsLeft = bdoc.ele("span", bdoc.class("controls_left"));
@@ -300,7 +300,7 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.MatchDescriptor), "Matches"));
             controlsLeft.appendChild(document.createTextNode(" "));
             controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.ClearDescriptor), "Clr"));
+                bdoc.attr("onclick", Mmx.ClearLrmiForm), "Clr"));
             controlsLeft.appendChild(document.createTextNode(" "));
             controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
@@ -345,14 +345,6 @@ class Mmx {
         addRow(dl, "Creator", "p_creator");
         addRow(dl, "Provenance", "p_provenance");
         form.appendChild(dl);
-
-        form.appendChild(bdoc.ele("div",
-            bdoc.attr("style", "display: none; visibility: hidden;"),
-            bdoc.attr("id", "p_framework")));
-
-        form.appendChild(bdoc.ele("div",
-            bdoc.attr("style", "display: none; visibility: hidden;"),
-            bdoc.attr("id", "p_id")));
 
         form.appendChild(bdoc.ele("h3", "Key"));
 
@@ -570,15 +562,19 @@ class Mmx {
     }
 
     static LoadLrmiForm(value) {
+        document.getElementById("mmx_status").textContent = "";
         //console.log(JSON.stringify(value));
         //console.log(value.id);
+        var form = document.getElementById("p_lrmiForm");
+        form.sourceData = value;
+
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
             if (ele) {
                 if (ele instanceof HTMLSelectElement) {
                     ele.value = value[p];
                 }
-                else if (p == "url") {
+                else if (p == "url" && value[p].startsWith("http")) {
                     ele.contentEditable = false;
                     ele.innerHTML = "<a href='" + value["url"] + "' target='_blank'>" + value["url"] + "</a>";
                 }
@@ -690,7 +686,9 @@ class Mmx {
     }
 
     static GenerateLrmiFromForm() {
-        let lrmi = {};
+        var form = document.getElementById("p_lrmiForm");
+        var lrmi = form.sourceData; // Load original data before overwriting attributes from the form.
+        if (!lrmi) lrmi = {};
 
         for (let e of Mmx.descProps) {
             let ele = document.getElementById("p_" + e.prop);
@@ -740,9 +738,11 @@ class Mmx {
         return key;
     }
 
-    static ClearDescriptor() {
-
+    static ClearLrmiForm() {
         document.getElementById("mmx_status").textContent = "";
+
+        var form = document.getElementById("p_lrmiForm");
+        form.sourceData = undefined;
 
         for (let e of Mmx.descProps) {
             let ele = document.getElementById("p_" + e.prop);
@@ -819,7 +819,12 @@ class Mmx {
 
     static async NextPrevDescriptor(nextPrev) {
         const nokey = document.getElementById("input_nokey").checked;
-        const id = document.getElementById("p_id").innerText;
+        const form = document.getElementById("p_lrmiForm");
+        if (!form) return;
+        const sourceData = form.sourceData;
+        if (!sourceData) return;
+        const id = sourceData.id;
+        if (!id) return;
         const response = await fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
         const data = await response.json();
         if (data.success) {
