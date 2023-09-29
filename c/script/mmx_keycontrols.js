@@ -305,11 +305,13 @@ class Mmx {
             controlsLeft.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
 
-            controlsRight.appendChild(document.createTextNode(" All"));
-            controlsRight.appendChild(bdoc.ele("input", bdoc.attr("type", "checkbox"),
-                bdoc.attr("id", "input_nokey"),
-                bdoc.class("toggle-switch")));
-            controlsRight.appendChild(document.createTextNode(" NoKey "));
+            controlsRight.appendChild(bdoc.ele("span", bdoc.class("mm_toggleSurround"),
+                document.createTextNode("All"),
+                bdoc.ele("input", bdoc.attr("type", "checkbox"),
+                    bdoc.attr("id", "input_nokey"),
+                    bdoc.class("toggle-switch")),
+                document.createTextNode("NoKey")
+            ));
             controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
             controlsRight.appendChild(bdoc.ele("button",
@@ -828,6 +830,12 @@ class Mmx {
         const data = await response.json();
         if (data.success) {
             Mmx.LoadLrmiFormFromDatabase(data.id);
+        }
+        else {
+            const status = document.getElementById("mmx_status");
+            if (!status) return;
+            status.style.color = "darkred";
+            status.textContent = nextPrev ? "No more descriptors." : "No preceding descriptors.";
         }
     }
  
