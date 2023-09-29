@@ -720,6 +720,8 @@ class Mmx {
             keyRow = keyRow.nextElementSibling;
         }
 
+        if (keyArray.length == 0) return "";
+
         keyArray.sort(function (a, b) {
             if (a.rel > b.rel) return 1;
             if (a.rel < b.rel) return -1;
@@ -761,44 +763,41 @@ class Mmx {
         mmx_dict.keyTable.innerHTML = "";
     }
 
-    static SaveDescriptor() {
+    static async SaveDescriptor() {
         let record = Mmx.GenerateLrmiFromForm();
         record.key = Mmx.GenerateKeyFromForm();
 
-        if (record.key == Mmx.keyPrefix) {
-            let status = document.getElementById("mmx_status");
-            status.textContent = "Please select at least one statement for the key.";
-            status.style.color = "darkred";
-            return;
-        }
-
-        if (!record.eleType) {
-            let status = document.getElementById("mmx_status");
-            status.textContent = "Please select an element type.";
-            status.style.color = "darkred";
-            return;
-        }
-
         let json = JSON.stringify(record);
 
-        let xhr = new XMLHttpRequest();
-        xhr.open('POST', "/descriptors");
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onreadystatechange = function () {
-            console.log("post-readyState: " + xhr.readyState);
-            if (xhr.readyState == 4) {
-                if (xhr.status == "200") {
-                    document.getElementById("mmx_status").textContent = "Saved!";
-                    console.log("Saved!");
-                }
-                else {
-                    document.getElementById("mmx_status").textContent = "Error: " + xhr.responseText;
-                    console.log("Error: " + xhr.responseText);
-                }
-            }
+        let verb;
+        let url;
+        if (record.id) {
+            verb = "PUT";
+            url = "/api/descriptors/" + record.id;
         }
-        console.log("Posting Description");
-        xhr.send(json);
+        else {
+            verb = "POST";
+            url = "/api/descriptors"
+        }
+
+        const response = await fetch(url, {
+            method: verb,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: json
+        });
+        if (response.ok) {
+            const status = document.getElementById("mmx_status");
+            status.style.color = "darkgreen";
+            status.textContent = "Saved!";
+        }
+        else {
+            const status = document.getElementById("mmx_status");
+            const text = await response.text();
+            status.style.color = "darkred";
+            status.textContent = `Save error: ${response.status} ${response.statusText}: ${text}`;
+        }
     }
 
     static MatchDescriptor() {
