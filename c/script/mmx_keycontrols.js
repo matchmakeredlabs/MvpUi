@@ -12,7 +12,7 @@ let mmx_dict = {};
 // Using the class like a namespace. All members are static.
 class Mmx {
 
-    static keyPrefix = "https://mm.dicax.org/key/";
+    static keyPrefix = "https://palet.codes/key/";
 
     static descProps = [
         { label: "Type", prop: "eleType", inner: "<select name='eleType'><option value='o'>Other</option><option value='lr'>Learning Resource</option><option value='cs'>Competency Statement</option><option value='c'>Curriculum</option></select>" },
