@@ -38,7 +38,7 @@ class MmFramework {
             if (!(value)) return;
 
             let val;
-            if (label == "URI" && value.startsWith("http")) {
+            if (label == "URL" && value.startsWith("http")) {
                 val = bdoc.ele("a", bdoc.attr("href", value), value);
             }
             else {
@@ -78,7 +78,7 @@ class MmFramework {
         addRow(dl, "Identifier", stmt.identifier);
         addRow(dl, "About", stmt.about);
         addRow(dl, "EducationLevel", stmt.educationLevel);
-        addRow(dl, "URI", stmt.url);
+        addRow(dl, "URL", stmt.url);
         detail.appendChild(dl);
 
         detail.appendChild(bdoc.ele("h3", "Links"));

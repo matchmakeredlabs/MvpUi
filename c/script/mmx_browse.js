@@ -28,7 +28,7 @@ class MmCollection {
             if (!(value)) return;
 
             let val;
-            if (label == "URI" && value.startsWith("http")) {
+            if (label == "URL" && value.startsWith("http")) {
                 val = bdoc.ele("a", bdoc.attr("href", value), value);
             }
             else {
@@ -68,7 +68,7 @@ class MmCollection {
         addRow(dl, "Identifier", desc.identifier);
         addRow(dl, "About", desc.about);
         addRow(dl, "EducationLevel", desc.educationLevel);
-        addRow(dl, "URI", desc.url);
+        addRow(dl, "URL", desc.url);
         detail.appendChild(dl);
 
         detail.appendChild(bdoc.ele("h3", "Links"));
