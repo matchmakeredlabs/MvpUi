@@ -313,9 +313,9 @@ class Mmx {
                 document.createTextNode("NoKey")
             ));
             controlsRight.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.PrevDescriptor), "\u23F4"));
+                bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
             controlsRight.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.NextDescriptor), "\u23F5"));
+                bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
             form.appendChild(controls);
         }
 
