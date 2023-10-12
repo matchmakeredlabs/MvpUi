@@ -76,7 +76,7 @@ class MmCollection {
         detail.appendChild(bdoc.ele("div", bdoc.ele("a",
             bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
             bdoc.attr("target", "_blank"),
-            "Describe")));
+            "Edit Description")));
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
