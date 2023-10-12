@@ -175,6 +175,22 @@ class MmCollection {
     }
 
     static clickSelect() {
+        const spans = document.querySelectorAll('li span');
+        spans.forEach(span => {
+            // Check if the clicked span is the same as the currently highlighted one
+                if (span === this) {
+                // Toggle the bold style
+                if (span.style.fontWeight === 'bold') {
+                    span.style.fontWeight = 'normal'; // Set to normal weight
+                } else {
+                    span.style.fontWeight = 'bold'; // Set to bold
+                }
+                } else {
+                // Reset the font weight for other spans
+                span.style.fontWeight = 'normal';
+                }
+            }
+        )
         MmCollection.thisCollection.select(this);
     }
 }
