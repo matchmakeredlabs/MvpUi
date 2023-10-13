@@ -969,13 +969,3 @@ class Mmx {
 }
 
 window.addEventListener("load", Mmx.OnPageLoad);
-window.addEventListener("keydown", function(event) {
-    if (event.key === "ArrowLeft") {
-        // Left arrow key was pressed
-        Mmx.PrevDescriptor;
-    } else if (event.key === "ArrowRight") {
-        // Right arrow key was pressed
-        Mmx.NextDescriptor;
-    }
-});
-
