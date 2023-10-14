@@ -3,7 +3,7 @@
 // Really just using mmxAuth as a namespace to isolate
 class mmxAuth {
 
-    static authtCookieName = "MMT";
+    static authtCookieName = "SessionToken";
     static loginUrl = "/c/Login";
 
     static dateParse(str) {
