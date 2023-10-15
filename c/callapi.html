@@ -11,10 +11,11 @@
 	</style>
 </head>
 <body>
-	<h2>Request</h2>
+	<h2><span style="cursor: pointer;" onclick="window.open('callapi', '_blank')">Request</span></h2>
 	<p>
 		<strong>Templates:</strong>
-		<a class="tlnk" onclick="template_login()">Login</a>
+		<a class="tlnk" onclick="template_login()">Login</a> <a class="tlnk" onclick="template_collections()">Collections</a>
+
 	</p>
 	<form id="form" onsubmit="sendRequest(event)">
 		<label for="verb">Verb:</label> <select id="verb" name="verb"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="DELETE">DELETE</option></select><br/>
@@ -29,9 +30,6 @@
 	<pre id="headers"></pre>
 	<pre id="resBody"></pre>
 	<script>
-
-// Default URL
-document.getElementById("url").value = window.location.origin;
 
 async function sendRequest(e) {
 	e.preventDefault();
@@ -61,7 +59,11 @@ async function sendRequest(e) {
 	const response = await fetch(reqUrl, req);
 	document.getElementById("resStatus").textContent = `${response.status} ${response.statusText}`;
 	let newToken;
-	if (newToken = getUpdatedToken(response)) document.getElementById("token").value = newToken;
+	if (newToken = getUpdatedToken(response)) {
+		document.getElementById("token").value = newToken;
+		sessionStorage.setItem("SessionToken", newToken);
+		sessionStorage.testValue = "Hello!";
+	}
 	var headers = "";
 	let contentType = response.headers.get('Content-Type')
 	if (contentType) {
@@ -92,6 +94,12 @@ function template_login() {
 	document.getElementById("body").value = '{\n  "username": "phred",\n  "password": ""\n}';
 }
 
+function template_collections() {
+    document.getElementById("verb").value = "GET";
+    updateUrl('/api/collections');
+    document.getElementById("body").value = '';
+}
+
 function updateUrl(newurl) {
 	const urlele = document.getElementById("url");
 	const existing = urlele.value;
@@ -102,6 +110,15 @@ function updateUrl(newurl) {
 		urlele.value = newurl;
 	}
 }
+
+// Initialization
+{
+	// Default URL
+	document.getElementById("url").value = window.location.origin;
+	const token = sessionStorage.getItem("SessionToken");
+	if (token) document.getElementById("token").value = token;
+}
+
 	</script>
 		
 </body>
