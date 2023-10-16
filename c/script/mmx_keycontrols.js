@@ -313,10 +313,10 @@ class Mmx {
                 document.createTextNode("NoKey")
             ));
             controlsRight.appendChild(bdoc.ele("button",
-            bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
+                bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
             controlsRight.appendChild(document.createTextNode("\u00A0")); // Insert a non-breaking space
             controlsRight.appendChild(bdoc.ele("button",
-            bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
+                bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
             form.appendChild(controls);
         }
 
@@ -964,4 +964,3 @@ class Mmx {
 }
 
 window.addEventListener("load", Mmx.OnPageLoad);
-
