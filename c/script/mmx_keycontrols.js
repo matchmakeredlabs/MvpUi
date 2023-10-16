@@ -469,6 +469,13 @@ class Mmx {
     }
 
     static RenderDescriptor(val, matchButton) {
+        function addRow(dl, label, value) {
+            if (!(value)) return;
+            dl.appendChild(bdoc.ele("div",
+                bdoc.ele("dt", label),
+                bdoc.ele("dd", value)));
+        }
+        
         let descriptor = bdoc.ele("div", bdoc.class("mmc_descriptor"));
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
