@@ -310,7 +310,7 @@ class Mmx {
                 bdoc.ele("input", bdoc.attr("type", "checkbox"),
                     bdoc.attr("id", "input_nokey"),
                     bdoc.class("toggle-switch")),
-                document.createTextNode("Undescribed")
+                document.createTextNode("Keyless")
             ));
             controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
