@@ -793,15 +793,10 @@ class Mmx {
             body: json
         });
         if (response.ok) {
-            const status = document.getElementById("mmx_status");
-            status.style.color = "darkgreen";
-            status.textContent = "Saved!";
+            alert("Saved!");
         }
         else {
-            const status = document.getElementById("mmx_status");
-            const text = await response.text();
-            status.style.color = "darkred";
-            status.textContent = `Save error: ${response.status} ${response.statusText}: ${text}`;
+            alert(`Save error: ${response.status} ${response.statusText}: ${text}`);
         }
     }
 
