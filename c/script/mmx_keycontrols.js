@@ -320,16 +320,6 @@ class Mmx {
             form.appendChild(controls);
         }
 
-        // Element type
-        form.appendChild(bdoc.ele("select",
-            bdoc.attr("name", "eleType"),
-            bdoc.attr("id", "p_eleType"),
-            bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
-            bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
-            bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
-            bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
-            bdoc.ele("option", bdoc.attr("value", "o"), "Other")));
-
         form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
             bdoc.attr("id", "p_name"),
             bdoc.attr("contentEditable", "true")));
@@ -479,13 +469,6 @@ class Mmx {
     }
 
     static RenderDescriptor(val, matchButton) {
-        function addRow(dl, label, value) {
-            if (!(value)) return;
-            dl.appendChild(bdoc.ele("div",
-                bdoc.ele("dt", label),
-                bdoc.ele("dd", value)));
-        }
-
         let descriptor = bdoc.ele("div", bdoc.class("mmc_descriptor"));
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
@@ -525,6 +508,23 @@ class Mmx {
         descriptor.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
+
+        let ddElementType = document.createElement("dd");
+        ddElementType.appendChild(bdoc.ele("select",
+        bdoc.attr("name", "eleType"),
+        bdoc.attr("id", "p_eleType"),
+        bdoc.attr("contentEditable", "true"),
+        bdoc.attr("class", "mmc_editable"),
+        bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
+        bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
+        bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
+        bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
+        bdoc.ele("option", bdoc.attr("value", "o"), "Other")));
+
+        let divElementType = document.createElement("div");
+        divElementType.appendChild(bdoc.ele("dt", "Element Type"));
+        divElementType.appendChild(ddElementType);
+        dl.appendChild(divElementType);
 
         if (val.url) {
             addRow(dl, "URL", bdoc.ele("a",
