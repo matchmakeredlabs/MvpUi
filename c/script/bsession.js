@@ -1,8 +1,12 @@
-// Fetch that manages the authentication token through the Authentication-Info (received)
-// and the Authorization (sent) headers.
-export default class bsession {
+import config from './config.js'
 
-    static async fetch(url, options = null) {
+export default class bsession {
+    // Fetch that manages the authentication token through the Authentication-Info (received)
+    // and the Authorization (sent) headers. It also defaults to the configured back-end origin.
+    // Path must start with a slash and must not include a domain name.
+    // Options is the same as used with conventional fetch.
+    static async fetch(path, options = null) {
+        const url = config.backEndUrl + path;
 
         // Shallow clone the options so that we can add headers without changing the original
         const req = Object.assign({headers: {}}, options)
