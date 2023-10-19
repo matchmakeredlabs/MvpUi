@@ -1,12 +1,14 @@
-import config from './config.js'
-
 export default class bsession {
+    constructor(baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
     // Fetch that manages the authentication token through the Authentication-Info (received)
     // and the Authorization (sent) headers. It also defaults to the configured back-end origin.
     // Path must start with a slash and must not include a domain name.
     // Options is the same as used with conventional fetch.
-    static async fetch(path, options = null) {
-        const url = config.backEndUrl + path;
+    async fetch(path, options = null) {
+        const url = this.baseUrl + path;
 
         // Shallow clone the options so that we can add headers without changing the original
         const req = Object.assign({headers: {}}, options)
