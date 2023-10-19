@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CallApi</title>
+	<style>
+.tlnk {
+	text-decoration: underline;
+	color: darkgreen;
+	cursor: pointer;
+}
+	</style>
+</head>
+<body>
+	<h2><span style="cursor: pointer;" onclick="window.open('callapi', '_blank')">Request</span></h2>
+	<p>
+		<strong>Templates:</strong>
+		<a class="tlnk" onclick="template_login()">Login</a> <a class="tlnk" onclick="template_collections()">Collections</a>
+
+	</p>
+	<form id="form">
+		<label for="verb">Verb:</label> <select id="verb" name="verb"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="DELETE">DELETE</option></select><br/>
+		<label for="url">URL:</label> <input id="url" name="url" type="text" style="width: 32em;" /><br/>
+		<label for="token">Authorization: Bearer</label> <input id="token" name="token" type="text" style="width: 34em;" /><br />
+		<textarea id="body" name="body" cols="80" rows="25"></textarea><br/>
+		<button type="submit">Send</button>
+	</form>
+	<hr/>
+	<h2>Response</h2>
+	<div id="resStatus"></div>
+	<pre id="headers"></pre>
+	<pre id="resBody"></pre>
+	<script type="module">
+
+import bsession from '/c/script/bsession.js';
+
+
+async function sendRequest(e) {
+	e.preventDefault();
+
+	document.getElementById("resStatus").textContent = '';
+    document.getElementById("headers").textContent = '';
+    document.getElementById("resBody").textContent = '';
+
+	const form = e.currentTarget;
+	const reqUrl = form.url.value;
+    const verb = form.verb.value
+	const req = {
+		headers: {
+			"Content-Type": "application/json",
+			"Accept": "application/json, */*;q=0.1"
+		},
+		method: verb
+	};
+
+    if (verb == "POST" || verb == "PUT") {
+		req.body = form.body.value;
+	}
+
+	const response = await bsession.fetch(reqUrl, req);
+	document.getElementById("resStatus").textContent = `${response.status} ${response.statusText}`;
+    var headers = "";
+	let contentType = response.headers.get('Content-Type')
+	if (contentType) {
+		headers += "Content-Type: " + contentType;
+	}
+	document.getElementById("headers").textContent = headers;
+	document.getElementById("resBody").textContent = await response.text();
+}
+
+// Initialization
+{
+	// Default URL
+    document.getElementById("form").addEventListener("submit", sendRequest);
+	document.getElementById("url").value = window.location.origin;
+}
+
+
+</script>
+<script>
+// Non-module script
+
+function template_login() {
+	document.getElementById("verb").value = "POST";
+	updateUrl('/api/login');
+	document.getElementById("body").value = '{\n  "username": "phred",\n  "password": ""\n}';
+}
+
+function template_collections() {
+    document.getElementById("verb").value = "GET";
+    updateUrl('/api/collections');
+    document.getElementById("body").value = '';
+}
+
+function updateUrl(newurl) {
+	const urlele = document.getElementById("url");
+	const existing = urlele.value;
+	if (existing.startsWith('http')) {
+	    urlele.value = new URL(newurl, existing);
+	}
+	else {
+		urlele.value = newurl;
+	}
+}
+	</script>
+		
+</body>
+</html>
