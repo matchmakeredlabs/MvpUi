@@ -17,7 +17,7 @@ autht: "anonymous"
 
 import config from '/c/script/config.js';
 import bsession from '/c/script/bsession.js';
-const session = new bsession(config.backEndUrl);
+const session = new bsession(config.backEndUrl, "mm");
 
 async function login(un, pw) {
 

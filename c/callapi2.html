@@ -34,7 +34,7 @@
 import bsession from '/c/script/bsession.js';
 import config from '/c/script/config.js';
 
-const session = new bsession(config.backEndUrl);
+const session = new bsession(config.backEndUrl, "callapi");
 
 async function sendRequest(e) {
 	e.preventDefault();
