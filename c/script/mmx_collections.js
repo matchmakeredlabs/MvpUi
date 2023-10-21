@@ -1,8 +1,8 @@
 import config from './config.js';
-import bsesson from './bsession.js';
+import bsession from './bsession.js';
 import bdoc from './bdoc.js';
 
-const sesson = new bsession(config.backEndUrl);
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 async function loadCollections() {
     let response = await session.fetch("/api/collections");

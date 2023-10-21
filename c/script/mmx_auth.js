@@ -1,9 +1,8 @@
-﻿// Authentication and Authorization
+﻿import config from './config.js';
 
-// Really just using mmxAuth as a namespace to isolate
-class mmxAuth {
-
-    static authtCookieName = "SessionToken";
+// Authentication and Authorization
+export default class mmxAuth {
+    static sessionKey = 'bsession_' + config.sessionTag;
     static loginUrl = "/c/Login";
 
     static dateParse(str) {
@@ -13,18 +12,16 @@ class mmxAuth {
     }
 
     static isAuthenticated() {
-        // Look for the presence of the authentication token.
-        // If expired, it should go away, but we check its expiration anyway
-        let ca = document.cookie.split(';');
-        const match = mmxAuth.authtCookieName + '=';
-        for (let cookie of ca) {
-            if (cookie.startsWith(match)) {
-                // Having found the cookie, parse it and check its expiration
-                let cookieParts = new URLSearchParams(decodeURIComponent(cookie.substring(match.length, cookie.length)));
-                let expiration = cookieParts.get("x");
-                if (expiration && mmxAuth.dateParse(expiration) > Date.now()) return true;
-            }
-        }
+        // Look for the presence of the authentication token in sessionStorage
+        // and check for expiration
+        const token = sessionStorage.getItem(mmxAuth.sessionKey)
+        if (!token) return false;
+
+        // Having found the cookie, parse it and check its expiration
+        const tokenParts = new URLSearchParams(decodeURIComponent(token));
+        const expiration = tokenParts.get("x");
+        if (expiration && mmxAuth.dateParse(expiration) > Date.now()) return true;
+
         console.log("Cookie expired");
         return false;
     }
@@ -42,6 +39,3 @@ class mmxAuth {
         }
     }
 }
-
-console.log("mmx_auth.js Loaded.");
-

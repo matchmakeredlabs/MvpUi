@@ -17,7 +17,7 @@ autht: "anonymous"
 
 import config from '/c/script/config.js';
 import bsession from '/c/script/bsession.js';
-const session = new bsession(config.backEndUrl, "mm");
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 async function login(un, pw) {
 
@@ -47,13 +47,14 @@ async function login(un, pw) {
     }
 }
 
-function submitLogin() {
-    console.log("submitLogin");
+function submitLogin(event) {
     event.preventDefault();
+    console.log("submitLogin");
     let formData = new FormData(event.target);
     login(formData.get("username"), formData.get("password"));
 }
 
 document.getElementById("login_form").addEventListener("submit", submitLogin);
+console.log("addEventListener complete")
 
 </script>
