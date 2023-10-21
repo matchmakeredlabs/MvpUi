@@ -1,10 +1,13 @@
 ﻿/* MatchMaker Prototype Web Controls
- * Eventually this will likely become a JavaScript module.
+ * Eventually this will likely become a proper JavaScript module.
  * which is a better way to isolate things than using the
  * objects like I've done here.
  */
 
 import bdoc from './bdoc.js';
+import config from './config.js';
+import bsession from './bsession.js';
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Container for MMX Globals
 let mmx_dict = {};
@@ -40,20 +43,9 @@ class Mmx {
     };
 
     static LoadJsonAsync(url, callback, arg) {
-        let xhr = new XMLHttpRequest();
-        xhr.overrideMimeType("application/json");
-        xhr.open('GET', url, true);
-        xhr.withCredentials = true;
-        xhr.onreadystatechange = function () {
-            console.log("readystate: " + xhr.readyState);
-            if (xhr.readyState == 4 && xhr.status == "200") {
-                // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-                let json = JSON.parse(xhr.responseText);
-                callback(json, arg);
-            }
-        }
-        console.log("sending...");
-        xhr.send(null);
+        session.fetch(url)
+            .then(response => response.json())
+            .then(json => callback(json, arg))
     }
 
     static StripKeyPrefix(key) {
@@ -381,7 +373,7 @@ class Mmx {
     static async LoadKeyIntoDescriptorSearchForm(key) {
         mmx_dict.keyTable.innerHTML = "";
         if (!key) return;
-        const response = await fetch("/key/" + Mmx.StripKeyPrefix(key));
+        const response = await session.fetch("/key/" + Mmx.StripKeyPrefix(key));
         const data = await response.json();
 
         for (let val of data.statements) {
@@ -610,7 +602,7 @@ class Mmx {
     }
 
     static async LoadLrmiFormFromDatabase(id) {
-        let response = await fetch("/api/descriptors/" + id);
+        let response = await session.fetch("/api/descriptors/" + id);
         let data = await response.json();
         let desc = data.descriptors[0];
         this.LoadLrmiForm(desc);
@@ -785,7 +777,7 @@ class Mmx {
             url = "/api/descriptors"
         }
 
-        const response = await fetch(url, {
+        const response = await session.fetch(url, {
             method: verb,
             headers: {
                 "Content-Type": "application/json"
@@ -829,7 +821,7 @@ class Mmx {
         if (!sourceData) return;
         const id = sourceData.id;
         if (!id) return;
-        const response = await fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
+        const response = await session.fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
         const data = await response.json();
         if (data.success) {
             Mmx.LoadLrmiFormFromDatabase(data.id);
