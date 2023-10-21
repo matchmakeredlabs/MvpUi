@@ -12,9 +12,9 @@ export default class mmxAuth {
     }
 
     static isAuthenticated() {
-        // Look for the presence of the authentication token in sessionStorage
+        // Look for the presence of the authentication token in localStorage
         // and check for expiration
-        const token = sessionStorage.getItem(mmxAuth.sessionKey)
+        const token = localStorage.getItem(mmxAuth.sessionKey)
         if (!token) return false;
 
         // Having found the cookie, parse it and check its expiration

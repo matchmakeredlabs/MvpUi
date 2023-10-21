@@ -15,7 +15,7 @@ export default class bsession {
         const req = Object.assign({headers: {}}, options)
 
         // Add the token if it exists
-        const token = sessionStorage.getItem('bsession_' + this.tag);
+        const token = localStorage.getItem('bsession_' + this.tag);
         if (token) {
             console.log("Bearer-Retrieve=" + token);
             req.headers = Object.assign(
@@ -35,7 +35,7 @@ export default class bsession {
                 if (eq < 0) continue;
                 if (part.substring(0, eq).trim().toLowerCase() != 'bearer-update') continue;
                 console.log("Bearer-Update=" + part.substring(eq + 1).trim());
-                sessionStorage.setItem('bsession_' + this.tag, part.substring(eq + 1).trim());
+                localStorage.setItem('bsession_' + this.tag, part.substring(eq + 1).trim());
                 break; // If there's more than one, keep the first
             }
         }
