@@ -32,7 +32,9 @@
 	<script type="module">
 
 import bsession from '/c/script/bsession.js';
+import config from '/c/script/config.js';
 
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 async function sendRequest(e) {
 	e.preventDefault();
@@ -56,7 +58,7 @@ async function sendRequest(e) {
 		req.body = form.body.value;
 	}
 
-	const response = await bsession.fetch(reqUrl, req);
+	const response = await session.fetch(reqUrl, req);
 	document.getElementById("resStatus").textContent = `${response.status} ${response.statusText}`;
     var headers = "";
 	let contentType = response.headers.get('Content-Type')

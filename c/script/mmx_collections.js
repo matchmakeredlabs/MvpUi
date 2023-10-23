@@ -1,7 +1,11 @@
+import config from './config.js';
+import bsession from './bsession.js';
 import bdoc from './bdoc.js';
 
+const session = new bsession(config.backEndUrl, config.sessionTag);
+
 async function loadCollections() {
-    let response = await fetch("/api/collections");
+    let response = await session.fetch("/api/collections");
     let data = await response.json();
 
     const list = document.getElementById("mmx_collections");

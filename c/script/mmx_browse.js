@@ -1,11 +1,15 @@
 import bdoc from './bdoc.js';
+import config from './config.js';
+import bsession from './bsession.js';
+
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 class MmCollection {
 
     static thisCollection;
 
     static async load(id) {
-        let response = await fetch("/api/collections/" + id);
+        let response = await session.fetch("/api/collections/" + id);
         let data = await response.json();
         return new MmCollection(data.collection);
     }

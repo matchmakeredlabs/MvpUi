@@ -14,7 +14,11 @@ title: Match Detail
 
 <script type="module" src="/c/script/mmx_keycontrols.js"></script>
 
-<script>
+<script type="module">
+    import config from '/c/script/config.js';
+    import bsession from '/c/script/bsession.js';
+    const session = new bsession(config.backEndUrl, config.sessionTag);
+
     async function loadDetail() {
         console.log("loadDetail");
         let query = new URLSearchParams(window.location.search);
@@ -27,7 +31,7 @@ title: Match Detail
         document.getElementById("matchKey").textContent = key;
 
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&algDetail`;
-        const response = await fetch(url);
+        const response = await session.fetch(url);
         const result = await response.json();
 
         let ele = document.getElementById("matchResult");

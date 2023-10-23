@@ -7,8 +7,10 @@
 
 {% if page.autht != "anonymous" %}
     <!-- Check for authentication at the beginning, before anything is rendered-->
-    <script src="/c/script/mmx_auth.js"></script>
-    <script>mmxAuth.requireAuthentication();</script>
+    <script type="module">
+        import mmxAuth from "/c/script/mmx_auth.js";
+        mmxAuth.requireAuthentication();
+    </script>
 {% endif %}
 </head>
 
