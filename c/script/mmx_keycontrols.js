@@ -323,6 +323,20 @@ class Mmx {
         form.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
+
+        // Element type
+        dl.appendChild(bdoc.ele("div",
+            bdoc.ele("dt", "Element Type"),
+            bdoc.ele("dd",
+                bdoc.ele("select",
+                bdoc.attr("name", "eleType"),
+                bdoc.attr("id", "p_eleType"),
+                bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
+                bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
+                bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
+                bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
+                bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
+
         addRow(dl, "URL", "p_url");
         addRow(dl, "About", "p_about");
         addRow(dl, "Identifier", "p_identifier");
@@ -507,23 +521,6 @@ class Mmx {
         descriptor.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
-
-        let ddElementType = document.createElement("dd");
-        ddElementType.appendChild(bdoc.ele("select",
-        bdoc.attr("name", "eleType"),
-        bdoc.attr("id", "p_eleType"),
-        bdoc.attr("contentEditable", "true"),
-        bdoc.attr("class", "mmc_editable"),
-        bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
-        bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
-        bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
-        bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
-        bdoc.ele("option", bdoc.attr("value", "o"), "Other")));
-
-        let divElementType = document.createElement("div");
-        divElementType.appendChild(bdoc.ele("dt", "Element Type"));
-        divElementType.appendChild(ddElementType);
-        dl.appendChild(divElementType);
 
         if (val.url) {
             addRow(dl, "URL", bdoc.ele("a",
