@@ -302,7 +302,7 @@ class Mmx {
                 bdoc.ele("input", bdoc.attr("type", "checkbox"),
                     bdoc.attr("id", "input_nokey"),
                     bdoc.class("toggle-switch")),
-                document.createTextNode("NoKey")
+                document.createTextNode("Keyless")
             ));
             controlsRight.appendChild(bdoc.ele("button",
                 bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
@@ -311,16 +311,6 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
             form.appendChild(controls);
         }
-
-        // Element type
-        form.appendChild(bdoc.ele("select",
-            bdoc.attr("name", "eleType"),
-            bdoc.attr("id", "p_eleType"),
-            bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
-            bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
-            bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
-            bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
-            bdoc.ele("option", bdoc.attr("value", "o"), "Other")));
 
         form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
             bdoc.attr("id", "p_name"),
@@ -333,6 +323,20 @@ class Mmx {
         form.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
+
+        // Element type
+        dl.appendChild(bdoc.ele("div",
+            bdoc.ele("dt", "Element Type"),
+            bdoc.ele("dd",
+                bdoc.ele("select",
+                bdoc.attr("name", "eleType"),
+                bdoc.attr("id", "p_eleType"),
+                bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
+                bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
+                bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
+                bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
+                bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
+
         addRow(dl, "URL", "p_url");
         addRow(dl, "About", "p_about");
         addRow(dl, "Identifier", "p_identifier");
@@ -477,7 +481,7 @@ class Mmx {
                 bdoc.ele("dt", label),
                 bdoc.ele("dd", value)));
         }
-
+        
         let descriptor = bdoc.ele("div", bdoc.class("mmc_descriptor"));
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
@@ -785,15 +789,10 @@ class Mmx {
             body: json
         });
         if (response.ok) {
-            const status = document.getElementById("mmx_status");
-            status.style.color = "darkgreen";
-            status.textContent = "Saved!";
+            alert("Saved!");
         }
         else {
-            const status = document.getElementById("mmx_status");
-            const text = await response.text();
-            status.style.color = "darkred";
-            status.textContent = `Save error: ${response.status} ${response.statusText}: ${text}`;
+            alert(`Save error: ${response.status} ${response.statusText}: ${text}`);
         }
     }
 
