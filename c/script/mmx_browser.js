@@ -1,11 +1,14 @@
 ﻿import bdoc from './bdoc.js';
+import config from './config.js';
+import bsession from './bsession.js';
+const session = new bsession(config.backEndUrl, config.sessionTag);
 
 class MmFramework {
 
     static thisFramework;
 
     static async load(url) {
-        let response = await fetch(url);
+        let response = await session.fetch(url);
         let data = await response.json();
         return new MmFramework(data.statements);
     }
@@ -84,7 +87,7 @@ class MmFramework {
         detail.appendChild(bdoc.ele("h3", "Links"));
 
         if (stmt.url) {
-            fetch("/descriptors?uriExists=" + encodeURIComponent(stmt.url))
+            session.fetch("/descriptors?uriExists=" + encodeURIComponent(stmt.url))
                 .then(this.onUriExists);
         }
     }
@@ -146,7 +149,7 @@ class MmFramework {
 
                 if (cn.url) {
                     console.log("uriExists: " + cn.url);
-                    fetch("/descriptors?uriExists=" + encodeURIComponent(cn.url))
+                    session.fetch("/descriptors?uriExists=" + encodeURIComponent(cn.url))
                         .then((response) => this.onDescriptorExists(response, button));
                 }
             }
@@ -234,8 +237,6 @@ async function loadFramework(url) {
 
     let framework = await MmFramework.load(fw);
     framework.attachTo(document.getElementById("mmx_browse_tree"));
-
-    console.log("sessionStorage=" + JSON.stringify(sessionStorage.phred));
 }
 
 loadFramework();

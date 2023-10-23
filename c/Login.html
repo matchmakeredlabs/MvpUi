@@ -4,7 +4,7 @@ autht: "anonymous"
 ---
 
 <main>
-    <form class="mmc_form" onsubmit="submitLogin(event);">
+    <form class="mmc_form" id="login_form">
         <h2>Login</h2>
         <div id="form_msg" class="message" style="visibility: hidden;"></div>
         <p><label for="username">Username:</label> <input type="text" name="username" id="username" autofill="username" /></p>
@@ -13,30 +13,48 @@ autht: "anonymous"
     </form>
 </main>
 
-<script>
-    async function login(un, pw) {
-        let url = "/Login?username=" + encodeURIComponent(un)
-            + "&password=" + encodeURIComponent(pw);
-        console.log(url);
-        let response = await fetch(url);
-        if (response.ok) {
-            const query = new URLSearchParams(window.location.search);
-            let ret = query.get("returnTo");
-            if (!ret) ret = "/";
-            window.location.href = ret;
-        }
-        else {
-            let json = await response.json();
-            let msgEle = document.getElementById("form_msg");
-            msgEle.textContent = json.errors[0].detail;
-            msgEle.style.visibility = "visible";
-        }
-    }
+<script type="module">
 
-    function submitLogin() {
-        console.log("submitLogin");
-        event.preventDefault();
-        let formData = new FormData(event.target);
-        login(formData.get("username"), formData.get("password"));
+import config from '/c/script/config.js';
+import bsession from '/c/script/bsession.js';
+const session = new bsession(config.backEndUrl, config.sessionTag);
+
+async function login(un, pw) {
+
+    const payload = {
+        username: un,
+        password: pw
+    };
+
+    let response = await session.fetch("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+    if (response.ok) {
+        const query = new URLSearchParams(window.location.search);
+        let ret = query.get("returnTo");
+        if (!ret) ret = "/";
+        window.location.href = ret;
     }
+    else {
+        let json = await response.json();
+        let msgEle = document.getElementById("form_msg");
+        msgEle.textContent = json.errors[0].detail;
+        msgEle.style.visibility = "visible";
+    }
+}
+
+function submitLogin(event) {
+    event.preventDefault();
+    console.log("submitLogin");
+    let formData = new FormData(event.target);
+    login(formData.get("username"), formData.get("password"));
+}
+
+document.getElementById("login_form").addEventListener("submit", submitLogin);
+console.log("addEventListener complete")
+
 </script>

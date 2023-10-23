@@ -1,14 +1,21 @@
-// Fetch that manages the authentication token through the Authentication-Info (received)
-// and the Authorization (sent) headers.
 export default class bsession {
+    constructor(baseUrl, tag) {
+        this.baseUrl = baseUrl;
+        this.tag = tag;
+    }
 
-    static async fetch(url, options = null) {
+    // Fetch that manages the authentication token through the Authentication-Info (received)
+    // and the Authorization (sent) headers. It also defaults to the configured back-end origin.
+    // Path must start with a slash and must not include a domain name.
+    // Options is the same as used with conventional fetch.
+    async fetch(path, options = null) {
+        const url = this.baseUrl + path;
 
         // Shallow clone the options so that we can add headers without changing the original
         const req = Object.assign({headers: {}}, options)
 
         // Add the token if it exists
-        const token = sessionStorage.getItem('bsession_token');
+        const token = localStorage.getItem('bsession_' + this.tag);
         if (token) {
             console.log("Bearer-Retrieve=" + token);
             req.headers = Object.assign(
@@ -28,7 +35,7 @@ export default class bsession {
                 if (eq < 0) continue;
                 if (part.substring(0, eq).trim().toLowerCase() != 'bearer-update') continue;
                 console.log("Bearer-Update=" + part.substring(eq + 1).trim());
-                sessionStorage.setItem('bsession_token', part.substring(eq + 1).trim());
+                localStorage.setItem('bsession_' + this.tag, part.substring(eq + 1).trim());
                 break; // If there's more than one, keep the first
             }
         }
