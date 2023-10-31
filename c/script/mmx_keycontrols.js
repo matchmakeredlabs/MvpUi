@@ -277,8 +277,7 @@ class Mmx {
                 bdoc.ele("dd",
                     bdoc.class("mmc_editable"),
                     bdoc.attr("contentEditable", "true"),
-                    bdoc.attr("id", id),
-                    bdoc.attr("style", "margin-left: 10px;"))));
+                    bdoc.attr("id", id))));
         }
 
         element.innerHTML = "";
@@ -580,12 +579,11 @@ class Mmx {
                     ele.contentEditable = false;
                     ele.innerHTML = "<a href='" + value["url"] + "' target='_blank'>" + value["url"] + "</a>";
                 }
+                else if (p === "abstract") {
+                    ele.innerHTML = value[p];
+                }
                 else {
-                    if (p === "abstract") {
-                        ele.innerHTML = value[p];
-                    } else {
-                        ele.textContent = value[p];
-                    }
+                    ele.textContent = value[p];
                 }
             }
         }
