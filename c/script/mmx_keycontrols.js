@@ -24,7 +24,7 @@ class Mmx {
         { label: "About", prop: "about" },
         { label: "Abstract", prop: "abstract" },
         { label: "Identifier", prop: "identifier" },
-        { label: "Educational Level", prop: "educationalLevel" },
+        { label: "Ed. Level", prop: "educationalLevel" },
         { label: "Creator", prop: "creator" },
         { label: "Provenance", prop: "provenance" }
     ];
@@ -340,7 +340,7 @@ class Mmx {
         addRow(dl, "URL", "p_url");
         addRow(dl, "About", "p_about");
         addRow(dl, "Identifier", "p_identifier");
-        addRow(dl, "Educational Level", "p_educationalLevel");
+        addRow(dl, "Ed. Level", "p_educationalLevel");
         addRow(dl, "Creator", "p_creator");
         addRow(dl, "Provenance", "p_provenance");
         form.appendChild(dl);
@@ -531,7 +531,7 @@ class Mmx {
 
         addRow(dl, "About", val.about);
         addRow(dl, "Identifier", val.identifier);
-        addRow(dl, "Educational Level", val.educationalLevel);
+        addRow(dl, "Ed. Level", val.educationalLevel);
         addRow(dl, "Creator", val.creator);
         addRow(dl, "Provenance", val.provenance);
 
@@ -578,6 +578,9 @@ class Mmx {
                 else if (p == "url" && value[p].startsWith("http")) {
                     ele.contentEditable = false;
                     ele.innerHTML = "<a href='" + value["url"] + "' target='_blank'>" + value["url"] + "</a>";
+                }
+                else if (p === "abstract") {
+                    ele.innerHTML = value[p];
                 }
                 else {
                     ele.textContent = value[p];

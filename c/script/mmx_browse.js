@@ -65,7 +65,9 @@ class MmCollection {
 
         detail.appendChild(bdoc.ele("h3", "Descriptor"));
         detail.appendChild(bdoc.ele("h2", desc.name));
-        detail.appendChild(bdoc.ele("section", bdoc.preText(desc.abstract)));
+        let sect = document.createElement("section");
+        sect.innerHTML = desc.abstract;
+        detail.appendChild(sect); 
         detail.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
