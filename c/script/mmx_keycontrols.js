@@ -12,6 +12,15 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 // Container for MMX Globals
 let mmx_dict = {};
 
+function toggleOneElement(element) {
+    let currentElement = document.getElementById(element)
+    if (currentElement.style.display === 'none') {
+        currentElement.style.display = 'block';
+    } else {
+        currentElement.style.display = 'none';
+    }
+}
+
 // Using the class like a namespace. All members are static.
 class Mmx {
 
@@ -298,6 +307,7 @@ class Mmx {
                     bdoc.attr("contentEditable", "true"),
                     bdoc.attr("id", id))));
         }
+        console.log(form);
 
         element.innerHTML = "";
 
@@ -330,6 +340,8 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
             form.appendChild(controls);
         }
+        form.appendChild(bdoc.ele("p",
+            bdoc.attr("id", "p_parent")));
 
         form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
             bdoc.attr("id", "p_name"),
@@ -581,12 +593,13 @@ class Mmx {
         }
     }
 
-    static LoadLrmiForm(value) {
+    static async LoadLrmiForm(value) {
         document.getElementById("mmx_status").textContent = "";
         //console.log(JSON.stringify(value));
         //console.log(value.id);
         var form = document.getElementById("p_lrmiForm");
         form.sourceData = value;
+        console.log(value.mainEntityId)
 
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
@@ -607,6 +620,54 @@ class Mmx {
             }
         }
 
+        function parentOf(id, collectionObject) {
+            let keys = Object.keys(collectionObject)
+            for (let i = 0; i < keys.length; i++) {
+                if (collectionObject[keys[i]].includes(id)) {
+                    return keys[i]
+                }
+            }
+            return -1;
+        }
+
+        let data = await session.fetch("/api/collections/" + value.mainEntityId)
+        data = await data.json();
+
+        let collectionObject = {};
+        let nodeParents = {};
+        let nodes = [];
+        let currentIntID;
+        
+        for (let i = 0; i < data['collection'].length; i++) {
+            collectionObject[i] = data['collection'][i]['intHasPart'];
+            nodeParents[i] = [];
+            nodes.push(i);
+            if (data['collection'][i].id === value.id) {
+                currentIntID = i;
+            }
+        }
+    
+        let currentNode = nodes[currentIntID]
+        let parentOfCurrentNode = parentOf(currentNode, collectionObject)
+        while (parentOfCurrentNode !== -1) {
+            nodeParents[currentNode].push(parentOfCurrentNode)
+            parentOfCurrentNode = parentOf(parseInt(parentOfCurrentNode), collectionObject)
+        }
+        let parents = nodeParents[currentNode];
+        parents.reverse();
+        let parentText = ""
+        for (let i = 0; i < parents.length; i++) {
+            parentText += `(${i+1}) ` + data['collection'][parents[i]].name + " - " + data['collection'][parents[i]].abstract + "<br>"
+        }
+
+        let ele = document.getElementById("p_parent");
+        ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Lineage' ) ? '► Descriptor Lineage' : '▼ Descriptor Lineage'")
+        ele.innerHTML = "";
+        ele.innerHTML += `<span
+        onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Lineage</strong>
+            <br>
+            <span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
+        
         // Load Key
         Mmx.LoadKeyIntoDescriptorSearchForm(value.key);
     }
@@ -982,4 +1043,7 @@ class Mmx {
 
 }
 
+
 window.addEventListener("load", Mmx.OnPageLoad);
+
+// window.addEventListener("load",document.getElementById('descriptor_lineage').addEventListener('click', () => { this.classList.toggle('hidden'); }));
