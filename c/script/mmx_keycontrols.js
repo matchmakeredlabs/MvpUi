@@ -829,10 +829,11 @@ class Mmx {
             Mmx.LoadLrmiFormFromDatabase(data.id);
         }
         else {
-            const status = document.getElementById("mmx_status");
-            if (!status) return;
-            status.style.color = "darkred";
-            status.textContent = nextPrev ? "No more descriptors." : "No preceding descriptors.";
+            if (nextPrev) {
+                alert("No more descriptors.")
+            } else {
+                alert("No preceding descriptors.")
+            }
         }
     }
  
