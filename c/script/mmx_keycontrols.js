@@ -133,6 +133,25 @@ class Mmx {
         let parent = element.parentElement;
         parent.removeChild(element);
 
+        parent.appendChild(bdoc.ele("div",
+            // bdoc.class("control"),
+            bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.ele("button", 
+                bdoc.class("search_select"),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "Cognitive Search")),
+            bdoc.ele("button", 
+                bdoc.class("search_select"),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "Algorithm")),
+            bdoc.ele("button",
+                bdoc.class("search_select"),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("textContent", "None"))
+        ))
+
         // Search bar
         parent.appendChild(bdoc.ele("div",
             bdoc.class("mmx_stmtSearchBar"),

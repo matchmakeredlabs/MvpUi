@@ -48,6 +48,13 @@
         cursor: pointer;
     }
 
+    button.search_select {
+        background-color: red; /* Gray background color */
+        color: #888; /* Gray text color */
+        cursor: not-allowed; /* Change cursor to indicate it's disabled */
+        margin: 5px;
+    }
+
     button.mmb_partial {
         background-image: var(--svg-triangle-right-partial);
     }
