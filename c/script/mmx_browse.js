@@ -78,11 +78,13 @@ class MmCollection {
         detail.appendChild(dl);
 
         detail.appendChild(bdoc.ele("h3", "Links"));
-
-        detail.appendChild(bdoc.ele("div", bdoc.ele("a",
-            bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
-            bdoc.attr("target", "_blank"),
-            "Edit Description")));
+        if (desc.intHasPart && desc.intHasPart.length === 0) {
+            console.log(desc.intHasPart)
+            detail.appendChild(bdoc.ele("div", bdoc.ele("a",
+                bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
+                bdoc.attr("target", "_blank"),
+                "Edit Description")));
+        }
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
