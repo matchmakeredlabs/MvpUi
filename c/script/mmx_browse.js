@@ -130,7 +130,13 @@ class MmCollection {
 
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;
-                span.textContent = cn.name;
+                
+                let abstr = cn.abstract.substring(0,50)
+                if (cn.abstract.length > 50) {
+                    abstr +="..."
+                }
+
+                span.textContent = cn.name + " - " + abstr;
                 li.appendChild(span);
                 ul.appendChild(li);
             }
