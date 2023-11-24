@@ -77,7 +77,9 @@ class MmCollection {
         addRow(dl, "URL", desc.url);
         detail.appendChild(dl);
 
-        detail.appendChild(bdoc.ele("h3", "Links"));
+        if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
+            detail.appendChild(bdoc.ele("h3", "Links"));
+        }
         if (desc.intHasPart && desc.intHasPart.length === 0) {
             console.log(desc.intHasPart)
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
