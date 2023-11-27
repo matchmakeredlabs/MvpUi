@@ -677,8 +677,7 @@ class Mmx {
         let ele = document.getElementById("p_parent");
         ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Lineage' ) ? '► Descriptor Lineage' : '▼ Descriptor Lineage'")
         ele.innerHTML = "";
-        ele.innerHTML += `<span
-        onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Lineage</strong><br><span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
+        ele.innerHTML += `<span onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Lineage</strong><br><span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
         
         // Load Key
         Mmx.LoadKeyIntoDescriptorSearchForm(value.key);

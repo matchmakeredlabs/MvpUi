@@ -130,7 +130,7 @@ class MmCollection {
 
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;
-                
+
                 let abstr = cn.abstract.substring(0,50)
                 if (cn.abstract.length > 50) {
                     abstr +="..."
@@ -196,11 +196,7 @@ class MmCollection {
             // Check if the clicked span is the same as the currently highlighted one
                 if (span === this) {
                 // Toggle the bold style
-                if (span.style.fontWeight === 'bold') {
-                    span.style.fontWeight = 'normal'; // Set to normal weight
-                } else {
-                    span.style.fontWeight = 'bold'; // Set to bold
-                }
+                    span.style.fontWeight = 'bold'; // Set to bold 
                 } else {
                 // Reset the font weight for other spans
                 span.style.fontWeight = 'normal';
