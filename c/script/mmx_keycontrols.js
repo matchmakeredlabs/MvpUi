@@ -145,20 +145,23 @@ class Mmx {
         parent.appendChild(bdoc.ele("div",
             // bdoc.class("control"),
             bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.ele("span", 
+                bdoc.class("search_select"),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
+            bdoc.ele("button", 
+                bdoc.class("search_select"),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "Text")),
             bdoc.ele("button", 
                 bdoc.class("search_select"),
                 bdoc.attr("disabled", "true"),
-                bdoc.attr("style", "margin-right: 0.25rem"),
-                bdoc.attr("textContent", "Cognitive Search")),
-            bdoc.ele("button", 
-                bdoc.class("search_select"),
-                bdoc.attr("disabled", "true"),
-                bdoc.attr("style", "margin-right: 0.25rem"),
-                bdoc.attr("textContent", "Algorithm")),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "AI")),
             bdoc.ele("button",
                 bdoc.class("search_select"),
                 bdoc.attr("disabled", "true"),
-                bdoc.attr("textContent", "None"))
+                bdoc.attr("textContent", "AI + Context"))
         ))
 
         // Search bar
@@ -656,8 +659,19 @@ class Mmx {
         let parents = nodeParents[currentNode];
         parents.reverse();
         let parentText = ""
+
+        
         for (let i = 0; i < parents.length; i++) {
-            parentText += `(${i+1}) ` + data['collection'][parents[i]].name + " - " + data['collection'][parents[i]].abstract + "<br>"
+            let abstr = data['collection'][parents[i]].abstract.substring(0,100)
+            if (data['collection'][parents[i]].abstract.length > 100) {
+                abstr += "..."
+            }
+            
+            let spacing = 0;
+            for (let j = 0; j < i; j++) {
+                spacing += 0.5
+            }
+            parentText += `<div style = "margin-left: ${spacing}rem;">` + data['collection'][parents[i]].name + " - " + abstr + "</div>"
         }
 
         let ele = document.getElementById("p_parent");

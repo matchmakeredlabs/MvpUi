@@ -71,6 +71,7 @@ title: Match Console
         const response = await session.fetch(url);
         const result = await response.json();
 
+        document.getElementById("matchKey").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance} - ${result.descriptors[0].abstract} <br> Palet Key: ${key}`
         let ele = document.getElementById("matchResult");
 
         for (;;) {
@@ -82,7 +83,7 @@ title: Match Console
 
         ele.appendChild(bdoc.ele("div", bdoc.class("con_matchHead"),
             bdoc.ele("span", bdoc.class("con_matchIndex"), "Index"),
-            bdoc.ele("span", bdoc.class("con_matchKey"), "Key")));
+            bdoc.ele("span", bdoc.class("con_matchKey"), "Name - Provenance - Abstract")));
 
         ele.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
@@ -94,9 +95,17 @@ title: Match Console
         let matches = bdoc.ele("div", bdoc.class("con_matches"));
        
         for (let desc of result.descriptors) {
+            // let abstr = desc.abstract.substring(0,150)
+            // if (desc.abstract.length > 150) {
+            //     abstr +="..."
+            // }
             matches.appendChild(bdoc.ele("div", bdoc.class("con_match"),
                 bdoc.ele("span", bdoc.class("con_matchIndex"), desc.matchIndex),
-                bdoc.ele("span", bdoc.class("con_matchKey"), StripKeyPrefix(desc.key))));
+                bdoc.ele("span", bdoc.class("con_matchKey"), desc.name + " - " + desc.provenance),
+                bdoc.ele("span", bdoc.class("con_matchIndex")),
+                bdoc.ele("span", bdoc.class("con_matchKey"),desc.abstract),
+                bdoc.ele("span", bdoc.class("con_matchIndex")),
+                bdoc.ele("span", bdoc.class("con_matchKey"), "Palet Key: " + StripKeyPrefix(desc.key))));
         }
 
         ele.appendChild(matches);
