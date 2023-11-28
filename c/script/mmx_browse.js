@@ -77,12 +77,16 @@ class MmCollection {
         addRow(dl, "URL", desc.url);
         detail.appendChild(dl);
 
-        detail.appendChild(bdoc.ele("h3", "Links"));
-
-        detail.appendChild(bdoc.ele("div", bdoc.ele("a",
-            bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
-            bdoc.attr("target", "_blank"),
-            "Edit Description")));
+        if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
+            detail.appendChild(bdoc.ele("h3", "Links"));
+        }
+        if (desc.intHasPart && desc.intHasPart.length === 0) {
+            console.log(desc.intHasPart)
+            detail.appendChild(bdoc.ele("div", bdoc.ele("a",
+                bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
+                bdoc.attr("target", "_blank"),
+                "Edit Description")));
+        }
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
@@ -126,7 +130,13 @@ class MmCollection {
 
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;
-                span.textContent = cn.name;
+
+                let abstr = cn.abstract.substring(0,50)
+                if (cn.abstract.length > 50) {
+                    abstr +="..."
+                }
+
+                span.textContent = cn.name + " - " + abstr;
                 li.appendChild(span);
                 ul.appendChild(li);
             }
@@ -186,11 +196,7 @@ class MmCollection {
             // Check if the clicked span is the same as the currently highlighted one
                 if (span === this) {
                 // Toggle the bold style
-                if (span.style.fontWeight === 'bold') {
-                    span.style.fontWeight = 'normal'; // Set to normal weight
-                } else {
-                    span.style.fontWeight = 'bold'; // Set to bold
-                }
+                    span.style.fontWeight = 'bold'; // Set to bold 
                 } else {
                 // Reset the font weight for other spans
                 span.style.fontWeight = 'normal';

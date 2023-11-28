@@ -12,6 +12,15 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 // Container for MMX Globals
 let mmx_dict = {};
 
+function toggleOneElement(element) {
+    let currentElement = document.getElementById(element)
+    if (currentElement.style.display === 'none') {
+        currentElement.style.display = 'block';
+    } else {
+        currentElement.style.display = 'none';
+    }
+}
+
 // Using the class like a namespace. All members are static.
 class Mmx {
 
@@ -132,6 +141,28 @@ class Mmx {
         
         let parent = element.parentElement;
         parent.removeChild(element);
+
+        parent.appendChild(bdoc.ele("div",
+            // bdoc.class("control"),
+            bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.ele("span", 
+                bdoc.class("search_select"),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
+            bdoc.ele("button", 
+                bdoc.class("search_select"),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "Text")),
+            bdoc.ele("button", 
+                bdoc.class("search_select"),
+                bdoc.attr("disabled", "true"),
+                //bdoc.attr("style", "margin-right: 0.25rem"),
+                bdoc.attr("textContent", "AI")),
+            bdoc.ele("button",
+                bdoc.class("search_select"),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("textContent", "AI + Context"))
+        ))
 
         // Search bar
         parent.appendChild(bdoc.ele("div",
@@ -279,6 +310,7 @@ class Mmx {
                     bdoc.attr("contentEditable", "true"),
                     bdoc.attr("id", id))));
         }
+        console.log(form);
 
         element.innerHTML = "";
 
@@ -311,6 +343,8 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
             form.appendChild(controls);
         }
+        form.appendChild(bdoc.ele("p",
+            bdoc.attr("id", "p_parent")));
 
         form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
             bdoc.attr("id", "p_name"),
@@ -562,12 +596,13 @@ class Mmx {
         }
     }
 
-    static LoadLrmiForm(value) {
+    static async LoadLrmiForm(value) {
         document.getElementById("mmx_status").textContent = "";
         //console.log(JSON.stringify(value));
         //console.log(value.id);
         var form = document.getElementById("p_lrmiForm");
         form.sourceData = value;
+        console.log(value.mainEntityId)
 
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
@@ -588,6 +623,62 @@ class Mmx {
             }
         }
 
+        function parentOf(id, collectionObject) {
+            let keys = Object.keys(collectionObject)
+            for (let i = 0; i < keys.length; i++) {
+                if (collectionObject[keys[i]].includes(id)) {
+                    return keys[i]
+                }
+            }
+            return -1;
+        }
+
+        let data = await session.fetch("/api/collections/" + value.mainEntityId)
+        data = await data.json();
+
+        let collectionObject = {};
+        let nodeParents = {};
+        let nodes = [];
+        let currentIntID;
+        
+        for (let i = 0; i < data['collection'].length; i++) {
+            collectionObject[i] = data['collection'][i]['intHasPart'];
+            nodeParents[i] = [];
+            nodes.push(i);
+            if (data['collection'][i].id === value.id) {
+                currentIntID = i;
+            }
+        }
+    
+        let currentNode = nodes[currentIntID]
+        let parentOfCurrentNode = parentOf(currentNode, collectionObject)
+        while (parentOfCurrentNode !== -1) {
+            nodeParents[currentNode].push(parentOfCurrentNode)
+            parentOfCurrentNode = parentOf(parseInt(parentOfCurrentNode), collectionObject)
+        }
+        let parents = nodeParents[currentNode];
+        parents.reverse();
+        let parentText = ""
+
+        
+        for (let i = 0; i < parents.length; i++) {
+            let abstr = data['collection'][parents[i]].abstract.substring(0,100)
+            if (data['collection'][parents[i]].abstract.length > 100) {
+                abstr += "..."
+            }
+            
+            let spacing = 0;
+            for (let j = 0; j < i; j++) {
+                spacing += 0.5
+            }
+            parentText += `<div style = "margin-left: ${spacing}rem;">` + data['collection'][parents[i]].name + " - " + abstr + "</div>"
+        }
+
+        let ele = document.getElementById("p_parent");
+        ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Lineage' ) ? '► Descriptor Lineage' : '▼ Descriptor Lineage'")
+        ele.innerHTML = "";
+        ele.innerHTML += `<span onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Lineage</strong><br><span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
+        
         // Load Key
         Mmx.LoadKeyIntoDescriptorSearchForm(value.key);
     }
@@ -829,10 +920,11 @@ class Mmx {
             Mmx.LoadLrmiFormFromDatabase(data.id);
         }
         else {
-            const status = document.getElementById("mmx_status");
-            if (!status) return;
-            status.style.color = "darkred";
-            status.textContent = nextPrev ? "No more descriptors." : "No preceding descriptors.";
+            if (nextPrev) {
+                alert("No more descriptors.")
+            } else {
+                alert("No preceding descriptors.")
+            }
         }
     }
  
@@ -961,5 +1053,6 @@ class Mmx {
     }
 
 }
+
 
 window.addEventListener("load", Mmx.OnPageLoad);
