@@ -71,7 +71,7 @@ title: Match Console
         const response = await session.fetch(url);
         const result = await response.json();
 
-        document.getElementById("matchKey").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance} - ${result.descriptors[0].abstract} <br> Palet Key: ${key}`
+        // document.getElementById("matchKey").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance} - ${result.descriptors[0].abstract} <br> Palet Key: ${key}`
         let ele = document.getElementById("matchResult");
 
         for (;;) {
