@@ -141,7 +141,14 @@ class Mmx {
         
         let parent = element.parentElement;
         parent.removeChild(element);
-
+        parent.appendChild(bdoc.ele("div", 
+            bdoc.attr("style", "display: flex; margin-left: 8.8rem;"),
+            bdoc.ele("span", 
+            bdoc.class("search_select"),
+            //bdoc.attr("style", "margin-right: 0.25rem"),
+            bdoc.attr("innerHTML", "┌──Bionic──┐"))
+        ))
+        
         parent.appendChild(bdoc.ele("div",
             // bdoc.class("control"),
             bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
