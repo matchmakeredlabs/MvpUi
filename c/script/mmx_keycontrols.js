@@ -738,7 +738,8 @@ class Mmx {
 
         // Change class of last element
         cellStmt.className = "mm_stmtKeyText";
-
+        console.log(`hello ${mmx_dict.keyTable.innerHTML} bye`);
+        
         mmx_dict.keyTable.appendChild(row);
 
         /*
