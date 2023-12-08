@@ -572,7 +572,6 @@ class Mmx {
         if (val.key) {
             addRow(dl, "Key", bdoc.ele("a",
                 bdoc.attr("href", Mmx.keyLinkPrefix + Mmx.StripKeyPrefix(val.key)),
-                bdoc.attr("target", "_blank"),
                 Mmx.StripKeyPrefix(val.key)));
         }
         descriptor.appendChild(dl);
