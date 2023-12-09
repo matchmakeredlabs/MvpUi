@@ -21,6 +21,25 @@ function toggleOneElement(element) {
     }
 }
 
+
+function extractStmtIDs() {
+    const stmtIdElements = document.querySelectorAll('.mm_stmtId');
+    const stmtIds = Array.from(stmtIdElements).map(element => element.textContent);
+    return stmtIds;
+}
+
+function extractAfterSecondId(entries) {
+    let secondIdIndex = entries.indexOf('Id', entries.indexOf('Id') + 1);
+    if (secondIdIndex === -1) {
+      return [];
+    }
+    return entries.slice(secondIdIndex + 1);
+}
+  
+function extractAddedIds() {
+    return extractAfterSecondId(extractStmtIDs())
+}
+
 // Using the class like a namespace. All members are static.
 class Mmx {
 
@@ -681,7 +700,8 @@ class Mmx {
         }
 
         let ele = document.getElementById("p_parent");
-        ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Lineage' ) ? '► Descriptor Lineage' : '▼ Descriptor Context'")
+        ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Context' ) ? '► Descriptor Context' : '▼ Descriptor Context'")
+        ele.setAttribute("style", "style='cursor: pointer;'")
         ele.innerHTML = "";
         ele.innerHTML += `<span onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Context</strong><br><span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
         
@@ -720,6 +740,11 @@ class Mmx {
         let cellId = cellAdd.nextElementSibling;
         let cellStmt = cellId.nextElementSibling.nextElementSibling;
 
+        let addedIds = extractAddedIds();
+        if (addedIds.includes(cellId.textContent)) {
+            alert("Error: Duplicate Key");
+        } else {
+
         // Convert first cell to remove
         cellAdd.innerHTML = "";
         cellAdd.appendChild(bdoc.ele("input", bdoc.attr("type", "button"),
@@ -737,22 +762,10 @@ class Mmx {
             cellId);
 
         // Change class of last element
-        cellStmt.className = "mm_stmtKeyText";
-        console.log(`hello ${mmx_dict.keyTable.innerHTML} bye`);
-        
+        cellStmt.className = "mm_stmtKeyText";        
         mmx_dict.keyTable.appendChild(row);
 
-        /*
-        input = document.createElement("input");
-        input.type = "checkbox";
-        input.textContent = "Central";
-        input.checked = true;
-        input.style.height = "1.5em";
-        input.style.width = "1.5em";
-        cell2.style.textAlign = "center";
-        cell2.append(input);
-        mmx_dict.keyTable.appendChild(row);
-        */
+        }
     }
 
     static RemoveStatementFromKey(event) {
