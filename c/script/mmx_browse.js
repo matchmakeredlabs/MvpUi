@@ -91,7 +91,6 @@ class MmCollection {
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
                 bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
-                bdoc.attr("target", "_blank"),
                 "View descriptor and matches")));
         }
     }
@@ -196,7 +195,7 @@ class MmCollection {
             // Check if the clicked span is the same as the currently highlighted one
                 if (span === this) {
                 // Toggle the bold style
-                    span.style.fontWeight = 'bold'; // Set to bold 
+                 span.style.fontWeight = 'bold'; // Set to bold 
                 } else {
                 // Reset the font weight for other spans
                 span.style.fontWeight = 'normal';

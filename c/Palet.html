@@ -22,7 +22,6 @@ title: Palet Key
             ele.innerHtml = "";
             let a = document.createElement("a");
             a.href = `/c/MatchDetail?matchKey=${key}`;
-            a.target = "_blank";
             a.textContent = key;
             ele.appendChild(a);
 
@@ -30,7 +29,6 @@ title: Palet Key
             ele.innerHtml = "";
             a = document.createElement("a");
             a.href = `/c/MatchConsole?matchKey=${key}`;
-            a.target = "_blank";
             a.textContent = key;
             ele.appendChild(a);
         }
