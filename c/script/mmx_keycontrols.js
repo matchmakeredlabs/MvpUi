@@ -742,7 +742,7 @@ class Mmx {
 
         let addedIds = extractAddedIds();
         if (addedIds.includes(cellId.textContent)) {
-            alert("Error: Duplicate Key");
+            alert("Error: Palet Statement already selected");
         } else {
 
         // Convert first cell to remove
