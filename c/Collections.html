@@ -7,8 +7,9 @@ title: MatchMaker Browser
         .filter {
             display: inline-block;
             background-color: #e0e0e0;
-            padding: 2px;
-            margin: 2px;
+            font-size: 13px;
+            padding: 0.1rem;
+            margin: 0.1rem;
             border-radius: 2px;
         }
 
@@ -23,24 +24,25 @@ title: MatchMaker Browser
 <body>
 <main>
     <h2>Collections</h2>
-    <b>Filter by: </b>
+    <b>Filter by: </b> <br>
     About
     <select id="filterDropdown1">
         <option value="--">--</option>
     </select>
+    <span id="filterContainer1">
+    </span> <br>
     Creator
     <select id="filterDropdown2">
         <option value="--">--</option>
-    </select> <br>
+    </select>
+    <span id="filterContainer2">
+    </span> <br>
     <b>Sort by: </b>
     <select id="sortDropdown">
-        <option value="Default">Default</option>
+        <option value="--">Default</option>
         <option value="About">About</option>
         <option value="Creator">Creator</option>
     </select>
-
-    <div id="filterContainer">
-    </div>
 
     <ul id="mmx_collections">
     </ul>
