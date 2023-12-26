@@ -208,42 +208,6 @@ class Mmx {
                 bdoc.attr("innerHTML", "AI + Context")),
         ))
 
-        /*let divEle = bdoc.ele("div",
-            // bdoc.class("control"),
-            bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
-            bdoc.class("toggle-container"),
-            bdoc.ele("span", 
-                bdoc.attr("id", "search-type"),
-                bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;"))
-        )
-
-        let pt1 = bdoc.ele("div",
-            bdoc.class("toggle-button active"),
-            bdoc.attr("id", "text-option"),
-            bdoc.attr("onclick", Mmx.setActive),
-            bdoc.attr("innerHTML", "Text"))
-
-        let pt2 = bdoc.ele("div",
-            bdoc.class("toggle-button"),
-            bdoc.attr("onclick", Mmx.setActive),
-            bdoc.attr("innerHTML", "AI"))
-
-        let pt3 =  bdoc.ele("div",
-            bdoc.class("toggle-button"),
-            bdoc.attr("onclick", Mmx.setActive),
-            bdoc.attr("innerHTML", "AI + Context"))
-
-        divEle.appendChild(pt1)
-        console.log(divEle)
-
-        parent.appendChild(
-            divEle
-            )
-
-        console.log(document.getElementById("text-option").offsetWidth)
-        console.log(document.getElementById("search-type").offsetWidth)
-        */
-
         // Search bar
         parent.appendChild(bdoc.ele("div",
             bdoc.class("mmx_stmtSearchBar"),
