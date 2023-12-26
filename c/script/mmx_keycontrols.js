@@ -21,7 +21,6 @@ function toggleOneElement(element) {
     }
 }
 
-
 function extractStmtIDs() {
     const stmtIdElements = document.querySelectorAll('.mm_stmtId');
     const stmtIds = Array.from(stmtIdElements).map(element => element.textContent);
@@ -128,6 +127,17 @@ class Mmx {
         }
     }
 
+    static setActive(event) {
+        console.log(event.target);
+        // Remove 'active' class from all buttons
+        var buttons = document.querySelectorAll('.toggle-button');
+        buttons.forEach(function(btn){
+            btn.classList.remove('active');
+        });
+        // Add 'active' class to the clicked button
+        element.classList.add('active');
+    }
+
     static RenderKey_Callback(jskey, element)
     {
         element.innerHTML = "";
@@ -153,6 +163,18 @@ class Mmx {
         }
     }
 
+    static setActive(event) {
+        console.log(event.target);
+        let element = event.target
+        // Remove 'active' class from all buttons
+        var buttons = document.querySelectorAll('.toggle-button');
+        buttons.forEach(function(btn){
+            btn.classList.remove('active');
+        });
+        // Add 'active' class to the clicked button
+        element.classList.add('active');
+    }
+
     static RenderStatementSearch(element) {
         // Search replaces this element rather than going into it
         // This won't work when we make search into a webElement
@@ -161,34 +183,66 @@ class Mmx {
         let parent = element.parentElement;
         parent.removeChild(element);
         parent.appendChild(bdoc.ele("div", 
-            bdoc.attr("style", "display: flex; margin-left: 8.8rem;"),
+            bdoc.attr("style", "display: flex; margin-left: 9.5rem;"),
             bdoc.ele("span", 
-            bdoc.class("search_select"),
-            //bdoc.attr("style", "margin-right: 0.25rem"),
             bdoc.attr("innerHTML", "┌──Bionic──┐"))
         ))
-        
+
         parent.appendChild(bdoc.ele("div",
             // bdoc.class("control"),
             bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.class("toggle-container"),
             bdoc.ele("span", 
-                bdoc.class("search_select"),
-                //bdoc.attr("style", "margin-right: 0.25rem"),
                 bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
-            bdoc.ele("button", 
-                bdoc.class("search_select"),
-                //bdoc.attr("style", "margin-right: 0.25rem"),
-                bdoc.attr("textContent", "Text")),
-            bdoc.ele("button", 
-                bdoc.class("search_select"),
-                bdoc.attr("disabled", "true"),
-                //bdoc.attr("style", "margin-right: 0.25rem"),
-                bdoc.attr("textContent", "AI")),
-            bdoc.ele("button",
-                bdoc.class("search_select"),
-                bdoc.attr("disabled", "true"),
-                bdoc.attr("textContent", "AI + Context"))
+            bdoc.ele("div",
+                bdoc.class("toggle-button active"),
+                bdoc.attr("onclick", Mmx.setActive),
+                bdoc.attr("innerHTML", "Text")),
+            bdoc.ele("div",
+                bdoc.class("toggle-button"),
+                bdoc.attr("onclick", Mmx.setActive),
+                bdoc.attr("innerHTML", "AI")),
+            bdoc.ele("div",
+                bdoc.class("toggle-button"),
+                bdoc.attr("onclick", Mmx.setActive),
+                bdoc.attr("innerHTML", "AI + Context")),
         ))
+
+        /*let divEle = bdoc.ele("div",
+            // bdoc.class("control"),
+            bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.class("toggle-container"),
+            bdoc.ele("span", 
+                bdoc.attr("id", "search-type"),
+                bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;"))
+        )
+
+        let pt1 = bdoc.ele("div",
+            bdoc.class("toggle-button active"),
+            bdoc.attr("id", "text-option"),
+            bdoc.attr("onclick", Mmx.setActive),
+            bdoc.attr("innerHTML", "Text"))
+
+        let pt2 = bdoc.ele("div",
+            bdoc.class("toggle-button"),
+            bdoc.attr("onclick", Mmx.setActive),
+            bdoc.attr("innerHTML", "AI"))
+
+        let pt3 =  bdoc.ele("div",
+            bdoc.class("toggle-button"),
+            bdoc.attr("onclick", Mmx.setActive),
+            bdoc.attr("innerHTML", "AI + Context"))
+
+        divEle.appendChild(pt1)
+        console.log(divEle)
+
+        parent.appendChild(
+            divEle
+            )
+
+        console.log(document.getElementById("text-option").offsetWidth)
+        console.log(document.getElementById("search-type").offsetWidth)
+        */
 
         // Search bar
         parent.appendChild(bdoc.ele("div",
