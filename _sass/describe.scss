@@ -174,3 +174,17 @@ $w_type: 4em;
 #lineage_title {
     cursor: pointer;
 }
+
+.toggle-container {
+    display: flex;
+}
+.toggle-button {
+    padding: 2.5px 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    }
+.active {
+    background-color: darkgrey;
+    color: white;
+}
