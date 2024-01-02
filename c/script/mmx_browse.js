@@ -4,11 +4,11 @@ import bsession from './bsession.js';
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
-class MmCollection {
+export default class MmCollection {
 
     static thisCollection;
 
-    static async load(id) {
+    static async LoadFromId(id) {
         let response = await session.fetch("/api/collections/" + id);
         let data = await response.json();
         return new MmCollection(data.collection);
@@ -206,12 +206,3 @@ class MmCollection {
     }
 }
 
-async function loadFramework(url) {
-    let query = new URLSearchParams(window.location.search);
-    let fw = query.get("id");
-
-    const collection = await MmCollection.load(fw);
-    collection.attachTo(document.getElementById("mmx_browse_tree"));
-}
-
-loadFramework();
