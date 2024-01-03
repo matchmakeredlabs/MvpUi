@@ -1,4 +1,4 @@
 export default class config {
-    static backEndUrl = "http://localhost:7084";
+    static backEndUrl = "https://matchmakerstaging.azurewebsites.net";
     static sessionTag = "mm";
 }
