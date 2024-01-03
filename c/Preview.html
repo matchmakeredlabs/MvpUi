@@ -1,0 +1,39 @@
+---
+title: Preview
+---
+
+<div id="prompt">
+    <form class="mm_preview_form" id="form-preview-url">
+        <h2>Preview a collection imported from a URL.</h2>
+        <p>Presently this works exclusively with ASN XML URLs but other sources may be added in the future.</p>
+        <label for="url">URL of Collection:</label> <input type="text" id="url" name="url" size="80"/><br/>
+        <div class="message"></div>
+        <input type="submit">
+    </form>    
+</div>
+
+<main class="mm_columns">
+    <div>
+        <article id="mmx_browse_tree"></article>
+    </div>
+    <div>
+        <article id="mmx_browse_detail"></article>
+    </div>
+</main>
+<script type="module">
+    import MmCollection from "/c/script/mmx_browse.js";
+
+    async function OnPreviewUri(e) {
+        e.preventDefault();
+        try {
+            const collection = await MmCollection.LoadFromExternalUrl(document.getElementById("url").value);
+            collection.attachTo(document.getElementById("mmx_browse_tree"));
+        }
+        catch (err) {
+            document.querySelector("#form-preview-url .message").textContent = "Error: " + err.message;
+        }
+    }
+
+    document.getElementById("form-preview-url").addEventListener("submit", OnPreviewUri);
+</script>
+    

@@ -14,6 +14,21 @@ export default class MmCollection {
         return new MmCollection(data.collection);
     }
 
+    static async LoadFromExternalUrl(url) {
+        const reqUrl = "/api/convert?url=" + encodeURIComponent(url);
+        const response = await session.fetch(reqUrl, {
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+        if (response.status >= 400) {
+            var text = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${text}`);
+        }
+        const data = await response.json();
+        return new MmCollection(data.collection);    
+    }
+
     constructor(collection) {
 
         // Descriptors with root

@@ -16,7 +16,7 @@ title: MatchMaker Browser
         let query = new URLSearchParams(window.location.search);
         let id = query.get("id");
     
-        const collection = await MmCollection.load(id);
+        const collection = await MmCollection.LoadFromId(id);
         collection.attachTo(document.getElementById("mmx_browse_tree"));
     }
     
