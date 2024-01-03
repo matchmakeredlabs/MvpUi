@@ -10,6 +10,13 @@ title: Preview
         <div class="message"></div>
         <input type="submit">
     </form>    
+    <form class="mm_preview_form" id="form-preview-file">
+        <h2>Preview a collection imported from a File.</h2>
+        <p>File must be .csv or .json and must match the <a href="https://schema.org/CreativeWork">https://schema.org/CreativeWork</a> schema.</p>
+        <label for="file">URL of Collection:</label> <input type="file" id="file" name="file"/><br/>
+        <div class="message"></div>
+        <input type="submit">
+    </form>    
 </div>
 
 <main class="mm_columns">
@@ -23,10 +30,11 @@ title: Preview
 <script type="module">
     import MmCollection from "/c/script/mmx_browse.js";
 
-    async function OnPreviewUri(e) {
+    async function OnPreviewUrl(e) {
         e.preventDefault();
         try {
             const collection = await MmCollection.LoadFromExternalUrl(document.getElementById("url").value);
+            document.getElementById("prompt").remove();
             collection.attachTo(document.getElementById("mmx_browse_tree"));
         }
         catch (err) {
@@ -34,6 +42,23 @@ title: Preview
         }
     }
 
-    document.getElementById("form-preview-url").addEventListener("submit", OnPreviewUri);
+    async function OnPreviewFile(e) {
+        e.preventDefault();
+        try {
+            const fileInput = document.getElementById("file");
+            console.log(fileInput.files[0]);
+            const collection = await MmCollection.LoadFromFile(fileInput.files[0]);
+
+            // Apparently successful. Clear the forms and display the collection.
+            document.getElementById("prompt").remove();
+            collection.attachTo(document.getElementById("mmx_browse_tree"));
+        }
+        catch (err) {
+            document.querySelector("#form-preview-file .message").textContent = "Error: " + err.message;
+        }
+    }
+
+    document.getElementById("form-preview-url").addEventListener("submit", OnPreviewUrl);
+    document.getElementById("form-preview-file").addEventListener("submit", OnPreviewFile);
 </script>
     

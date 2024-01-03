@@ -29,6 +29,24 @@ export default class MmCollection {
         return new MmCollection(data.collection);    
     }
 
+    static async LoadFromFile(file) {
+        const reqUrl = "/api/convert";
+        const response = await session.fetch(reqUrl, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": file.type
+            },
+            body: file
+        });
+        if (response.status >= 400) {
+            var text = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${text}`);
+        }
+        const data = await response.json();
+        return new MmCollection(data.collection);    
+    }
+
     constructor(collection) {
 
         // Descriptors with root
