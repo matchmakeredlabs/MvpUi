@@ -1,0 +1,13 @@
+.mm_preview_form {
+    @include mmx_card;
+    max-width: 80%;
+
+    h2 {
+        text-align: center;
+        margin: 0;
+    }
+
+    .message {
+        color: darkred;
+    }
+}
