@@ -196,15 +196,15 @@ class Mmx {
                 bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
             bdoc.ele("div",
                 bdoc.class("toggle-button active"),
-                bdoc.attr("onclick", Mmx.setActive),
+                // bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "Text")),
             bdoc.ele("div",
                 bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
+                //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI")),
             bdoc.ele("div",
                 bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
+                //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI + Context")),
         ))
 
