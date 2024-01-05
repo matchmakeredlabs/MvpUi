@@ -15,8 +15,6 @@ const selectedOptions2 = [];
 let about = []
 let creator = []
 
-
-
 async function loadFiltersAndAllCollections() {
     let response = await session.fetch("/api/collections");
     let data = await response.json();
