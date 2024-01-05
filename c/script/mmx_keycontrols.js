@@ -199,11 +199,11 @@ class Mmx {
                 // bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "Text")),
             bdoc.ele("div",
-                bdoc.class("toggle-button"),
+                bdoc.class("toggle-button disabled"),
                 //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI")),
             bdoc.ele("div",
-                bdoc.class("toggle-button"),
+                bdoc.class("toggle-button disabled"),
                 //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI + Context")),
         ))
