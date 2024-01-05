@@ -416,7 +416,7 @@ class Mmx {
                 bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
 
         addRow(dl, "URL", "p_url");
-        addRow(dl, "About", "p_about");
+        addRow(dl, "Subject", "p_about");
         addRow(dl, "Identifier", "p_identifier");
         addRow(dl, "Ed. Level", "p_educationalLevel");
         addRow(dl, "Creator", "p_creator");
@@ -607,7 +607,7 @@ class Mmx {
                 val.url));
         }
 
-        addRow(dl, "About", val.about);
+        addRow(dl, "Subject", val.about);
         addRow(dl, "Identifier", val.identifier);
         addRow(dl, "Ed. Level", val.educationalLevel);
         addRow(dl, "Creator", val.creator);
