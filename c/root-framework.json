@@ -8,7 +8,7 @@
     {
       "id": 1,
       "name": "<a href='?fwsrc=local://sample.json' target='_top'>Sample Framework</a>",
-      "abstract": "Sample framework demonstrating the browser functions."
+      "description": "Sample framework demonstrating the browser functions."
     },
     {
       "id": 2,

@@ -5,7 +5,7 @@
  */
 
 import bdoc from './bdoc.js';
-import config from './config.js';
+import config from '/config.js';
 import bsession from './bsession.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
@@ -48,8 +48,8 @@ class Mmx {
         { label: "Type", prop: "eleType", inner: "<select name='eleType'><option value='o'>Other</option><option value='lr'>Learning Resource</option><option value='cs'>Competency Statement</option><option value='c'>Curriculum</option></select>" },
         { label: "Name", prop: "name" },
         { label: "URL", prop: "url" },
-        { label: "About", prop: "about" },
-        { label: "Abstract", prop: "abstract" },
+        { label: "Subject", prop: "subject" },
+        { label: "Description", prop: "description" },
         { label: "Identifier", prop: "identifier" },
         { label: "Ed. Level", prop: "educationalLevel" },
         { label: "Creator", prop: "creator" },
@@ -395,7 +395,7 @@ class Mmx {
             bdoc.attr("contentEditable", "true")));
         
         form.appendChild(bdoc.ele("section", bdoc.class("mmc_editable"),
-            bdoc.attr("id", "p_abstract"),
+            bdoc.attr("id", "p_description"),
             bdoc.attr("contentEditable", "true")));
 
         form.appendChild(bdoc.ele("h3", "Detail"));
@@ -416,7 +416,7 @@ class Mmx {
                 bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
 
         addRow(dl, "URL", "p_url");
-        addRow(dl, "About", "p_about");
+        addRow(dl, "Subject", "p_subject");
         addRow(dl, "Identifier", "p_identifier");
         addRow(dl, "Ed. Level", "p_educationalLevel");
         addRow(dl, "Creator", "p_creator");
@@ -593,8 +593,8 @@ class Mmx {
         else {
             descriptor.appendChild(bdoc.ele("h2", "Unnamed"));
         }
-        if (val.abstract) {
-            descriptor.appendChild(bdoc.ele("section", bdoc.preText(val.abstract)));
+        if (val.description) {
+            descriptor.appendChild(bdoc.ele("section", bdoc.preText(val.description)));
         }
         descriptor.appendChild(bdoc.ele("h3", "Detail"));
 
@@ -607,7 +607,7 @@ class Mmx {
                 val.url));
         }
 
-        addRow(dl, "About", val.about);
+        addRow(dl, "Subject", val.subject);
         addRow(dl, "Identifier", val.identifier);
         addRow(dl, "Ed. Level", val.educationalLevel);
         addRow(dl, "Creator", val.creator);
@@ -657,7 +657,7 @@ class Mmx {
                     ele.contentEditable = false;
                     ele.innerHTML = "<a href='" + value["url"] + "' target='_blank'>" + value["url"] + "</a>";
                 }
-                else if (p === "abstract") {
+                else if (p === "description") {
                     ele.innerHTML = value[p];
                 }
                 else {
@@ -705,8 +705,8 @@ class Mmx {
 
         
         for (let i = 0; i < parents.length; i++) {
-            let abstr = data['collection'][parents[i]].abstract.substring(0,100)
-            if (data['collection'][parents[i]].abstract.length > 100) {
+            let abstr = data['collection'][parents[i]].description.substring(0,100)
+            if (data['collection'][parents[i]].description.length > 100) {
                 abstr += "..."
             }
             
