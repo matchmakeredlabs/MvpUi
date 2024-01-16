@@ -1,5 +1,5 @@
 import bdoc from './bdoc.js';
-import config from './config.js';
+import config from '/config.js';
 import bsession from './bsession.js';
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
@@ -99,16 +99,18 @@ export default class MmCollection {
         detail.appendChild(bdoc.ele("h3", "Descriptor"));
         detail.appendChild(bdoc.ele("h2", desc.name));
         let sect = document.createElement("section");
-        sect.innerHTML = desc.abstract;
+        sect.innerHTML = desc.description;
         detail.appendChild(sect); 
         detail.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
         addRow(dl, "Identifier", desc.identifier);
-        addRow(dl, "About", desc.about);
+        addRow(dl, "Subject", desc.subject);
         addRow(dl, "EducationLevel", desc.educationLevel);
         addRow(dl, "URL", desc.url);
         detail.appendChild(dl);
+
+        if (!desc.id) return; // No edit description or view descriptor on preview
 
         if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
             detail.appendChild(bdoc.ele("h3", "Links"));
@@ -163,8 +165,8 @@ export default class MmCollection {
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;
 
-                let abstr = cn.abstract.substring(0,50)
-                if (cn.abstract.length > 50) {
+                let abstr = cn.description.substring(0,50)
+                if (cn.description.length > 50) {
                     abstr +="..."
                 }
 
