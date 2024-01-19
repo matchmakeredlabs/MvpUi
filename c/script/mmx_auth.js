@@ -1,4 +1,4 @@
-﻿import config from './config.js';
+﻿import config from '/config.js';
 
 // Authentication and Authorization
 export default class mmxAuth {

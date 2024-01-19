@@ -1,17 +1,50 @@
 import bdoc from './bdoc.js';
-import config from './config.js';
+import config from '/config.js';
 import bsession from './bsession.js';
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
-class MmCollection {
+export default class MmCollection {
 
     static thisCollection;
 
-    static async load(id) {
+    static async LoadFromId(id) {
         let response = await session.fetch("/api/collections/" + id);
         let data = await response.json();
         return new MmCollection(data.collection);
+    }
+
+    static async LoadFromExternalUrl(url) {
+        const reqUrl = "/api/convert?url=" + encodeURIComponent(url);
+        const response = await session.fetch(reqUrl, {
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+        if (response.status >= 400) {
+            var text = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${text}`);
+        }
+        const data = await response.json();
+        return new MmCollection(data.collection);    
+    }
+
+    static async LoadFromFile(file) {
+        const reqUrl = "/api/convert";
+        const response = await session.fetch(reqUrl, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": file.type
+            },
+            body: file
+        });
+        if (response.status >= 400) {
+            var text = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${text}`);
+        }
+        const data = await response.json();
+        return new MmCollection(data.collection);    
     }
 
     constructor(collection) {
@@ -66,16 +99,18 @@ class MmCollection {
         detail.appendChild(bdoc.ele("h3", "Descriptor"));
         detail.appendChild(bdoc.ele("h2", desc.name));
         let sect = document.createElement("section");
-        sect.innerHTML = desc.abstract;
+        sect.innerHTML = desc.description;
         detail.appendChild(sect); 
         detail.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
         addRow(dl, "Identifier", desc.identifier);
-        addRow(dl, "About", desc.about);
+        addRow(dl, "Subject", desc.subject);
         addRow(dl, "EducationLevel", desc.educationLevel);
         addRow(dl, "URL", desc.url);
         detail.appendChild(dl);
+
+        if (!desc.id) return; // No edit description or view descriptor on preview
 
         if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
             detail.appendChild(bdoc.ele("h3", "Links"));
@@ -130,8 +165,8 @@ class MmCollection {
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;
 
-                let abstr = cn.abstract.substring(0,50)
-                if (cn.abstract.length > 50) {
+                let abstr = cn.description.substring(0,50)
+                if (cn.description.length > 50) {
                     abstr +="..."
                 }
 
@@ -206,12 +241,3 @@ class MmCollection {
     }
 }
 
-async function loadFramework(url) {
-    let query = new URLSearchParams(window.location.search);
-    let fw = query.get("id");
-
-    const collection = await MmCollection.load(fw);
-    collection.attachTo(document.getElementById("mmx_browse_tree"));
-}
-
-loadFramework();

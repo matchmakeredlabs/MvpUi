@@ -154,8 +154,8 @@ $w_type: 4em;
     color:gray;
 }
 
-#p_abstract:empty::before {
-    content: "Abstract";
+#p_description:empty::before {
+    content: "Description";
     color:gray;
 }
 
