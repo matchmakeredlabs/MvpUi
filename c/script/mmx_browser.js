@@ -1,5 +1,5 @@
 ﻿import bdoc from './bdoc.js';
-import config from './config.js';
+import config from '/config.js';
 import bsession from './bsession.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
@@ -74,12 +74,12 @@ class MmFramework {
 
         detail.appendChild(bdoc.ele("h3", "Competency Statement"));
         detail.appendChild(bdoc.ele("h2", stmt.name));
-        detail.appendChild(bdoc.ele("section", bdoc.preText(stmt.abstract)));
+        detail.appendChild(bdoc.ele("section", bdoc.preText(stmt.description)));
         detail.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
         addRow(dl, "Identifier", stmt.identifier);
-        addRow(dl, "About", stmt.about);
+        addRow(dl, "Subject", stmt.subject);
         addRow(dl, "EducationLevel", stmt.educationLevel);
         addRow(dl, "URL", stmt.url);
         detail.appendChild(dl);
