@@ -12,7 +12,7 @@ const filterContainer2 = document.getElementById('filterContainer2');
 const sortDropdown = document.getElementById('sortDropdown');
 const selectedOptions1 = [];
 const selectedOptions2 = [];
-let about = []
+let subject = []
 let creator = []
 
 async function loadFiltersAndAllCollections() {
@@ -22,9 +22,9 @@ async function loadFiltersAndAllCollections() {
     const list = document.getElementById("mmx_collections");
     for (const collection of data.collections) {
         // console.log(JSON.stringify(collection));
-        if (!about.includes(collection['about'])) {
-            about.push(collection['about']);
-            document.getElementById('filterDropdown1').innerHTML += `<option value="${collection['about']}">${collection['about']}</option>`
+        if (!subject.includes(collection['subject'])) {
+            subject.push(collection['subject']);
+            document.getElementById('filterDropdown1').innerHTML += `<option value="${collection['subject']}">${collection['subject']}</option>`
         }
         if (!creator.includes(collection['creator'])) {
             creator.push(collection['creator']);
@@ -41,13 +41,13 @@ async function loadFiltersAndAllCollections() {
     for (const collection of data.collections) {
         if (collection['creator'] === null) {
             list.append(bdoc.ele("li",
-                bdoc.attr("id", `about=${collection['about']} creator=null`),
+                bdoc.attr("id", `subject=${collection['subject']} creator=null`),
                 bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                 collection.name)));
         }
         else {
             list.append(bdoc.ele("li",
-                bdoc.attr("id", `about=${collection['about']} creator=${collection['creator']}`),
+                bdoc.attr("id", `subject=${collection['subject']} creator=${collection['creator']}`),
                 bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                 collection.name)));
         }
@@ -65,7 +65,7 @@ async function loadCollections() {
     for (const collection of data.collections) {
         if (selectedOptions1.length === 0 && selectedOptions2.length === 0) {
             list.append(bdoc.ele("li",
-                bdoc.attr("id", `about=${collection['about']} creator=${collection['creator']}`),
+                bdoc.attr("id", `subject=${collection['subject']} creator=${collection['creator']}`),
                 bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                 collection.name)));
 
@@ -74,41 +74,41 @@ async function loadCollections() {
             for (const creator of selectedOptions2) { 
                 if (collection['creator'] !== null && collection['creator'] === creator) {
                 list.append(bdoc.ele("li",
-                bdoc.attr("id", `about=${collection['about']} creator=${creator}`),
+                bdoc.attr("id", `subject=${collection['subject']} creator=${creator}`),
                 bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                 collection.name)));
                 }
                 if (collection['creator'] === null && creator === 'null') {
                     list.append(bdoc.ele("li",
-                    bdoc.attr("id", `about=${collection['about']} creator=null`),
+                    bdoc.attr("id", `subject=${collection['subject']} creator=null`),
                     bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                     collection.name)));
                 }
             }
         }
         else if(selectedOptions1.length !== 0 && selectedOptions2.length === 0) {
-            for (const about of selectedOptions1) {
-                if (collection['about'] === about){
+            for (const subject of selectedOptions1) {
+                if (collection['subject'] === subject){
                     list.append(bdoc.ele("li",
-                    bdoc.attr("id", `about=${about} creator=${collection['creator']}`),
+                    bdoc.attr("id", `subject=${subject} creator=${collection['creator']}`),
                     bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                     collection.name)));
                 }
             }
         }
         else {
-            for (const about of selectedOptions1) {
+            for (const subject of selectedOptions1) {
                 for (const creator of selectedOptions2) {
-                    if (collection['about'] === about && collection['creator'] !== null && collection['creator'] === creator) {
+                    if (collection['subject'] === subject && collection['creator'] !== null && collection['creator'] === creator) {
                         list.append(bdoc.ele("li", 
-                            bdoc.attr("id", `about=${about} creator=${creator}`),
+                            bdoc.attr("id", `subject=${subject} creator=${creator}`),
                             bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
                         collection.name)));
                     }
-                    if (collection['about'] === about && collection['creator'] === null && creator === 'null') {
+                    if (collection['subject'] === subject && collection['creator'] === null && creator === 'null') {
                         list.append(
                             bdoc.ele("li",
-                            bdoc.attr("id", `about=${about} creator=null`),
+                            bdoc.attr("id", `subject=${subject} creator=null`),
                             bdoc.ele("a", 
                                 bdoc.attr("href", "Browse2?id=" + collection.id),
                                 collection.name)));
