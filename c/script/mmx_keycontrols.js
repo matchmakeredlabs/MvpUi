@@ -348,6 +348,7 @@ class Mmx {
 
         function addRow(dl, label, id) {
             dl.appendChild(bdoc.ele("div",
+                bdoc.attr("style", "align-items: flex-end;"),
                 bdoc.ele("dt", label),
                 bdoc.ele("dd",
                     bdoc.class("mmc_editable"),
@@ -405,6 +406,7 @@ class Mmx {
         // Element type
         dl.appendChild(bdoc.ele("div",
             bdoc.ele("dt", "Element Type"),
+            bdoc.attr("style", "align-items: flex-end;"),
             bdoc.ele("dd",
                 bdoc.ele("select",
                 bdoc.attr("name", "eleType"),
