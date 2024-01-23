@@ -196,15 +196,15 @@ class Mmx {
                 bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
             bdoc.ele("div",
                 bdoc.class("toggle-button active"),
-                bdoc.attr("onclick", Mmx.setActive),
+                // bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "Text")),
             bdoc.ele("div",
-                bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
+                bdoc.class("toggle-button disabled"),
+                //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI")),
             bdoc.ele("div",
-                bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
+                bdoc.class("toggle-button disabled"),
+                //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI + Context")),
         ))
 
@@ -348,6 +348,7 @@ class Mmx {
 
         function addRow(dl, label, id) {
             dl.appendChild(bdoc.ele("div",
+                bdoc.attr("style", "align-items: flex-end;"),
                 bdoc.ele("dt", label),
                 bdoc.ele("dd",
                     bdoc.class("mmc_editable"),
@@ -405,6 +406,7 @@ class Mmx {
         // Element type
         dl.appendChild(bdoc.ele("div",
             bdoc.ele("dt", "Element Type"),
+            bdoc.attr("style", "align-items: flex-end;"),
             bdoc.ele("dd",
                 bdoc.ele("select",
                 bdoc.attr("name", "eleType"),
@@ -416,6 +418,7 @@ class Mmx {
                 bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
 
         addRow(dl, "URL", "p_url");
+
         addRow(dl, "Subject", "p_subject");
         addRow(dl, "Identifier", "p_identifier");
         addRow(dl, "Ed. Level", "p_educationalLevel");
@@ -606,7 +609,6 @@ class Mmx {
                 bdoc.attr("target", "_blank"),
                 val.url));
         }
-
         addRow(dl, "Subject", val.subject);
         addRow(dl, "Identifier", val.identifier);
         addRow(dl, "Ed. Level", val.educationalLevel);
