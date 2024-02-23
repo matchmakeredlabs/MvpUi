@@ -1,10 +1,51 @@
 ---
 title: MatchMaker Browser
 ---
+
+<head>
+    <style>
+        .filter {
+            display: inline-block;
+            background-color: #e0e0e0;
+            font-size: 13px;
+            padding: 0.1rem;
+            margin: 0.1rem;
+            border-radius: 2px;
+        }
+
+        .filter .close {
+            margin-left: 2px;
+            cursor: pointer;
+        }
+
+   </style>
+</head>
+
+<body>
 <main>
     <h2>Collections</h2>
+    <b>Filter by: </b> 
+    Subject
+    <select id="filterDropdown1">
+        <option value="--">--</option>
+    </select>
+    Creator
+    <select id="filterDropdown2">
+        <option value="--">--</option>
+    </select> 
+    <span id="filterContainer1"></span> 
+    <span id="filterContainer2"></span> <br>
+    <b>Sort by: </b>
+    <select id="sortDropdown">
+        <option value="--">Default</option>
+        <option value="About">About</option>
+        <option value="Creator">Creator</option>
+    </select>
+
     <ul id="mmx_collections">
     </ul>
+    
 </main>
 <script type="module" src="/c/script/mmx_collections.js"></script>
 
+</body>

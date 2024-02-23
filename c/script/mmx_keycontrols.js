@@ -407,6 +407,7 @@ class Mmx {
 
         // Element type
         dl.appendChild(bdoc.ele("div",
+            bdoc.attr("style", "align-items: flex-end;"),
             bdoc.ele("dt", "Element Type"),
             bdoc.attr("style", "align-items: flex-end;"),
             bdoc.ele("dd",
