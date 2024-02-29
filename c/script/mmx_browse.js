@@ -169,8 +169,12 @@ export default class MmCollection {
                 if (cn.description.length > 50) {
                     abstr +="..."
                 }
-
-                span.textContent = cn.name + " - " + abstr;
+            
+                span.textContent += cn.name 
+                if (cn.datePublished) {
+                    span.textContent += ", " + cn.datePublished 
+                }
+                span.textContent += " - " + abstr;
                 li.appendChild(span);
                 ul.appendChild(li);
             }
