@@ -5,132 +5,57 @@ import bdoc from './bdoc.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Get references to the select element and filter container
-const filterDropdown1 = document.getElementById('filterDropdown1');
-const filterContainer1 = document.getElementById('filterContainer1');
-const filterDropdown2 = document.getElementById('filterDropdown2');
-const filterContainer2 = document.getElementById('filterContainer2');
-const sortDropdown = document.getElementById('sortDropdown');
-const selectedOptions1 = [];
-const selectedOptions2 = [];
-let subject = []
-let creator = []
 
-async function loadFiltersAndAllCollections() {
-    let response = await session.fetch("/api/collections");
-    let data = await response.json();
+const addKeyword = document.getElementById('addKeyword');
+const keywordElement = document.getElementById('keywordElement');
+const keywordContainer = document.getElementById('keywordContainer');
+const tableBody = document.getElementById("table-body");
 
-    const list = document.getElementById("mmx_collections");
-    for (const collection of data.collections) {
-        // console.log(JSON.stringify(collection));
-        if (!subject.includes(collection['subject'])) {
-            subject.push(collection['subject']);
-            document.getElementById('filterDropdown1').innerHTML += `<option value="${collection['subject']}">${collection['subject']}</option>`
-        }
-        if (!creator.includes(collection['creator'])) {
-            creator.push(collection['creator']);
-            if (collection['creator'] !== null) {
-                document.getElementById('filterDropdown2').innerHTML += `<option value="${collection['creator']}">${collection['creator']}</option>`
-            }
-        }
-    }
+let filterDropdowns = document.getElementById('filterDropdowns');
+let filterContainers = document.getElementById('filterContainers');
+let sortDropdown = document.getElementById("sortDropdown");
 
-    if (creator.includes(null)) {
-        document.getElementById('filterDropdown2').innerHTML += `<option value="null">N/A</option>`
-    }
+let selectedOptions = {};
+let searchKeywords = [];
+let collectionHTML = {};
 
-    for (const collection of data.collections) {
-        if (collection['creator'] === null) {
-            list.append(bdoc.ele("li",
-                bdoc.attr("id", `subject=${collection['subject']} creator=null`),
-                bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                collection.name)));
+function sortByIndex(array, index) {
+    return array.sort((a, b) => {
+        const itemA = a[index];
+        const itemB = b[index];
+
+        if (itemA < itemB) {
+            return -1;
         }
-        else {
-            list.append(bdoc.ele("li",
-                bdoc.attr("id", `subject=${collection['subject']} creator=${collection['creator']}`),
-                bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                collection.name)));
+        if (itemA > itemB) {
+            return 1;
         }
-    }
+        return 0;
+    });
 }
 
-async function loadCollections() {
-    let response = await session.fetch("/api/collections");
-    let data = await response.json();
+window.selectOption = function(filter) {
+    console.log("here", window.data);
+    // console.log(filter);
+    let filterContainer = document.getElementById(`${filter}-container`);
+    let filterDropdown = document.getElementById(`${filter}-dropdown`);
+    let selectedOption = filterDropdown.options[filterDropdown.selectedIndex];
 
-    const list = document.getElementById("mmx_collections");
-    list.innerHTML = "";
-    console.log(selectedOptions1, selectedOptions2);
-    
-    for (const collection of data.collections) {
-        if (selectedOptions1.length === 0 && selectedOptions2.length === 0) {
-            list.append(bdoc.ele("li",
-                bdoc.attr("id", `subject=${collection['subject']} creator=${collection['creator']}`),
-                bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                collection.name)));
+    console.log("selectedOption", selectedOption);
+    selectedOption = selectedOption.value
+    console.log("selectedOption", selectedOption);
 
-        }
-        else if(selectedOptions1.length === 0 && selectedOptions2.length !== 0) {
-            for (const creator of selectedOptions2) { 
-                if (collection['creator'] !== null && collection['creator'] === creator) {
-                list.append(bdoc.ele("li",
-                bdoc.attr("id", `subject=${collection['subject']} creator=${creator}`),
-                bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                collection.name)));
-                }
-                if (collection['creator'] === null && creator === 'null') {
-                    list.append(bdoc.ele("li",
-                    bdoc.attr("id", `subject=${collection['subject']} creator=null`),
-                    bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                    collection.name)));
-                }
-            }
-        }
-        else if(selectedOptions1.length !== 0 && selectedOptions2.length === 0) {
-            for (const subject of selectedOptions1) {
-                if (collection['subject'] === subject){
-                    list.append(bdoc.ele("li",
-                    bdoc.attr("id", `subject=${subject} creator=${collection['creator']}`),
-                    bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                    collection.name)));
-                }
-            }
-        }
-        else {
-            for (const subject of selectedOptions1) {
-                for (const creator of selectedOptions2) {
-                    if (collection['subject'] === subject && collection['creator'] !== null && collection['creator'] === creator) {
-                        list.append(bdoc.ele("li", 
-                            bdoc.attr("id", `subject=${subject} creator=${creator}`),
-                            bdoc.ele("a", bdoc.attr("href", "Browse2?id=" + collection.id),
-                        collection.name)));
-                    }
-                    if (collection['subject'] === subject && collection['creator'] === null && creator === 'null') {
-                        list.append(
-                            bdoc.ele("li",
-                            bdoc.attr("id", `subject=${subject} creator=null`),
-                            bdoc.ele("a", 
-                                bdoc.attr("href", "Browse2?id=" + collection.id),
-                                collection.name)));
-                    }
-                }
-            }
-        }
-    }
-}
+    if (selectedOption) {
+      // Check if the selected option is not already in the list
+      if (selectedOptions[filter][selectedOption] == false && selectedOption.value !== "--") {
 
-function selectOption(selectedOptions, filterDropdown, filterContainer) {
-    const selectedOption = filterDropdown.options[filterDropdown.selectedIndex];
-  
-    if (selectedOption.value) {
-      // Check if the selected option is not in the list
-      if (!selectedOptions.includes(selectedOption.value) && selectedOption.value !== "--") {
-        selectedOptions.push(selectedOption.value);
+        // Change to be true
+        selectedOptions[filter][selectedOption] = true;
   
         // Create a filter element and add it to the container
         const filterElement = document.createElement('div');
         filterElement.classList.add('filter'); // You can style this class with CSS
-        filterElement.textContent = selectedOption.text;
+        filterElement.textContent = selectedOption;
   
         // Add a close button to remove the filter
         const closeButton = document.createElement('span');
@@ -141,70 +66,301 @@ function selectOption(selectedOptions, filterDropdown, filterContainer) {
           filterContainer.removeChild(filterElement);
           
           // Remove the option from the selectedOptions array
-          const index = selectedOptions.indexOf(selectedOption.value);
-          if (index !== -1) {
-            selectedOptions.splice(index, 1);
-          }
-          loadCollections();
+          selectedOptions[filter][selectedOption] = false;
+          reload();
         });
   
         filterElement.appendChild(closeButton);
         filterContainer.appendChild(filterElement);
       }
     }
-  }
+    reload()
+}
 
-  function sortByIdAttribute(attribute) {
-    var listItems = document.querySelectorAll('#mmx_collections li');
+function sortByIdAttribute(attribute) {
+    let titles = document.getElementById("table-titles");
+    let title_th = titles.getElementsByTagName("th");
     
-    // Normalize the attribute to be lowercase for comparison
-    attribute = attribute.toLowerCase();
-  
-    var sortedItems = Array.from(listItems).sort(function(a, b) {
-        // Split the id by space and then by '=' to get key-value pairs
-        var keyValuePairsA = a.id.split(' ').map(part => part.split('='));
-        var keyValuePairsB = b.id.split(' ').map(part => part.split('='));
-    
-        // Find the pair with the key matching the attribute and get the value or 'null' if not present
-        var valueA = (keyValuePairsA.find(pair => pair[0].toLowerCase() === attribute) || ['','null'])[1].toLowerCase();
-        var valueB = (keyValuePairsB.find(pair => pair[0].toLowerCase() === attribute) || ['','null'])[1].toLowerCase();
-    
-        // Compare values, ensuring 'null' values are sorted to the end
-        if (valueA === 'null') return 1; // A is 'null', B is not, A should come after B
-        if (valueB === 'null') return -1; // B is 'null', A is not, A should come before B
-    
-        return valueA.localeCompare(valueB); // Compare the two non-'null' values
-      });
-    
-    // Re-insert the sorted items into the DOM
-    var list = document.getElementById('mmx_collections');
-    list.innerHTML = ''; // Clear existing items
-    sortedItems.forEach(function(item) {
-      list.appendChild(item); // Append sorted items
-    });
-  }
-  
+    let column = 0
+    console.log(attribute);
+    for (let i = 0; i < title_th.length; i++){
+        console.log(title_th[i].textContent);
+        if (title_th[i].textContent == attribute) {
+            column = i;
+            break;
+        }
+    }
+    console.log(column);
 
-loadFiltersAndAllCollections()
+    let rows = tableBody.getElementsByTagName("tr");
+    let allRows = []
+    for (let row of rows) {
+        console.log(row.id);
+        let cells = row.getElementsByTagName("td");
+        let currentRow = []
+        for (let cell of cells) {
+            currentRow.push(cell.textContent.trim());
+        }
+        let collectionId = cells[0].lastChild.getAttribute('href').split("=")[1];
+        currentRow.push(collectionId);
 
-// Listen for changes in the dropdown and pass references to the function (not calling it)
-filterDropdown1.addEventListener('change', function () {
-    selectOption(selectedOptions1, filterDropdown1, filterContainer1);
-    loadCollections();
-});
+        allRows.push(currentRow);
+    }
+    let sortedRows = sortByIndex(allRows, column);
+    console.log(sortedRows);
 
-filterDropdown2.addEventListener('change', function () {
-    selectOption(selectedOptions2, filterDropdown2, filterContainer2);
-    loadCollections();
-});
+    tableBody.innerHTML = "";
+    for (let row of sortedRows) {
+        tableBody.innerHTML += collectionHTML[row[row.length - 1]]
+    }
 
-sortDropdown.addEventListener('change', function() {
+}
+
+// ex. listOfFilters = ['subject', 'publisher']
+async function initialLoad(listToFilter, listToSort, displayProperties) {
+
+    let response = await session.fetch("/api/collections");
+    let data = await response.json();
+    window.data = data;
+    let table = document.getElementById("table-titles")
+
+    addKeyword.addEventListener('click', function() {
+        let newKeyword = keywordElement.value;
+        keywordElement.value = "";
+   
+        // Create a filter element and add it to the container
+        const searchElement = document.createElement('div');
+        searchElement.classList.add('filter'); 
+        searchElement.textContent = newKeyword;
+   
+        // Add element to keywords list 
+        searchKeywords.push(newKeyword);
+   
+        // Create delete button
+        const closeButton = document.createElement('span');
+        closeButton.classList.add('close');
+        closeButton.innerHTML = '&times;'; // Display a "x" for closing
+        closeButton.addEventListener('click', function () {
+           // Remove the filter element from the container
+           keywordContainer.removeChild(searchElement);
+   
+           // Remove the option from the keywords array
+           searchKeywords = searchKeywords.filter(item => item !== newKeyword);
+   
+           reload();
+        });
+        searchElement.appendChild(closeButton);
+        keywordContainer.appendChild(searchElement);
+        reload();
+   })
+
+   sortDropdown.addEventListener('change', function() {
+        const selectedOption = sortDropdown.options[sortDropdown.selectedIndex];
+        if (selectedOption.value !== "--") {
+            console.log(`'${selectedOption.value}'`)
+            sortByIdAttribute(selectedOption.value);
+        }
+        else {
+            reload();
+        }
+    })
+
+
+    for (let property of displayProperties) {
+        property = property.charAt(0).toUpperCase() + property.slice(1);
+        table.innerHTML += (`<th>${property}</th>`)
+    }
+
+
+    for (let filter of listToFilter) {
+        const oneFilterDropdown = document.createElement('select');
+
+        // Set attributes for the select element
+        oneFilterDropdown.setAttribute("id", `${filter}-dropdown`);
+        oneFilterDropdown.setAttribute("style", "width: 100px;");
+
+        // Create and append the default option
+        let defaultOption = document.createElement("option");
+        defaultOption.setAttribute("value", "--");
+        defaultOption.textContent = "--";
+        oneFilterDropdown.appendChild(defaultOption);
+
+        // Append filtering dropdown
+        let filterUppercase = filter.charAt(0).toUpperCase() + filter.slice(1);
+        filterDropdowns.innerHTML += " " + filterUppercase + " ";
+        filterDropdowns.appendChild(oneFilterDropdown);
+
+        // Append container for filter container
+        let spanElement = document.createElement("span");
+        spanElement.setAttribute("id", `${filter}-container`);
+        filterContainers.appendChild(spanElement);
+        
+        // Create object to keep track of what is selected in selectedOptions
+        selectedOptions[filter] = []
+    }
+
+    for (let sortItem of listToSort) {
+        let sortItemUppercase = sortItem.charAt(0).toUpperCase() + sortItem.slice(1);
+
+        // Create option element
+        let optionElement = document.createElement("option");
+        optionElement.setAttribute("value", sortItemUppercase);
+        optionElement.textContent = sortItemUppercase;
+
+        // Append to sort dropdown menu
+        sortDropdown.appendChild(optionElement);
+    }
+
+    // Render table data with properties
+    for (const collection of data.collections) {
+        let elementId = "";
+        let elementData = "";
+        // Grab values for filter
+        for (let filter of listToFilter) {
+            let currentValue = collection[filter];
+            
+            if (currentValue === null || currentValue === "" || currentValue === undefined) {
+                currentValue = 'Null';
+            }
+            if (!Object.keys(selectedOptions[filter]).includes(currentValue)) {
+                selectedOptions[filter][currentValue] = false;
+                document.getElementById(`${filter}-dropdown`).innerHTML += `<option value="${currentValue}">${currentValue}</option>`
+            }
+
+            elementId += `${filter}=${currentValue},`;
+        }
+        
+        // Grab data for table
+        for (let property of displayProperties) {
+            elementData += `<td>${collection[property]}</td>`;
+        }
+        console.log(elementId);
+        elementId = elementId.slice(0, -1);
+        console.log(elementId);
+        // Generate HTML
+        let htmlCode = `<tr id=${elementId}>
+        <td><a href="Browse2?id=${collection.id}">
+        ${collection.name}</a></td>${elementData}</tr>`
+
+        // Append and store for later
+        tableBody.innerHTML += htmlCode;
+        collectionHTML[collection.id] = htmlCode;
+    }
+    
+
+    const selectNodes = Array.from(filterDropdowns.childNodes).filter(node => node.tagName === 'SELECT');
+    for (let node of selectNodes) {
+        let filter = node.id.split("-")[0];
+        node = document.getElementById(node.id);
+        node.setAttribute("onchange", `selectOption("${node.id.split("-")[0]
+    }")`);
+    }
+
+    console.log(selectedOptions);
+}
+
+
+async function reload() {
+    let data = window.data;
+    console.log(data);
+
+    tableBody.innerHTML = "";
+
+    let collectionsContainsKeyword = [];
+    console.log("selectedOptions", selectedOptions);
+
+    if (searchKeywords.length > 0) {
+        for (const collection of data.collections) {
+            let stringifiedCollection = JSON.stringify(collection.name);
+            let keywordCount = 0;
+            // If the collection contains all keywords, then add it
+            for (let keyword of searchKeywords) {
+                if(stringifiedCollection.toLowerCase().includes(keyword.toLowerCase())){
+                    keywordCount += 1;
+                }
+            }
+            if (keywordCount == searchKeywords.length) {
+                collectionsContainsKeyword.push(collection);
+            }
+        }
+    } else {
+        collectionsContainsKeyword = data.collections
+    }
+
+    let filterNeeded = false;
+    let filters = Object.keys(selectedOptions) 
+
+    for (let filter of filters) {
+        let set = new Set(Array.from(Object.values(selectedOptions[filter])));
+        if (set.size > 1) {
+            filterNeeded = true;
+        }
+    }
+
+    if (filterNeeded) {
+        // filters = [subject, publisher, etc.]
+        let collectionsForEachFilter = {}
+        for (let filter of filters) {
+            collectionsForEachFilter[filter] = [] 
+        }
+        for (const collection of collectionsContainsKeyword) {
+            // filter will be a filtering option, such as "subject"
+            for (let filter of filters) {
+                // options = [Math, Science, etc.] for "subject" filter
+                let options = Object.keys(selectedOptions[filter]);
+
+                // If there is at least oneTrue for all of the options for this filter
+                let oneTrue = false;
+                for (let option of options) {
+                    if (selectedOptions[filter][option] == true) {
+                        oneTrue = true;
+                    }
+                }
+                if (oneTrue) {
+                    // option will be an option of filter, such as "Math"
+                    for (let option of options) {
+                        // If user selected that option to filter on
+                        if (selectedOptions[filter][option]) {
+                            // Make sure that this collection matches the selected option
+                            if (option === collection[filter]) {
+                                collectionsForEachFilter[filter].push(collection.id);
+                            }
+                        }
+                    }
+                }
+                else {
+                    collectionsForEachFilter[filter].push(collection.id);
+                }
+            }
+        }
+        console.log(collectionsForEachFilter);
+        let finalIds = collectionsForEachFilter[filters[0]]
+        for (let filter of filters.slice(1)) {
+            finalIds = finalIds.filter(subject => collectionsForEachFilter[filter].includes(String(subject)));
+        }
+
+        if (finalIds.length > 0) {
+        }
+        
+        for (const collectionId of finalIds) {
+            tableBody.innerHTML += collectionHTML[collectionId];
+        }
+    } else {
+        for (const collection of collectionsContainsKeyword) {
+            tableBody.innerHTML += collectionHTML[collection.id];
+        }
+    }
+
     const selectedOption = sortDropdown.options[sortDropdown.selectedIndex];
     if (selectedOption.value !== "--") {
         console.log(`'${selectedOption.value}'`)
         sortByIdAttribute(selectedOption.value);
     }
-    else {
-        loadCollections();
-    }
-})
+
+}
+
+let listToFilter = ['subject', 'publisher']
+let listToSort = ['subject', 'publisher']
+let displayProperties = ['subject', 'publisher']
+initialLoad(listToFilter, listToSort, displayProperties);
+
