@@ -22,7 +22,6 @@ export default class mmxAuth {
         const expiration = tokenParts.get("x");
         if (expiration && mmxAuth.dateParse(expiration) > Date.now()) return true;
 
-        console.log("Cookie expired");
         return false;
     }
 
@@ -37,5 +36,17 @@ export default class mmxAuth {
             console.log("Redirecting to login.");
             mmxAuth.redirectToLogin();
         }
+
+        let header = document.getElementById("header-container");
+        let logoutButton = document.createElement("span");
+        logoutButton.id = 'logout-button';
+        logoutButton.className = 'small-button small-button5';
+        logoutButton.textContent = 'Logout';
+        logoutButton.addEventListener('click', function () {
+            localStorage.removeItem(mmxAuth.sessionKey);
+            mmxAuth.redirectToLogin();
+          });
+    
+        header.appendChild(logoutButton);
     }
 }

@@ -65,11 +65,11 @@
   }
   
   .big-button5 {
-    background-color: #b3b2af;
+    background-color: #969592;
   }
   
   .big-button5:hover {
-    background-color: #969592;
+    background-color: #737373;
   }
   
   .button-text {
@@ -84,3 +84,40 @@
     text-decoration: none;
   }
 
+
+  .small-button {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center; 
+    width: 2.5em; 
+    height: 1em; 
+    border: none;
+    color: black;
+    margin: 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition-duration: 0.4s;
+    position: relative;
+    padding: 10px;
+    overflow: hidden; 
+    text-decoration: none;
+  }
+
+  .small-button5 {
+    background-color: #f2f2f2;
+  }
+  
+  .small-button5:hover {
+    background-color: #e6e6e6;
+  }
+  
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
