@@ -11,6 +11,7 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Container for MMX Globals
 let mmx_dict = {};
+window.searchProperty = "Text"
 
 function toggleOneElement(element) {
     let currentElement = document.getElementById(element)
@@ -129,17 +130,6 @@ class Mmx {
         }
     }
 
-    static setActive(event) {
-        console.log(event.target);
-        // Remove 'active' class from all buttons
-        var buttons = document.querySelectorAll('.toggle-button');
-        buttons.forEach(function(btn){
-            btn.classList.remove('active');
-        });
-        // Add 'active' class to the clicked button
-        element.classList.add('active');
-    }
-
     static RenderKey_Callback(jskey, element)
     {
         element.innerHTML = "";
@@ -166,12 +156,13 @@ class Mmx {
     }
 
     static setActive(event) {
-        console.log(event.target);
+        window.searchProperty = event.target.textContent;
+        
         let element = event.target
         // Remove 'active' class from all buttons
         var buttons = document.querySelectorAll('.toggle-button');
-        buttons.forEach(function(btn){
-            btn.classList.remove('active');
+        buttons.forEach(function(button){
+            button.classList.remove('active');
         });
         // Add 'active' class to the clicked button
         element.classList.add('active');
@@ -198,16 +189,24 @@ class Mmx {
                 bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
             bdoc.ele("div",
                 bdoc.class("toggle-button active"),
-                // bdoc.attr("onclick", Mmx.setActive),
+                bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "Text")),
             bdoc.ele("div",
-                bdoc.class("toggle-button disabled"),
-                //bdoc.attr("onclick", Mmx.setActive),
+                bdoc.class("toggle-button"),
+                bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI")),
             bdoc.ele("div",
                 bdoc.class("toggle-button disabled"),
                 //bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI + Context")),
+            bdoc.ele("span", 
+                bdoc.attr("innerHTML", "&nbsp;&nbsp;AI Algorithm:&nbsp;&nbsp;")),
+            bdoc.ele("select",
+                bdoc.attr("style", "width: 70px;"),
+                bdoc.ele("option", 
+                    bdoc.attr("value", "Cosine Similarity"),
+                    bdoc.attr("innerHTML", "Cosine Similarity")
+                ))
         ))
 
         // Search bar
@@ -485,8 +484,26 @@ class Mmx {
 
     static SearchStatements() {
         let keywords = document.getElementById("mmid_search").value;
-        let url = "/statements?keywords=" + encodeURIComponent(keywords);
-        Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
+        if (window.searchProperty == "Text") {
+            let url = "/statements?keywords=" + encodeURIComponent(keywords);
+            Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
+        } else if (window.searchProperty == "AI") {
+            let url = "/api/match/palet"
+            let options = {
+            method: "POST",
+                body: JSON.stringify({matchText: keywords}),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8"
+                }
+            };
+            session.fetch(url, options)
+            .then(response => response.json())
+            .then(json => {
+                console.log(json);
+                Mmx.SearchStatements_Callback(json)
+            })
+        }
+        
     }
 
     static SearchStatements_Callback(result) {
