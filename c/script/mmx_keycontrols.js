@@ -53,7 +53,9 @@ class Mmx {
         { label: "Identifier", prop: "identifier" },
         { label: "Ed. Level", prop: "educationalLevel" },
         { label: "Creator", prop: "creator" },
-        { label: "Provenance", prop: "provenance" }
+        { label: "Provenance", prop: "provenance" },
+        { label: "Date Published", prop: "datePublished"},
+        { label: "Repository Date", prop: "sdDatePublished"}
     ];
 
     static keyLabel = "Key";
@@ -423,10 +425,14 @@ class Mmx {
         addRow(dl, "Identifier", "p_identifier");
         addRow(dl, "Ed. Level", "p_educationalLevel");
         addRow(dl, "Creator", "p_creator");
-        addRow(dl, "Provenance", "p_provenance");
+        addRow(dl, "Published", "p_datePublished");
+
         form.appendChild(dl);
 
         form.appendChild(bdoc.ele("h3", "Key"));
+        let dl2 = document.createElement("dl");
+        addRow(dl2, "Provenance", "p_provenance");
+        form.appendChild(dl2);
 
         form.appendChild(bdoc.ele("div",
             bdoc.class("mm_stmtHead"),
@@ -614,6 +620,8 @@ class Mmx {
         addRow(dl, "Ed. Level", val.educationalLevel);
         addRow(dl, "Creator", val.creator);
         addRow(dl, "Provenance", val.provenance);
+        addRow(dl, "Date Published", val.datePublishefd);
+        addRow(dl, "Repository Date", val.sdDatePublished);
 
         if (val.key) {
             addRow(dl, "Key", bdoc.ele("a",
