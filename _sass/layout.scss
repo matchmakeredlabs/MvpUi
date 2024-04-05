@@ -1,5 +1,7 @@
 main {
     height: calc(100vh - 9rem);
+    overflow: auto; // This will add a scrollbar to the main content if it exceeds the viewport height.
+    padding-bottom: 1em; // Replace (size of footer) with the actual height of your footer.
 }
 
 // Assign this to <main> or something with a specified height.
