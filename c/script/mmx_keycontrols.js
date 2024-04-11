@@ -426,6 +426,7 @@ class Mmx {
         addRow(dl, "Ed. Level", "p_educationalLevel");
         addRow(dl, "Creator", "p_creator");
         addRow(dl, "Published", "p_datePublished");
+        addRow(dl, "Repository Date", "p_sdDatePublished");
 
         form.appendChild(dl);
 
@@ -860,6 +861,7 @@ class Mmx {
             else {
                 val = ele.textContent;
             }
+            
             lrmi[e.prop] = val;
         }
 
