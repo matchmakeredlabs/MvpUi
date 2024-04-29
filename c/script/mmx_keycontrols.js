@@ -77,6 +77,7 @@ function convertJsonToCsv(data) {
     return csv;
 }
 
+
 function toggleOneElement(element) {
     let currentElement = document.getElementById(element)
     if (currentElement.style.display === 'none') {
