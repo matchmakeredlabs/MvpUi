@@ -228,6 +228,44 @@ class Mmx {
         buttons.forEach(function(button){
             button.classList.remove('active');
         });
+
+        let mmid_search = document.getElementById("mmid_search");
+        let searchOneLiner = document.getElementById("searchOneLiner")
+        if (event.target.textContent === "Text") {
+            mmid_search.placeholder = "Add key words to search";
+            searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
+        } else {
+            let keywords = document.getElementById("mmid_search").value;
+            mmid_search.placeholder = "Add another term to augment the search";
+
+            let requestBody = "";
+            if (window.searchProperty == "AI") {
+                requestBody += JSON.stringify({matchText: window.description + keywords});
+                searchOneLiner.textContent = "Returned statements based on the descriptor abstract"
+            } 
+            else if (window.searchProperty == "AI + Context") {
+                requestBody += JSON.stringify({matchText: window.descriptorContext + keywords});
+                searchOneLiner.textContent = "Returned statements based on the descriptor abstract and associated context"
+
+            }
+            console.log(requestBody);
+            let url = "/api/match/palet"
+            let options = {
+            method: "POST",
+                body: JSON.stringify({matchText: requestBody}),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8"
+                }
+            };
+            session.fetch(url, options)
+            .then(response => response.json())
+            .then(json => {
+                console.log(json);
+                Mmx.SearchStatements_Callback(json)
+            })
+
+        }
+
         // Add 'active' class to the clicked button
         element.classList.add('active');
     }
@@ -260,8 +298,8 @@ class Mmx {
                 bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI")),
             bdoc.ele("div",
-                bdoc.class("toggle-button disabled"),
-                //bdoc.attr("onclick", Mmx.setActive),
+                bdoc.class("toggle-button"),
+                bdoc.attr("onclick", Mmx.setActive),
                 bdoc.attr("innerHTML", "AI + Context")),
             bdoc.ele("span", 
                 bdoc.attr("innerHTML", "&nbsp;&nbsp;AI Algorithm:&nbsp;&nbsp;")),
@@ -272,6 +310,12 @@ class Mmx {
                     bdoc.attr("innerHTML", "Cosine Similarity")
                 ))
         ))
+
+        let searchOneLiner = document.createElement("div");
+        searchOneLiner.id = "searchOneLiner"
+        searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
+        searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`
+        parent.appendChild(searchOneLiner)
 
         // Search bar
         parent.appendChild(bdoc.ele("div",
@@ -573,11 +617,19 @@ class Mmx {
         if (window.searchProperty == "Text") {
             let url = "/statements?keywords=" + encodeURIComponent(keywords);
             Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
-        } else if (window.searchProperty == "AI") {
+        } else {
+            let requestBody = "";
+            if (window.searchProperty == "AI") {
+                requestBody += JSON.stringify({matchText: window.description + keywords});
+            } 
+            else if (window.searchProperty == "AI + Context") {
+                requestBody += JSON.stringify({matchText: window.descriptorContext + keywords});
+            }
+            console.log(requestBody);
             let url = "/api/match/palet"
             let options = {
             method: "POST",
-                body: JSON.stringify({matchText: keywords}),
+                body: JSON.stringify({matchText: requestBody}),
                 headers: {
                     "Content-type": "application/json; charset=UTF-8"
                 }
@@ -588,8 +640,7 @@ class Mmx {
                 console.log(json);
                 Mmx.SearchStatements_Callback(json)
             })
-        }
-        
+        }        
     }
 
     static SearchStatements_Callback(result) {
@@ -779,6 +830,7 @@ class Mmx {
                 }
                 else if (p === "description") {
                     ele.innerHTML = value[p];
+                    window.description = value[p];
                 }
                 else {
                     ele.textContent = value[p];
@@ -822,10 +874,14 @@ class Mmx {
         let parents = nodeParents[currentNode];
         parents.reverse();
         let parentText = ""
-
         
+        let contextDescription = "";
+
         for (let i = 0; i < parents.length; i++) {
             let abstr = data['collection'][parents[i]].description.substring(0,100)
+            if (data['collection'][parents[i]].description) {
+                contextDescription += data['collection'][parents[i]].description + " ";
+            }
             if (data['collection'][parents[i]].description.length > 100) {
                 abstr += "..."
             }
@@ -837,6 +893,7 @@ class Mmx {
             parentText += `<div style = "margin-left: ${spacing}rem;">` + data['collection'][parents[i]].name + " - " + abstr + "</div>"
         }
 
+        window.descriptorContext = contextDescription;
         let ele = document.getElementById("p_parent");
         ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Context' ) ? '► Descriptor Context' : '▼ Descriptor Context'")
         ele.setAttribute("style", "style='cursor: pointer;'")
@@ -1204,28 +1261,32 @@ class Mmx {
 
         let downloadModal = document.getElementById("download-modal");
         let downloadButton = document.getElementById("download-matches");
-        downloadButton.onclick = function() {
-            downloadModal.style.display = "block";
+        if (downloadButton) {
+            downloadButton.onclick = function() {
+                downloadModal.style.display = "block";
+            }
         }
 
         let downloadJSONButton = document.getElementById("download-json")
         let downloadCSVButton = document.getElementById("download-csv")
-
-        downloadJSONButton.onclick = function() {
-            let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
-            Mmx.LoadJsonAsync(url, function(result) {
-                downloadJson(`matches-${mmx_dict.searchKey}`, result);
-                }
-            )
+        if (downloadJSONButton) {
+            downloadJSONButton.onclick = function() {
+                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+                Mmx.LoadJsonAsync(url, function(result) {
+                    downloadJson(`matches-${mmx_dict.searchKey}`, result);
+                    }
+                )
+            }
         }
-        downloadCSVButton.onclick = function() {
-            let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
-            Mmx.LoadJsonAsync(url, function(result) {
-                downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result))
-                }
-            )
+        if (downloadCSVButton) {
+            downloadCSVButton.onclick = function() {
+                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+                Mmx.LoadJsonAsync(url, function(result) {
+                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result))
+                    }
+                )
+            }
         }
-
         // Get the modal
         let match_modal = document.getElementById("match-modal");
         let matchSettings = ["alg-w-cc", "alg-w-cp", "alg-w-pc", "alg-w-pp", "alg-t-cc", "alg-t-cp", "alg-t-pc", "alg-t-pp", "alg-w-k", "alg-t-k", "alg-w-c", "alg-t-c", "alg-w-p", "alg-t-p", "alg-w-d", "alg-t-d"];
