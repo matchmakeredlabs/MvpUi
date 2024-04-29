@@ -379,3 +379,128 @@ table.custom th, table.custom td {
     border-style: none;
 }
 
+/* The Modal (background) */
+.modal_console {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+  
+  .modal-content_console {
+    background-color: #fefefe;
+    margin: 0 auto; /* Center horizontally */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 700px; /* Fixed width for the modal content */
+    box-sizing: border-box; /* Include padding and border in the width */
+    position: relative; /* Ensure relative positioning */
+    top: 10%;
+  }
+    
+  
+  /* The Close Button */
+  .close_console {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .close_console:hover,
+  .close_console:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  /* Table */
+  .table-container_console {
+    width: 100%; 
+  }
+  
+  .data-table_console {
+    width: 480px;
+    table-layout: fixed; /* Fix the table layout */
+  }
+  
+  /* Thick bottom border for header cells */
+  .header_console {
+    border: 1px solid black;
+    border-top: none;
+    border-bottom: 2px solid black;
+    text-align: center;
+    padding: 8px;
+  }
+  
+  .data-table_console td:first-child, .data-table_console th:first-child {
+    width: 80px; 
+  }
+  
+  /* Distribute columns equally from the second column to the last column */
+  .data_console:not(:first-child), .header_console:not(:first-child) {
+    width: 120px;
+  }
+  
+  /* Custom styling for specific cells */
+  
+  /* Second cell in the first row */
+  .header_console:nth-child(2) {
+    border-left: 2px solid black;
+  }
+    /* Bottom border for the second row */
+    .data-table_console tr:nth-child(2) {
+    border-bottom: 1px solid black;
+    }
+
+  /* Top and left border for the first cell in the second row */
+  .data-table_console tr:nth-child(2) td:first-child {
+    border-top: 2px solid black;
+    border-left: none;
+    border-bottom: 1px solid black;
+  }
+  
+  /* Left border for the second cell in the second row */
+  .data-table_console tr:nth-child(2) td:nth-child(2) {
+    border-left: 2px solid black;
+  }
+  
+  /* Left border for the first cell in the third row */
+  .data-table_console tr:nth-child(3) td:first-child {
+    border-left: none;
+  }
+
+  .data-table_console tr:nth-child(2) td:nth-child(n+2):nth-child(-n+5) {
+    border-bottom: 1px solid black;
+}
+.data-table_console tr:nth-child(2) td:nth-child(n+2):nth-child(-n+4) {
+    border-right: 1px solid black;
+}
+
+.data-table_console tr:nth-child(3) td:nth-child(n+2):nth-child(-n+4) {
+    border-right: 1px solid black;
+}
+
+  
+  /* Left border for the second cell in the third row */
+  .data-table_console tr:nth-child(3) td:nth-child(2) {
+    border-left: 2px solid black;
+    border-right: 1px solid black;
+  }
+
+  .data-table_console .data_console {
+    text-align: center;
+  }
+  
+
+  .header_console:last-child {
+    border-right:none;
+}
