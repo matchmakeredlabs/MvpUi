@@ -112,6 +112,7 @@
   
   .small-button5:hover {
     background-color: #e6e6e6;
+    cursor: pointer;
   }
   
 
@@ -120,4 +121,29 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+  }
+
+  #download-matches:hover {
+    cursor: pointer;
+  }
+
+  .modal-button {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center; 
+    width: 10em; 
+    height: 1em; 
+    border: none;
+    color: black;
+    margin: 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition-duration: 0.4s;
+    position: relative;
+    padding: 10px;
+    overflow: hidden; 
+    text-decoration: none;
   }

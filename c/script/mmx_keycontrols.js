@@ -13,6 +13,70 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 let mmx_dict = {};
 window.searchProperty = "Text"
 
+function downloadJson(filename, jsonContent) {
+    const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
+    const element = document.createElement('a');
+    element.setAttribute('href', dataUrl);
+    element.setAttribute('download', filename + '.json');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+
+function downloadCSV(filename, csvContent) {
+    const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+    const element = document.createElement('a');
+    element.setAttribute('href', dataUrl);
+    element.setAttribute('download', filename + '.csv');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+
+function convertJsonToCsv(data) {
+    // Define the headers for the CSV
+    const headers = [
+        'id',
+        'eleType',
+        'name',
+        'url',
+        'subject',
+        'description',
+        'identifier',
+        'educationalLevel',
+        'creator',
+        'provenance',
+        'key',
+        'mainEntity',
+        'mainEntityId',
+        'isPartOf',
+        'isPartOfId',
+        'datePublished',
+        'sdDatePublished',
+        'sdPublisher',
+        'matchIndex'
+    ];
+
+    // Initialize the CSV string with headers
+    let csv = headers.join(',') + '\n';
+
+    // Iterate through each descriptor and add its data to the CSV
+    data.descriptors.forEach(descriptor => {
+        const row = headers.map(header => {
+            // Replace any double quotes in the field with two double quotes to escape them
+            const field = descriptor[header] || '';
+            return `"${field.toString().replace(/"/g, '""')}"`;
+        }).join(',');
+        csv += row + '\n';
+    });
+
+    return csv;
+}
+
 function toggleOneElement(element) {
     let currentElement = document.getElementById(element)
     if (currentElement.style.display === 'none') {
@@ -310,9 +374,15 @@ class Mmx {
     }
 
     static RenderDescriptorMatchFilter(element) {
-        // Clear existing contents
+       // Clear existing contents
         element.innerHTML = "";
 
+        // Create flexbox container
+        let container = document.createElement("div");
+        container.style.display = "flex"; // Set display to flex
+        container.style.alignItems = "center"; // Align items vertically in the center
+
+        // Create typeSelect (first select element)
         let typeSelect = document.createElement("select");
         for (let key in Mmx.EleTypeTranslate) {
             let opt = document.createElement("option");
@@ -329,10 +399,25 @@ class Mmx {
 
         mmx_dict.descriptorTypeFilter = typeSelect;
 
-        let searchbar = document.createElement("div");
-        searchbar.className = "mmx_searchBar";
-        searchbar.appendChild(typeSelect);
-        element.appendChild(searchbar);
+        // Create typeSelect2 (second select element)
+        let typeSelect2 = document.createElement("select");
+        let dummySettings = ["Console Settings 1", "Console Settings 2", "Console Settings 3"];
+        for (let key of dummySettings) {
+            let opt = document.createElement("option");
+            opt.value = key;
+            opt.textContent = key;
+            typeSelect2.appendChild(opt);
+        }
+        typeSelect2.style.marginLeft = "auto";
+
+        // Append select elements to the container
+        container.appendChild(typeSelect);
+        container.appendChild(typeSelect2);
+
+        // Append the flexbox container to the element
+        element.appendChild(container);
+
+
     }
 
 
@@ -543,7 +628,13 @@ class Mmx {
         mmx_dict.searchKey = key;
         mmx_dict.searchEleType = eleType;
         if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
+        
+        let matchWeights = localStorage.getItem("matchWeights");
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}`;
+        if(matchWeights) {
+            url += `&${matchWeights}`
+        }
+
         Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsByKey_Callback);
     }
 
@@ -1028,14 +1119,6 @@ class Mmx {
         // Read options from the MMT token cookie
         let token = new URLSearchParams(Mmx.getCookie("MMT"));
 
-        // Extra styles
-        {
-            let s = document.createElement('link');
-            s.rel = "stylesheet";
-            s.type = "text/css";
-            s.href = "/c/res/" + token.get("st") + ".css";
-            document.head.appendChild(s);
-        }
 
         let hasFindDescriptor = false;
         let hasComposeKey = false;
@@ -1088,6 +1171,7 @@ class Mmx {
             Mmx.RenderDescriptorMatchDisplay(ele);
         }
 
+    
         if (hasFindDescriptor) {
             let stmtId = query.get("stmtId");
             if (stmtId) {
@@ -1118,9 +1202,86 @@ class Mmx {
             }
         }
 
+        let downloadModal = document.getElementById("download-modal");
+        let downloadButton = document.getElementById("download-matches");
+        downloadButton.onclick = function() {
+            downloadModal.style.display = "block";
+        }
+
+        let downloadJSONButton = document.getElementById("download-json")
+        let downloadCSVButton = document.getElementById("download-csv")
+
+        downloadJSONButton.onclick = function() {
+            let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+            Mmx.LoadJsonAsync(url, function(result) {
+                downloadJson(`matches-${mmx_dict.searchKey}`, result);
+                }
+            )
+        }
+        downloadCSVButton.onclick = function() {
+            let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+            Mmx.LoadJsonAsync(url, function(result) {
+                downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result))
+                }
+            )
+        }
+
+        // Get the modal
+        let match_modal = document.getElementById("match-modal");
+        let matchSettings = ["alg-w-cc", "alg-w-cp", "alg-w-pc", "alg-w-pp", "alg-t-cc", "alg-t-cp", "alg-t-pc", "alg-t-pp", "alg-w-k", "alg-t-k", "alg-w-c", "alg-t-c", "alg-w-p", "alg-t-p", "alg-w-d", "alg-t-d"];
+
+        // Get the button that opens the modal
+        let match_console_button = document.getElementById("match-console-button");
+
+        // Get the <span> element that closes the modal
+        let close_console = document.getElementsByClassName("close_console");
+        let modifyBtn = document.querySelector(".modify-btn_console");
+
+        // When the user clicks on the button, open the modal
+        if (match_console_button) { 
+            match_console_button.onclick = function() {
+                match_modal.style.display = "block";
+                let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
+                for (let property of matchSettings) {
+                    let item =  document.getElementById(property);
+                    item.innerHTML = matchWeightsObj[property]
+                }
+            }
+        }
+
+        // When the user clicks on close_console(x), close the modal
+        for (let close of close_console) {
+            if (close) {
+                close.onclick = function() {
+                    match_modal.style.display = "none";
+                    downloadModal.style.display = "none";
+                }
+            }
+        }
+        
+
+        if (modifyBtn) {
+            modifyBtn.onclick = function() {
+                window.location.href = `/c/MatchConsole?matchKey=${mmx_dict.searchKey}`;
+            }
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == match_modal) {
+                match_modal.style.display = "none";
+            }
+            if (event.target == downloadModal) {
+                downloadModal.style.display = "none";
+            }
+        }
+
+
     }
 
 }
+
+
 
 
 window.addEventListener("load", Mmx.OnPageLoad);

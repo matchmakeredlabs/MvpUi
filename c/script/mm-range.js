@@ -43,6 +43,16 @@
         shadow.appendChild(this.#numberInput);
     }
 
+    updateValue(newValue) {
+        this.setAttribute('value', newValue);
+        this.#rangeInput.value = newValue;
+        this.#numberInput.value = newValue;
+        this.#internals.setFormValue(newValue);
+        
+        // You might also want to dispatch an event if needed, for example:
+        this.dispatchEvent(new Event('change'));
+    }
+
     connectedCallback() {
         let v = this.getAttribute('min');
         if (v) {

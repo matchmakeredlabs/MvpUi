@@ -7,8 +7,15 @@ title: Match Descriptors
         <article class="mmx_descriptorSearchForm"></article>
     </div>
     <div>
-        <h1>Matches</h1>
-        <article class="mmx_descriptorMatchFilter"></article>
+        <h1>
+            Matches
+            <span style="font-size: 15px; display: inline-block; vertical-align: middle;">
+                <i id = "download-matches" class="fa-sharp fa-solid fa-download" ></i>
+            </span>
+            <button id="match-console-button">Match Console</button>
+        </h1>
+        <span class="mmx_descriptorMatchFilter">
+        </span>    
     </div>
 </div>
 <div class="mm_columns_body mm_columns">
@@ -19,4 +26,80 @@ title: Match Descriptors
         <article class="mmx_descriptorMatchDisplay"></article>
     </div>
 </div>
+
+<!-- The Modal -->
+<div id="match-modal" class="modal_console">
+    <!-- Modal content -->
+    <div class="modal-content_console">
+      <span class="close_console">&times;</span>
+      <h2 style="text-align: center;">Match Settings</h2>
+      <br>
+      <table class="data-table_console">
+        <tr>
+          <th></th>
+          <th class="header_console">Central-Central</th>
+          <th class="header_console">Central-Peripheral</th>
+          <th class="header_console">Peripheral-Central</th>
+          <th class="header_console">Peripheral-Peripheral</th>
+        </tr>
+        <tr>
+          <td class="row-label_console">Weight</td>
+          <td class="data_console" id = "alg-w-cc">0</td>
+          <td class="data_console" id = "alg-w-cp">0</td>
+          <td class="data_console" id = "alg-w-pc">0</td>
+          <td class="data_console" id = "alg-w-pp">0</td>
+        </tr>
+        <tr>
+          <td class="row-label_console">Threshold&nbsp;&nbsp;</td>
+          <td class="data_console" id = "alg-t-cc">0</td>
+          <td class="data_console" id = "alg-t-cp">0</td>
+          <td class="data_console" id = "alg-t-pc">0</td>
+          <td class="data_console" id = "alg-t-pp">0</td>
+        </tr>
+      </table>
+      <br>
+      <table class="data-table_console">
+        <tr>
+          <th></th>
+          <th class="header_console">Knowledge (STFK)</th>
+          <th class="header_console">Conceptual Understanding</th>
+          <th class="header_console">Process</th>
+          <th class="header_console">Pedagogy</th>
+        </tr>
+        <tr>
+          <td class="row-label_console">Weight</td>
+          <td class="data_console" id = "alg-w-k">0</td>
+          <td class="data_console" id = "alg-w-c">0</td>
+          <td class="data_console" id = "alg-w-p">0</td>
+          <td class="data_console" id = "alg-w-d">0</td>
+        </tr>
+        <tr>
+          <td class="row-label_console">Threshold&nbsp;&nbsp;</td>
+          <td class="data_console" id = "alg-t-k">0</td>
+          <td class="data_console" id = "alg-t-c">0</td>
+          <td class="data_console" id = "alg-t-p">0</td>
+          <td class="data_console" id = "alg-t-d">0</td>
+        </tr>
+      </table>
+      <div class="button-container_console">
+        <button class="modify-btn_console">Modify</button>
+      </div>      
+    </div>
+  
+  </div>
+  
+<div id="download-modal" class="modal_console">
+  <div class="modal-content_console" style = "width: 400px;">
+    <span class="close_console">&times;</span>
+    <div class="button-container-download">
+      <div class="modal-button small-button5" id = "download-json">Download JSON</div>
+      <br>
+      <div class="modal-button small-button5" id = "download-csv">Download CSV</div>
+    </div>
+  </div> 
+  </div>
+
+</div>
+
 <script type="module" src="/c/script/mmx_keycontrols.js"></script>
+<script src="https://kit.fontawesome.com/9e617e5901.js"></script>
