@@ -4,21 +4,74 @@ title: Match Console
 
 <div class="mm_flex_vert">
     <form id="algForm" class="con_algForm">
-        <div class="con-row"><span class="con-col1 con-heading">Match</span><span class="con-col2 con-heading">Weight</span><span class="con-col3 con-heading">Threshold</span></div>
-        <div class="con-row"><span class="con-col1">Central-Central</span><mm-range name="alg-w-cc" class="con-col2" min="0" max="2" step="0.01" value="2"></mm-range><mm-range name="alg-t-cc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Central-Peripheral</span><mm-range name="alg-w-cp" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-cp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Peripheral-Central</span><mm-range name="alg-w-pc" class="con-col2" min="0" max="2" step="0.01" value="0.5"></mm-range><mm-range name="alg-t-pc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Peripheral-Peripheral</span><mm-range name="alg-w-pp" class="con-col2" min="0" max="2" step="0.01" value="0.25"></mm-range><mm-range name="alg-t-pp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row" style="margin-top: 0.75em;"><span class="con-col1 con-heading">Statement Type</span><span class="con-col2 con-heading">Weight</span><span class="con-col3 con-heading">Threshold</span></div>
-        <div class="con-row"><span class="con-col1">Knowledge (STFk)</span><mm-range name="alg-w-k" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-k" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Conceptual Understanding</span><mm-range name="alg-w-c" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-c" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Process</span><mm-range name="alg-w-p" class="con-col2" min="0" max="2" step="0.01" value="1"></mm-range><mm-range name="alg-t-p" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row"><span class="con-col1">Pedagogy</span><mm-range name="alg-w-d" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range><mm-range name="alg-t-d" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range></div>
-        <div class="con-row" style="margin-top: 0.75em;"><span class="con-col1">Alternative Anchor</span><span class="con-col2"><input type="checkbox" name="alg-self-anchor"></span><span class="con-col3">&nbsp;</span></div>
-        <div class="con-row" style="margin-top: 0.75em;"><span class="con-colspan"><button>Find Matches</button></span></div>
+        <div class="con-row">
+            <span class="con-col1 con-heading">Match</span>
+            <span class="con-col2 con-heading">Weight</span>
+            <span class="con-col3 con-heading">Threshold</span>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Central-Central</span>
+            <mm-range name="alg-w-cc" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-cc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Central-Peripheral</span>
+            <mm-range name="alg-w-cp" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-cp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Peripheral-Central</span>
+            <mm-range name="alg-w-pc" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-pc" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Peripheral-Peripheral</span>
+            <mm-range name="alg-w-pp" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-pp" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row" style="margin-top: 0.75em;">
+            <span class="con-col1 con-heading">Statement Type</span>
+            <span class="con-col2 con-heading">Weight</span>
+            <span class="con-col3 con-heading">Threshold</span>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Knowledge (STFk)</span>
+            <mm-range name="alg-w-k" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-k" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Conceptual Understanding</span>
+            <mm-range name="alg-w-c" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-c" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Process</span>
+            <mm-range name="alg-w-p" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-p" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row">
+            <span class="con-col1">Pedagogy</span>
+            <mm-range name="alg-w-d" class="con-col2" min="0" max="2" step="0.01" value="0"></mm-range>
+            <mm-range name="alg-t-d" class="con-col3" min="0" max="1" step="0.01" value="0"></mm-range>
+        </div>
+        <div class="con-row" style="margin-top: 0.75em;">
+            <span class="con-col1">Alternative Anchor</span>
+            <span class="con-col2">
+                <input type="checkbox" name="alg-self-anchor">
+            </span>
+            <span class="con-col3">&nbsp;</span>
+        </div>
+        <div class="con-row" style="margin-top: 0.75em;">
+            <span class="con-colspan">
+                <button>Save Match Settings</button>
+            </span>
+        </div>
     </form>
+    <span style="display: flex; justify-content: center; align-items: center; padding: 0.5em;">
+        <button id="set-defaults">Set Default</button>
+    </span>    
     <hr />
-    <h2>Matches from</h2>
+    <h2 id="matches-from-header"></h2>
     <p>
         <span id="matchKey"></span>
     </p>
@@ -42,11 +95,46 @@ title: Match Console
             form.onsubmit = on_alg_submit;
         }
         
+        // Selecting all mm-range elements
+        let mmRanges = document.querySelectorAll('mm-range');
+        let matchWeightsObj = localStorage.getItem("matchWeightsObj")
+        if (!matchWeightsObj) {
+            matchWeightsObj = {
+                'alg-w-cc': '2',
+                'alg-t-cc': '0',
+                'alg-w-cp': '1',
+                'alg-t-cp': '0',
+                'alg-w-pc': '0.5',
+                'alg-t-pc': '0',
+                'alg-w-pp': '0.25',
+                'alg-t-pp': '0',
+                'alg-w-k': '1',
+                'alg-t-k': '0',
+                'alg-w-c': '1',
+                'alg-t-c': '0',
+                'alg-w-p': '1',
+                'alg-t-p': '0',
+                'alg-w-d': '0',
+                'alg-t-d': '0'
+                }
+        } else {
+            matchWeightsObj = JSON.parse(matchWeightsObj);
+        }
+    
+        // Looping through each mm-range element
+        mmRanges.forEach((mmRange) => {
+            // Change the value of each mm-range element
+            let name = mmRange.getAttribute('name')
+            mmRange.updateValue(matchWeightsObj[name]); 
+            console.log(mmRange);
+        });
+
         let key = new URLSearchParams(window.location.search).get("matchKey");
         if (key) {
             document.getElementById("matchKey").textContent = key;
+            document.getElementById("matches-from-header").textContent = "Matches from";
             updateMatches(form);
-        }
+        } 
     }
 
     async function on_alg_submit(event) {
@@ -54,15 +142,33 @@ title: Match Console
         updateMatches(event.currentTarget);
     }
 
+    function extractQueryParams(url) {
+        let params = new URLSearchParams(url.substring(url.indexOf('?')));
+        let queryParams = {};
+        for (let param of params.entries()) {
+            if (param[0] !== 'searchKey' && param[0] !== 'eleType') {
+                queryParams[param[0]] = param[1];
+            }
+        }
+        queryParams = JSON.stringify(queryParams);
+        return queryParams;
+    }
+
     async function updateMatches(formEle) {
-        console.log("updateMatches");
         // Get the algorithm weights
         let weights = new URLSearchParams(new FormData(formEle)).toString();
+        localStorage.setItem("matchWeights", weights)
+
+        let matchWeightsObj = extractQueryParams(weights);
+        localStorage.setItem("matchWeightsObj", matchWeightsObj)
 
         // Get the key
         let key = document.getElementById("matchKey").textContent;
 
-        if (!key) return;
+        if (!key) {
+            window.history.back();
+            return;
+        }
 
         let eleType = "any";
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&${weights}`;
@@ -114,6 +220,35 @@ title: Match Console
     function StripKeyPrefix(key) {
         let slash = key.lastIndexOf("/");
         return (slash >= 0) ? key.substring(slash + 1) : key;
+    }
+
+    let setDefault = document.getElementById("set-defaults");
+    setDefault.onclick = function () {
+        let matchWeightsObj = {
+            'alg-w-cc': '2',
+            'alg-t-cc': '0',
+            'alg-w-cp': '1',
+            'alg-t-cp': '0',
+            'alg-w-pc': '0.5',
+            'alg-t-pc': '0',
+            'alg-w-pp': '0.25',
+            'alg-t-pp': '0',
+            'alg-w-k': '1',
+            'alg-t-k': '0',
+            'alg-w-c': '1',
+            'alg-t-c': '0',
+            'alg-w-p': '1',
+            'alg-t-p': '0',
+            'alg-w-d': '0',
+            'alg-t-d': '0'
+        }
+        let mmRanges = document.querySelectorAll('mm-range');
+        mmRanges.forEach((mmRange) => {
+            // Change the value of each mm-range element
+            let name = mmRange.getAttribute('name')
+            mmRange.updateValue(matchWeightsObj[name]); 
+            console.log(mmRange);
+        });
     }
 
     window.addEventListener("load", on_load);

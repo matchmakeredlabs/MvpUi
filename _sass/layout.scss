@@ -45,3 +45,35 @@ main {
     flex-shrink: 1;
 }
 
+#match-console-button {
+    background-color: #5d9732;
+    color: white;
+    border: none; /* Remove border */
+    padding: 8px 16px; /* Adjust padding as needed */
+    cursor: pointer;
+    border-radius: 4px; /* Add border radius for rounded corners */
+    float: right;
+}
+
+.button-container_console {
+    display: flex;
+    justify-content: flex-end; /* Align items to the end of the container */
+  }
+  
+.modify-btn_console {
+    background-color: #7a7a7a;
+    color: white;
+    border: none; /* Remove border */
+    padding: 8px 16px; /* Adjust padding as needed */
+    cursor: pointer;
+    border-radius: 4px; /* Add border radius for rounded corners */
+    align-self: right;
+}
+
+.button-container-download {
+    display: flex;
+    flex-direction: column; /* Stacks children vertically */
+    justify-content: center; /* Centers children vertically in the container */
+    align-items: center; /* Centers children horizontally in the container */
+    padding: 8px 16px; /* Adjust padding as needed */
+}
