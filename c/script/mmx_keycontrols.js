@@ -234,10 +234,9 @@ class Mmx {
         if (event.target.textContent === "Text") {
             mmid_search.placeholder = "Add key words to search";
             searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
-            mmx_dict.stmtSearchResult.innerHTML = "";
         } else {
             let keywords = document.getElementById("mmid_search").value;
-            mmid_search.placeholder = "You can add another term to augment the search";
+            mmid_search.placeholder = "Add another term to augment the search";
 
             let requestBody = "";
             if (window.searchProperty == "AI") {
@@ -264,6 +263,7 @@ class Mmx {
                 console.log(json);
                 Mmx.SearchStatements_Callback(json)
             })
+
         }
 
         // Add 'active' class to the clicked button
@@ -1336,14 +1336,6 @@ class Mmx {
                 downloadModal.style.display = "none";
             }
         }
-
-        let mmid_search = document.getElementById("mmid_search");
-        let searchOneLiner = document.getElementById("searchOneLiner")
-        mmid_search.placeholder = "Add key words to search";
-        searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
-
-
-
 
     }
 
