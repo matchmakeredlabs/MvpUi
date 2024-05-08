@@ -1303,6 +1303,26 @@ class Mmx {
             match_console_button.onclick = function() {
                 match_modal.style.display = "block";
                 let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
+                if (!matchWeightsObj) {
+                    matchWeightsObj = {
+                        'alg-w-cc': '2',
+                        'alg-t-cc': '0',
+                        'alg-w-cp': '1',
+                        'alg-t-cp': '0',
+                        'alg-w-pc': '0.5',
+                        'alg-t-pc': '0',
+                        'alg-w-pp': '0.25',
+                        'alg-t-pp': '0',
+                        'alg-w-k': '1',
+                        'alg-t-k': '0',
+                        'alg-w-c': '1',
+                        'alg-t-c': '0',
+                        'alg-w-p': '1',
+                        'alg-t-p': '0',
+                        'alg-w-d': '0',
+                        'alg-t-d': '0'
+                    }
+                }
                 for (let property of matchSettings) {
                     let item =  document.getElementById(property);
                     item.innerHTML = matchWeightsObj[property]
@@ -1323,6 +1343,7 @@ class Mmx {
 
         if (modifyBtn) {
             modifyBtn.onclick = function() {
+                match_modal.style.display = "none";
                 window.location.href = `/c/MatchConsole?matchKey=${mmx_dict.searchKey}`;
             }
         }
