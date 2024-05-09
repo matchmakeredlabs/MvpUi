@@ -285,8 +285,10 @@ class Mmx {
 
         parent.appendChild(bdoc.ele("div",
             // bdoc.class("control"),
-            bdoc.attr("style", "display: flex; margin-bottom: 0.5rem;"),
+            bdoc.attr("style", "display: flex; flex-wrap: wrap; margin-bottom: 0.5rem;"),
             bdoc.class("toggle-container"),
+            bdoc.ele("div",
+            bdoc.attr("style","display: flex;"),
             bdoc.ele("span", 
                 bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
             bdoc.ele("div",
@@ -300,15 +302,17 @@ class Mmx {
             bdoc.ele("div",
                 bdoc.class("toggle-button"),
                 bdoc.attr("onclick", Mmx.setActive),
-                bdoc.attr("innerHTML", "AI + Context")),
+                bdoc.attr("innerHTML", "AI + Context"),
+                bdoc.attr("style", "margin-right: 10px;"))),
+            bdoc.ele("div",
             bdoc.ele("span", 
-                bdoc.attr("innerHTML", "&nbsp;&nbsp;AI Algorithm:&nbsp;&nbsp;")),
+                bdoc.attr("innerHTML", "AI Algorithm:&nbsp;&nbsp;")),
             bdoc.ele("select",
                 bdoc.attr("style", "width: 70px;"),
                 bdoc.ele("option", 
                     bdoc.attr("value", "Cosine Similarity"),
                     bdoc.attr("innerHTML", "Cosine Similarity")
-                ))
+                )))
         ))
 
         let searchOneLiner = document.createElement("div");
