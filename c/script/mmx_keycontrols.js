@@ -13,7 +13,16 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 let mmx_dict = {};
 window.searchProperty = "Text"
 
+function filterDescriptorsByElementFilter(descriptorArr) {
+    if(localStorage.getItem("matchFilter") !== "null") {
+        descriptorArr = descriptorArr.filter(descriptor => descriptor.eleType == localStorage.getItem("matchFilter"));
+    }
+    return descriptorArr;
+}
+
 function downloadJson(filename, jsonContent) {
+    jsonContent.descriptors = filterDescriptorsByElementFilter(jsonContent.descriptors);
+
     const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
     const element = document.createElement('a');
     element.setAttribute('href', dataUrl);
@@ -65,7 +74,7 @@ function convertJsonToCsv(data) {
     let csv = headers.join(',') + '\n';
 
     // Iterate through each descriptor and add its data to the CSV
-    data.descriptors.forEach(descriptor => {
+    data.forEach(descriptor => {
         const row = headers.map(header => {
             // Replace any double quotes in the field with two double quotes to escape them
             const field = descriptor[header] || '';
@@ -441,6 +450,7 @@ class Mmx {
 
         typeSelect.onchange = function () {
             if (mmx_dict.searchKey != null && mmx_dict.searchEleType != mmx_dict.descriptorTypeFilter.value) {
+                localStorage.setItem("matchFilter", mmx_dict.descriptorTypeFilter.value);
                 Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
             }
         }
@@ -1285,8 +1295,9 @@ class Mmx {
         if (downloadCSVButton) {
             downloadCSVButton.onclick = function() {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
-                Mmx.LoadJsonAsync(url, function(result) {
-                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result))
+                Mmx.LoadJsonAsync(url, (result) => {
+                    result = filterDescriptorsByElementFilter(result.descriptors);
+                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result));
                     }
                 )
             }
@@ -1361,6 +1372,8 @@ class Mmx {
                 downloadModal.style.display = "none";
             }
         }
+
+        localStorage.setItem("matchFilter", null)
 
     }
 
