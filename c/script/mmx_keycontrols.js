@@ -240,9 +240,15 @@ class Mmx {
 
         let mmid_search = document.getElementById("mmid_search");
         let searchOneLiner = document.getElementById("searchOneLiner")
+        let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         if (event.target.textContent === "Text") {
             mmid_search.placeholder = "Add key words to search";
-            searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
+            let text = document.createElement("span")
+            text.style = "margin-right: 0.5em;"
+            text.textContent = "Returned statements match one or more of the search keywords"
+            searchOneLiner.innerHTML = "";
+            searchOneLiner.appendChild(text);
+            searchOneLiner.innerHTML += tooltip;
         } else {
             let keywords = document.getElementById("mmid_search").value;
             mmid_search.placeholder = "Add another term to augment the search";
@@ -250,12 +256,21 @@ class Mmx {
             let requestBody = "";
             if (window.searchProperty == "AI") {
                 requestBody += JSON.stringify({matchText: window.description + keywords});
-                searchOneLiner.textContent = "Returned statements based on the descriptor abstract"
+                let text = document.createElement("span")
+                text.style = "margin-right: 0.5em;"
+                text.textContent = "Returned statements based on the descriptor abstract"
+                searchOneLiner.innerHTML = "";
+                searchOneLiner.appendChild(text);
+                searchOneLiner.innerHTML += tooltip;
             } 
             else if (window.searchProperty == "AI + Context") {
                 requestBody += JSON.stringify({matchText: window.descriptorContext + keywords});
-                searchOneLiner.textContent = "Returned statements based on the descriptor abstract and associated context"
-
+                let text = document.createElement("span")
+                text.style = "margin-right: 0.5em;"
+                text.textContent = "Returned statements based on the descriptor abstract and associated context"
+                searchOneLiner.innerHTML = "";
+                searchOneLiner.appendChild(text);
+                searchOneLiner.innerHTML += tooltip;
             }
             console.log(requestBody);
             let url = "/api/match/palet"
@@ -327,6 +342,13 @@ class Mmx {
         let searchOneLiner = document.createElement("div");
         searchOneLiner.id = "searchOneLiner"
         searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
+        let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
+        let text = document.createElement("span")
+        text.style = "margin-right: 0.5em;"
+        text.textContent = "Returned statements match one or ∂more of the search keywords"
+        searchOneLiner.innerHTML = "";
+        searchOneLiner.appendChild(text);
+        searchOneLiner.innerHTML += tooltip;
         searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`
         parent.appendChild(searchOneLiner)
 
@@ -1271,6 +1293,11 @@ class Mmx {
             if (key) {
                 Mmx.LoadKeyIntoDescriptorSearchForm(key);
             }
+        }
+
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.classList.add('mm_descColumns');
         }
 
         let downloadModal = document.getElementById("download-modal");
