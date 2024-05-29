@@ -18,6 +18,7 @@ let sortDropdown = document.getElementById("sortDropdown");
 let selectedOptions = {};
 let searchKeywords = [];
 let collectionHTML = {};
+let allCollections = {};
 
 function sortByIndex(array, index) {
     return array.sort((a, b) => {
@@ -66,7 +67,7 @@ window.selectOption = function(filter) {
           filterContainer.removeChild(filterElement);
           
           // Remove the option from the selectedOptions array
-          selectedOptions[filter][selectedOption] = false;
+          selectedOptions[filter][String(selectedOption)] = false;
           reload();
         });
   
@@ -224,6 +225,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
             }
             if (!Object.keys(selectedOptions[filter]).includes(currentValue)) {
                 selectedOptions[filter][currentValue] = false;
+                // Inner option
                 document.getElementById(`${filter}-dropdown`).innerHTML += `<option value="${currentValue}">${currentValue}</option>`
             }
 
@@ -232,7 +234,11 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
         
         // Grab data for table
         for (let property of displayProperties) {
-            elementData += `<td>${collection[property]}</td>`;
+            let currentValue = collection[property]
+            if (currentValue === null || currentValue === "" || currentValue === undefined) {
+                currentValue = 'Null';
+            }
+            elementData += `<td>${currentValue}</td>`;
         }
         console.log(elementId);
         elementId = elementId.slice(0, -1);
@@ -245,6 +251,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
         // Append and store for later
         tableBody.innerHTML += htmlCode;
         collectionHTML[collection.id] = htmlCode;
+        allCollections[collection.id] = collection;
     }
     
 
@@ -297,6 +304,7 @@ async function reload() {
         }
     }
 
+    let finalIds = [];
     if (filterNeeded) {
         // filters = [subject, publisher, etc.]
         let collectionsForEachFilter = {}
@@ -325,6 +333,9 @@ async function reload() {
                             if (option === collection[filter]) {
                                 collectionsForEachFilter[filter].push(collection.id);
                             }
+                            else if (option == "Null" && collection[filter] == undefined) {
+                                collectionsForEachFilter[filter].push(collection.id);
+                            }
                         }
                     }
                 }
@@ -334,20 +345,40 @@ async function reload() {
             }
         }
         console.log(collectionsForEachFilter);
-        let finalIds = collectionsForEachFilter[filters[0]]
+        finalIds = collectionsForEachFilter[filters[0]]
         for (let filter of filters.slice(1)) {
             finalIds = finalIds.filter(subject => collectionsForEachFilter[filter].includes(String(subject)));
         }
 
-        if (finalIds.length > 0) {
-        }
-        
-        for (const collectionId of finalIds) {
-            tableBody.innerHTML += collectionHTML[collectionId];
-        }
     } else {
-        for (const collection of collectionsContainsKeyword) {
-            tableBody.innerHTML += collectionHTML[collection.id];
+        for (let collection of collectionsContainsKeyword) {
+            finalIds.push(collection['id'])
+        }
+    }
+
+    let newFilters = {}
+    for (const collectionId of finalIds) {
+        tableBody.innerHTML += collectionHTML[collectionId];
+        for (let filter of filters) {
+            if(newFilters[filter] !== undefined) {
+                newFilters[filter].push(allCollections[collectionId][filter]);
+            } else {
+                newFilters[filter] = [allCollections[collectionId][filter]];
+            }
+        }
+    }
+
+    for (let filter of filters) {
+        newFilters[filter] = Array.from(new Set(newFilters[filter]));
+        document.getElementById(`${filter}-dropdown`).innerHTML = `<option value="--">--</option>`
+    }
+    console.log("newFilters", newFilters);
+    for (let filter of filters) {
+        for (let currentValue of newFilters[filter]) {
+            if (currentValue === null || currentValue === "" || currentValue === undefined) {
+                currentValue = 'Null';
+            }
+            document.getElementById(`${filter}-dropdown`).innerHTML += `<option value="${currentValue}">${currentValue}</option>`
         }
     }
 
