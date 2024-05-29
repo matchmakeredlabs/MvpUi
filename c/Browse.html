@@ -1,14 +1,12 @@
 ---
 title: MatchMaker Browser
 ---
-<main class="mm_columns">
     <div>
         <article id="mmx_browse_tree">Loading...</article>
     </div>
     <div>
         <article id="mmx_browse_detail"></article>
     </div>
-</main>
 <script type="module">
     import MmCollection from "/c/script/mmx_browse.js";
     async function loadCollection() {
@@ -18,6 +16,11 @@ title: MatchMaker Browser
     
         const collection = await MmCollection.LoadFromId(id);
         collection.attachTo(document.getElementById("mmx_browse_tree"));
+
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.classList.add('mm_columns');
+        }
     }
     
     loadCollection();
