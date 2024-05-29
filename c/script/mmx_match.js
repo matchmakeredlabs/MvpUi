@@ -1,4 +1,4 @@
-﻿/* MatchMaker Prototype Web Controls
+/* MatchMaker Prototype Web Controls
  * Eventually this will likely become a proper JavaScript module.
  * which is a better way to isolate things than using the
  * objects like I've done here.
@@ -345,7 +345,7 @@ class Mmx {
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         let text = document.createElement("span")
         text.style = "margin-right: 0.5em;"
-        text.textContent = "Returned statements match one or more of the search keywords"
+        text.textContent = "Returned statements match one or ∂more of the search keywords"
         searchOneLiner.innerHTML = "";
         searchOneLiner.appendChild(text);
         searchOneLiner.innerHTML += tooltip;
