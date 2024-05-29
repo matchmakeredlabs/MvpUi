@@ -55,29 +55,31 @@ title: MatchMaker Browser
 </head>
 
 <body>
-<main>
-    <!-- SEARCH --> 
-    <h2>Collections</h2> 
-    <b>Search By Keyword: </b>
-    <input id="keywordElement" type="text"></input> 
-    <button id="addKeyword">+</button>
-    <span id="keywordContainer"></span>
-    <br>
-
-    <!-- FILTER --> 
-    <div id="filterDropdowns">
-    <b>Filter by: </b> 
-    </div>
-    <div id="filterContainers">
-    </div>
-
-    <!-- SORT --> 
-    <b>Sort by: </b>
-    <select id="sortDropdown">
-        <option value="--">--</option>
-        
-    </select>
-    <br>
+        <div style="padding-left:2em;">
+        <!-- SEARCH --> 
+        <h2>Collections</h2> 
+        <b>Search By Keyword: </b>
+        <input id="keywordElement" type="text"></input> 
+        <button id="addKeyword">+</button>
+        <span id="keywordContainer"></span>
+        <br>
+    
+        <!-- FILTER --> 
+        <div id="filterDropdowns">
+        <b>Filter by: </b> 
+        </div>
+        <div id="filterContainers">
+        </div>
+    
+        <!-- SORT --> 
+        <b>Sort by: </b>
+        <select id="sortDropdown">
+            <option value="--">--</option>
+            
+        </select>
+        </div>
+        <br>
+    <main style="height: calc(100vh - 20rem);">
 
     <div class="table-container">
         <table>

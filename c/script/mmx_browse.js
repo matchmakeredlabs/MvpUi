@@ -58,6 +58,7 @@ export default class MmCollection {
         }
 
         this.descriptors = descriptors;
+
     }
 
     select(ele) {

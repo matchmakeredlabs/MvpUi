@@ -1,4 +1,4 @@
-﻿/* MatchMaker Prototype Web Controls
+/* MatchMaker Prototype Web Controls
  * Eventually this will likely become a proper JavaScript module.
  * which is a better way to isolate things than using the
  * objects like I've done here.
@@ -12,88 +12,6 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 // Container for MMX Globals
 let mmx_dict = {};
 window.searchProperty = "Text"
-
-function filterDescriptorsByElementFilter(descriptorArr) {
-    if(localStorage.getItem("matchFilter") !== "null") {
-        descriptorArr = descriptorArr.filter(descriptor => descriptor.eleType == localStorage.getItem("matchFilter"));
-    }
-    return descriptorArr;
-}
-
-function downloadJson(filename, jsonContent) {
-    jsonContent.descriptors = filterDescriptorsByElementFilter(jsonContent.descriptors);
-
-    const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
-    const element = document.createElement('a');
-    element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.json');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
-
-function downloadCSV(filename, csvContent) {
-    const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-    const element = document.createElement('a');
-    element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.csv');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
-
-function convertJsonToCsv(data) {
-    // Define the headers for the CSV
-    const headers = [
-        'id',
-        'eleType',
-        'name',
-        'url',
-        'subject',
-        'description',
-        'identifier',
-        'educationalLevel',
-        'creator',
-        'provenance',
-        'key',
-        'mainEntity',
-        'mainEntityId',
-        'isPartOf',
-        'isPartOfId',
-        'datePublished',
-        'sdDatePublished',
-        'sdPublisher',
-        'matchIndex'
-    ];
-
-    // Initialize the CSV string with headers
-    let csv = headers.join(',') + '\n';
-
-    // Iterate through each descriptor and add its data to the CSV
-    data.forEach(descriptor => {
-        const row = headers.map(header => {
-            // Replace any double quotes in the field with two double quotes to escape them
-            const field = descriptor[header] || '';
-            return `"${field.toString().replace(/"/g, '""')}"`;
-        }).join(',');
-        csv += row + '\n';
-    });
-
-    return csv;
-}
-
-function toggleOneElement(element) {
-    let currentElement = document.getElementById(element)
-    if (currentElement.style.display === 'none') {
-        currentElement.style.display = 'block';
-    } else {
-        currentElement.style.display = 'none';
-    }
-}
 
 function extractStmtIDs() {
     const stmtIdElements = document.querySelectorAll('.mm_stmtId');
@@ -246,6 +164,9 @@ class Mmx {
             let text = document.createElement("span")
             text.style = "margin-right: 0.5em;"
             text.textContent = "Returned statements match one or more of the search keywords"
+            document.querySelectorAll('.mmc_stmtSearchResult').forEach(element => {
+                element.innerHTML = '';
+            });   
             searchOneLiner.innerHTML = "";
             searchOneLiner.appendChild(text);
             searchOneLiner.innerHTML += tooltip;
@@ -402,105 +323,6 @@ class Mmx {
         element.appendChild(keyTable);
     }
 
-    static RenderDescriptorSearchForm(element) {
-        // Clear existing contents
-        element.innerHTML = "";
-
-        let typeSelect = bdoc.ele("select",
-            bdoc.attr("name", "eleType"));
-        for (let key in Mmx.EleTypeTranslate) {
-            typeSelect.appendChild(bdoc.ele("option",
-                bdoc.attr("value", key),
-                bdoc.attr("textContent", Mmx.EleTypeTranslate[key])));
-        }
-
-        typeSelect.onchange = function (event) {
-            if (mmx_dict.searchKeywords != null && mmx_dict.searchKeywordsEleType != event.target.value) {
-                Mmx.SearchDescriptorsByKeywords();
-            }
-        }
-
-        let search = bdoc.ele("input",
-            bdoc.attr("type", "search"),
-            bdoc.class("mmc_descSearch"),
-            bdoc.attr("onsearch", Mmx.SearchDescriptorsByKeywords));
-        
-        // Search bar
-        element.appendChild(bdoc.ele("div", bdoc.class("mmx_descSearchBar"),
-            search,
-            bdoc.ele("input",
-                bdoc.attr("type", "button"),
-                bdoc.attr("value", "\uD83D\uDD0D"),
-                bdoc.class("mmc_descSearchButton"),
-                bdoc.attr("onclick", Mmx.SearchDescriptorsByKeywords)),
-            bdoc.ele("br"),
-            typeSelect));
-
-        mmx_dict.descriptorKeywords = search;   
-        mmx_dict.descriptorType = typeSelect;   
-    }
-
-    static RenderDescriptorSearchDisplay(element) {
-        // Clear existing contents
-        element.innerHTML = "";
-
-        // Search results
-        let descriptorResults = document.createElement("div");
-        descriptorResults.style.width = "100%";
-        descriptorResults.className = "mmx_keywordSearchResult";
-        mmx_dict.keywordSearchResult = descriptorResults;
-        element.appendChild(descriptorResults);
-    }
-
-    static RenderDescriptorMatchFilter(element) {
-       // Clear existing contents
-        element.innerHTML = "";
-
-        // Create flexbox container
-        let container = document.createElement("div");
-        container.style.display = "flex"; // Set display to flex
-        container.style.alignItems = "center"; // Align items vertically in the center
-
-        // Create typeSelect (first select element)
-        let typeSelect = document.createElement("select");
-        for (let key in Mmx.EleTypeTranslate) {
-            let opt = document.createElement("option");
-            opt.value = key;
-            opt.textContent = Mmx.EleTypeTranslate[key];
-            typeSelect.appendChild(opt);
-        }
-
-        typeSelect.onchange = function () {
-            if (mmx_dict.searchKey != null && mmx_dict.searchEleType != mmx_dict.descriptorTypeFilter.value) {
-                localStorage.setItem("matchFilter", mmx_dict.descriptorTypeFilter.value);
-                Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
-            }
-        }
-
-        mmx_dict.descriptorTypeFilter = typeSelect;
-
-        // Create typeSelect2 (second select element)
-        let typeSelect2 = document.createElement("select");
-        let dummySettings = ["Console Settings 1", "Console Settings 2", "Console Settings 3"];
-        for (let key of dummySettings) {
-            let opt = document.createElement("option");
-            opt.value = key;
-            opt.textContent = key;
-            typeSelect2.appendChild(opt);
-        }
-        typeSelect2.style.marginLeft = "auto";
-
-        // Append select elements to the container
-        container.appendChild(typeSelect);
-        container.appendChild(typeSelect2);
-
-        // Append the flexbox container to the element
-        element.appendChild(container);
-
-
-    }
-
-
     static RenderDescriptorMatchDisplay(element) {
         // Clear existing contents
         element.innerHTML = "";
@@ -651,7 +473,7 @@ class Mmx {
     static SearchStatements() {
         let keywords = document.getElementById("mmid_search").value;
         if (window.searchProperty == "Text") {
-            let url = "/statements?keywords=" + encodeURIComponent(keywords);
+            let url = "/statements?keywords=" + encodeURIComponent(keywords);         
             Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
         } else {
             let requestBody = "";
@@ -1295,120 +1117,14 @@ class Mmx {
             }
         }
 
-        // const mainElement = document.querySelector('main');
-        // const bodyElement = document.querySelector('body');
-        // if (mainElement) {
-        //     bodyElement.innerHTML += mainElement.innerHTML;
-        // }
-
-        let downloadModal = document.getElementById("download-modal");
-        let downloadButton = document.getElementById("download-matches");
-        if (downloadButton) {
-            downloadButton.onclick = function() {
-                downloadModal.style.display = "block";
-            }
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.classList.add('mm_descColumns');
         }
-
-        let downloadJSONButton = document.getElementById("download-json")
-        let downloadCSVButton = document.getElementById("download-csv")
-        if (downloadJSONButton) {
-            downloadJSONButton.onclick = function() {
-                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
-                Mmx.LoadJsonAsync(url, function(result) {
-                    downloadJson(`matches-${mmx_dict.searchKey}`, result);
-                    }
-                )
-            }
-        }
-        if (downloadCSVButton) {
-            downloadCSVButton.onclick = function() {
-                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
-                Mmx.LoadJsonAsync(url, (result) => {
-                    result = filterDescriptorsByElementFilter(result.descriptors);
-                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result));
-                    }
-                )
-            }
-        }
-        // Get the modal
-        let match_modal = document.getElementById("match-modal");
-        let matchSettings = ["alg-w-cc", "alg-w-cp", "alg-w-pc", "alg-w-pp", "alg-t-cc", "alg-t-cp", "alg-t-pc", "alg-t-pp", "alg-w-k", "alg-t-k", "alg-w-c", "alg-t-c", "alg-w-p", "alg-t-p", "alg-w-d", "alg-t-d"];
-
-        // Get the button that opens the modal
-        let match_console_button = document.getElementById("match-console-button");
-
-        // Get the <span> element that closes the modal
-        let close_console = document.getElementsByClassName("close_console");
-        let modifyBtn = document.querySelector(".modify-btn_console");
-
-        // When the user clicks on the button, open the modal
-        if (match_console_button) { 
-            match_console_button.onclick = function() {
-                match_modal.style.display = "block";
-                let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
-                if (!matchWeightsObj) {
-                    matchWeightsObj = {
-                        'alg-w-cc': '2',
-                        'alg-t-cc': '0',
-                        'alg-w-cp': '1',
-                        'alg-t-cp': '0',
-                        'alg-w-pc': '0.5',
-                        'alg-t-pc': '0',
-                        'alg-w-pp': '0.25',
-                        'alg-t-pp': '0',
-                        'alg-w-k': '1',
-                        'alg-t-k': '0',
-                        'alg-w-c': '1',
-                        'alg-t-c': '0',
-                        'alg-w-p': '1',
-                        'alg-t-p': '0',
-                        'alg-w-d': '0',
-                        'alg-t-d': '0'
-                    }
-                }
-                for (let property of matchSettings) {
-                    let item =  document.getElementById(property);
-                    item.innerHTML = matchWeightsObj[property]
-                }
-            }
-        }
-
-        // When the user clicks on close_console(x), close the modal
-        for (let close of close_console) {
-            if (close) {
-                close.onclick = function() {
-                    match_modal.style.display = "none";
-                    downloadModal.style.display = "none";
-                }
-            }
-        }
-        
-
-        if (modifyBtn) {
-            modifyBtn.onclick = function() {
-                match_modal.style.display = "none";
-                window.location.href = `/c/MatchConsole?matchKey=${mmx_dict.searchKey}`;
-            }
-        }
-
-        // When the user clicks anywhere outside of the modal, close it
-        window.onclick = function(event) {
-            if (event.target == match_modal) {
-                match_modal.style.display = "none";
-            }
-            if (event.target == downloadModal) {
-                downloadModal.style.display = "none";
-            }
-        }
-
-        localStorage.setItem("matchFilter", null)
 
     }
 
 }
-
-
-
 
 window.addEventListener("load", Mmx.OnPageLoad);
 window.addEventListener('popstate', (event) => {location.reload();});

@@ -193,3 +193,53 @@ $w_type: 4em;
     color: white;
     cursor: not-allowed;
 }
+
+
+.info-button-wrapper {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle; /* Aligns with the surrounding text */
+  }
+  
+  .info-button {
+    font-family: Arial, sans-serif;
+    width: 10px; /* Small width for the button */
+    height: 10px; /* Small height for the button */
+    font-style: normal;
+    background-color: #6c757d;
+    color: white;
+    text-align: center;
+    line-height: 12px; /* Aligns the 'i' vertically within the button */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    font-size: 8px; /* Small font size for the 'i' */
+    display: inline-block;
+    position: relative;
+    top: -5px; /* Moves the button up to give a superscript effect */
+  }
+  
+  .info-tooltip {
+    visibility: hidden;
+    width: 10rem;
+    background-color: #333;
+    font-style: normal;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    line-height: 15px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: visibility 0.2s, opacity 0.2s ease-in-out;
+    opacity: 0;
+    font-size: 15px; /* Larger font size for the tooltip text */
+    /* You can change this font-size to suit your needs */
+  }
+  
+  .info-button:hover .info-tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
