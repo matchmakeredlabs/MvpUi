@@ -20,8 +20,19 @@ function filterDescriptorsByElementFilter(descriptorArr) {
     return descriptorArr;
 }
 
+function filterDescriptorsByThreshold(descriptorArr) {
+    let matchThreshold = document.getElementById("MatchThreshold").value;
+    if(matchThreshold != 0) {
+        descriptorArr = descriptorArr.filter(descriptor => descriptor.matchIndex >= matchThreshold); 
+    } 
+    return descriptorArr; 
+}
+
 function downloadJson(filename, jsonContent) {
     jsonContent.descriptors = filterDescriptorsByElementFilter(jsonContent.descriptors);
+    jsonContent.descriptors = filterDescriptorsByThreshold(jsonContent.descriptors); 
+    
+    console.log(jsonContent);
 
     const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
     const element = document.createElement('a');
@@ -35,6 +46,9 @@ function downloadJson(filename, jsonContent) {
 
 
 function downloadCSV(filename, csvContent) {
+    csvContent = filterDescriptorsByElementFilter(csvContent.descriptors);
+    csvContent = filterDescriptorsByThreshold(csvContent); 
+    csvContent = convertJsonToCsv(csvContent);
     const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
     const element = document.createElement('a');
     element.setAttribute('href', dataUrl);
@@ -1324,8 +1338,7 @@ class Mmx {
             downloadCSVButton.onclick = function() {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
                 Mmx.LoadJsonAsync(url, (result) => {
-                    result = filterDescriptorsByElementFilter(result.descriptors);
-                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result));
+                    downloadCSV(`matches-${mmx_dict.searchKey}`,result);
                     }
                 )
             }
