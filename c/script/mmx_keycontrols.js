@@ -20,13 +20,22 @@ function filterDescriptorsByElementFilter(descriptorArr) {
     return descriptorArr;
 }
 
-function downloadJson(filename, jsonContent) {
-    jsonContent.descriptors = filterDescriptorsByElementFilter(jsonContent.descriptors);
+function addMatchedToProperty(descriptorArr, matchedToId) {
+    for (let i = 0; descriptorArr.length; i++) {
+        descriptorArr[i]['matchedTo'] = matchedToId;
+    }
+    console.log("descriptorArr", descriptorArr)
+    return descriptorArr;
+}
 
-    const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
+function downloadJsonSingleMatch(matchedToId, content) {
+    content.descriptors = filterDescriptorsByElementFilter(content.descriptors);
+    content.descriptors = addMatchedToProperty(content.descriptors, matchedToId);
+
+    const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content));
     const element = document.createElement('a');
     element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.json');
+    element.setAttribute('download', `matches-${matchedToId}` + '.json');
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -34,17 +43,21 @@ function downloadJson(filename, jsonContent) {
 }
 
 
-function downloadCSV(filename, csvContent) {
-    const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+function downloadCsvSingleMatch(matchedToId, content) {
+    content.descriptors = filterDescriptorsByElementFilter(content.descriptors);
+    content.descriptors = addMatchedToProperty(content.descriptors, matchedToId);
+
+    content = convertJsonToCsv(content)
+
+    const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(content);
     const element = document.createElement('a');
     element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.csv');
+    element.setAttribute('download', `matches-${matchedToId}` + '.csv');
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
 }
-
 
 function convertJsonToCsv(data) {
     // Define the headers for the CSV
@@ -67,7 +80,8 @@ function convertJsonToCsv(data) {
         'datePublished',
         'sdDatePublished',
         'sdPublisher',
-        'matchIndex'
+        'matchIndex',
+        'matchedTo'
     ];
 
     // Initialize the CSV string with headers
@@ -1315,7 +1329,7 @@ class Mmx {
             downloadJSONButton.onclick = function() {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
                 Mmx.LoadJsonAsync(url, function(result) {
-                    downloadJson(`matches-${mmx_dict.searchKey}`, result);
+                    downloadJsonSingleMatch(mmx_dict.searchKey, result);
                     }
                 )
             }
@@ -1325,7 +1339,7 @@ class Mmx {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
                 Mmx.LoadJsonAsync(url, (result) => {
                     result = filterDescriptorsByElementFilter(result.descriptors);
-                    downloadCSV(`matches-${mmx_dict.searchKey}`,convertJsonToCsv(result));
+                    downloadCsvSingleMatch(mmx_dict.searchKey,result);
                     }
                 )
             }

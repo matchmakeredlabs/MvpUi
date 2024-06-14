@@ -1,8 +1,12 @@
 import bdoc from './bdoc.js';
 import config from '/config.js';
 import bsession from './bsession.js';
+import { convertJsonToCsv, convertJsonToCsvNoHeader } from './downloadhelper.js';
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
+
+window.closelevel = 0;
+window.currentCollection = {};
 
 export default class MmCollection {
 
@@ -11,6 +15,9 @@ export default class MmCollection {
     static async LoadFromId(id) {
         let response = await session.fetch("/api/collections/" + id);
         let data = await response.json();
+
+        window.currentCollection = data.collection;
+
         return new MmCollection(data.collection);
     }
 
@@ -22,7 +29,7 @@ export default class MmCollection {
             }
         });
         if (response.status >= 400) {
-            var text = await response.text();
+            let text = await response.text();
             throw new Error(`${response.status} ${response.statusText}: ${text}`);
         }
         const data = await response.json();
@@ -40,7 +47,7 @@ export default class MmCollection {
             body: file
         });
         if (response.status >= 400) {
-            var text = await response.text();
+            let text = await response.text();
             throw new Error(`${response.status} ${response.statusText}: ${text}`);
         }
         const data = await response.json();
@@ -58,6 +65,7 @@ export default class MmCollection {
         }
 
         this.descriptors = descriptors;
+        
 
     }
 
@@ -97,6 +105,11 @@ export default class MmCollection {
         detail.innerHTML = "";
         detail.className = "mmc_competency";
 
+        // let collectionMatches = document.createElement("button")
+        // collectionMatches.textContent = "View Collection Matches"
+        // collectionMatches.id = "match-console-button"
+        // detail.appendChild(collectionMatches);
+
         detail.appendChild(bdoc.ele("h3", "Descriptor"));
         detail.appendChild(bdoc.ele("h2", desc.name));
         let sect = document.createElement("section");
@@ -126,7 +139,7 @@ export default class MmCollection {
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
-                bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
+                bdoc.attr("href", "/api/Match?stmtId=" + encodeURIComponent(desc.id)),
                 "View descriptor and matches")));
         }
     }
@@ -203,6 +216,145 @@ export default class MmCollection {
         element.innerHTML = ""; // Erase any existing content
         element.appendChild(bdoc.ele("h3", "Collection"));
 
+        // let buttonGroup = document.createElement("div")
+        // buttonGroup.classList.add("button-group");
+
+        let downloadMatchButton = document.getElementById("match-collections-button")
+
+        async function downloadMatches() {
+            let currentCollection = window.currentCollection;
+
+            let leafDescriptors = [];
+            
+            for (let i = 0; i < currentCollection.length; i++) {
+                if (currentCollection[i].intHasPart.length === 0) {
+                    let paletKey = currentCollection[i].key
+                    paletKey = paletKey.split('/')
+                    paletKey = paletKey[paletKey.length - 1];
+
+                    currentCollection[i]['requestURL'] = `/descriptors?searchKey=${paletKey}&eleType=any&${localStorage.getItem("matchWeights")}`
+                    leafDescriptors.push(currentCollection[i]);
+                }
+            }
+
+            let allDescriptors = {}
+
+            for (let leaf of leafDescriptors) {
+                let response = await session.fetch(leaf.requestURL)
+                response = await response.json();
+                allDescriptors[leaf.id] = response;
+            }
+
+            let descriptorKeys = Object.keys(allDescriptors);
+
+            for (let key of descriptorKeys) {
+                let matches = allDescriptors[key].descriptors; 
+                for (let i = 0; i < matches.length; i++) {
+                    matches[i]['matchedTo'] = key;
+                }
+                allDescriptors[key].descriptors = matches;
+            }
+        
+            let jsonform = false;
+            
+            let query = new URLSearchParams(window.location.search);
+            let id = query.get("id");
+            if (jsonform) {
+                const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(allDescriptors));
+                const element = document.createElement('a');
+                element.setAttribute('href', dataUrl);
+                element.setAttribute('download', `collection-matches-${id}` + '.json');
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            }
+            else {
+                let finalCSV = "";
+                for (let key of descriptorKeys) {
+                    let matches = allDescriptors[key].descriptors; 
+                    if (finalCSV == "") {
+                        finalCSV += convertJsonToCsv(matches);
+                    } else {
+                        finalCSV += convertJsonToCsvNoHeader(matches);
+                    }
+                }
+
+                const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(finalCSV);
+                const element = document.createElement('a');
+                element.setAttribute('href', dataUrl);
+                element.setAttribute('download', `collection-matches-${id}` + '.csv');
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            }
+        }
+
+        downloadMatchButton.onclick = downloadMatches
+
+        let expandElement = document.createElement("span");
+        expandElement.innerText = "Expand";
+        expandElement.classList.add("button-div");
+        
+        function expandli() {
+            window.closelevel += 1;
+
+            // Select all li elements
+            let allLis = document.querySelectorAll('li');
+
+            // Filter to get only the leaf-level li elements
+            let leafLevelLis = Array.from(allLis).filter(function(li) {
+                return li.querySelector('li') === null;
+            });
+
+            // Iterate over the NodeList of leaf-level li elements and perform actions
+            leafLevelLis.forEach(function(li) {
+                li.firstChild.click()
+        });
+        }
+        function closeli() {
+            if (window.closelevel >= 0) {
+                clickOnLevel(window.closelevel);
+                window.closelevel -= 1;
+            }
+        }
+        
+        function clickOnLevel(level) {
+            // Helper function to recursively find and click on li elements at the given level
+            function clickLevel(liElements, currentLevel) {
+                if (currentLevel === level) {
+                    // If the current level matches the target level, click on all li elements
+                    liElements.forEach(function(li) {
+                        if (li.firstChild) {
+                            li.firstChild.click();
+                        }
+                    });
+                } else {
+                    // Otherwise, go deeper into the DOM tree
+                    liElements.forEach(function(li) {
+                        let childUl = li.querySelector('ul');
+                        if (childUl) {
+                            clickLevel(Array.from(childUl.children).filter(child => child.tagName === 'LI'), currentLevel + 1);
+                        }
+                    });
+                }
+            }
+        
+            // Start with top level li elements
+            let topLevelLis = Array.from(document.querySelectorAll('ul > li'));
+            clickLevel(topLevelLis, 0);
+        }
+        
+        let shrinkElement = document.createElement("span");
+        shrinkElement.innerText = "Close";
+        shrinkElement.classList.add("button-div");
+        expandElement.onclick = expandli;
+        shrinkElement.onclick = closeli;
+
+        element.appendChild(shrinkElement)
+        element.appendChild(expandElement)
+
         let stmt = this.descriptors[0];
         console.log(stmt.name);
         if (stmt && stmt.name) {
@@ -213,6 +365,7 @@ export default class MmCollection {
             element.appendChild(h2);
             this.select(h2);
         }
+
         this.expand(0, element);
     }
 

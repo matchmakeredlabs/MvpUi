@@ -7,98 +7,12 @@
 import bdoc from './bdoc.js';
 import config from '/config.js';
 import bsession from './bsession.js';
+import { downloadJsonSingleMatch, downloadCsvSingleMatch } from './downloadhelper.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Container for MMX Globals
 let mmx_dict = {};
 window.searchProperty = "Text"
-
-function filterDescriptorsByElementFilter(descriptorArr) {
-    if(localStorage.getItem("matchFilter") !== "null") {
-        descriptorArr = descriptorArr.filter(descriptor => descriptor.eleType == localStorage.getItem("matchFilter"));
-    }
-    return descriptorArr;
-}
-
-function filterDescriptorsByThreshold(descriptorArr) {
-    let matchThreshold = document.getElementById("MatchThreshold").value;
-    if(matchThreshold != 0) {
-        descriptorArr = descriptorArr.filter(descriptor => descriptor.matchIndex >= matchThreshold); 
-    } 
-    return descriptorArr; 
-}
-
-function downloadJson(filename, jsonContent) {
-    jsonContent.descriptors = filterDescriptorsByElementFilter(jsonContent.descriptors);
-    jsonContent.descriptors = filterDescriptorsByThreshold(jsonContent.descriptors); 
-    
-    console.log(jsonContent);
-
-    const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonContent));
-    const element = document.createElement('a');
-    element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.json');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
-
-function downloadCSV(filename, csvContent) {
-    csvContent = filterDescriptorsByElementFilter(csvContent.descriptors);
-    csvContent = filterDescriptorsByThreshold(csvContent); 
-    csvContent = convertJsonToCsv(csvContent);
-    const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-    const element = document.createElement('a');
-    element.setAttribute('href', dataUrl);
-    element.setAttribute('download', filename + '.csv');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
-
-function convertJsonToCsv(data) {
-    // Define the headers for the CSV
-    const headers = [
-        'id',
-        'eleType',
-        'name',
-        'url',
-        'subject',
-        'description',
-        'identifier',
-        'educationalLevel',
-        'creator',
-        'provenance',
-        'key',
-        'mainEntity',
-        'mainEntityId',
-        'isPartOf',
-        'isPartOfId',
-        'datePublished',
-        'sdDatePublished',
-        'sdPublisher',
-        'matchIndex'
-    ];
-
-    // Initialize the CSV string with headers
-    let csv = headers.join(',') + '\n';
-
-    // Iterate through each descriptor and add its data to the CSV
-    data.forEach(descriptor => {
-        const row = headers.map(header => {
-            // Replace any double quotes in the field with two double quotes to escape them
-            const field = descriptor[header] || '';
-            return `"${field.toString().replace(/"/g, '""')}"`;
-        }).join(',');
-        csv += row + '\n';
-    });
-
-    return csv;
-}
 
 function toggleOneElement(element) {
     let currentElement = document.getElementById(element)
@@ -359,7 +273,7 @@ class Mmx {
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         let text = document.createElement("span")
         text.style = "margin-right: 0.5em;"
-        text.textContent = "Returned statements match one or ∂more of the search keywords"
+        text.textContent = "Returned statements match one or more of the search keywords"
         searchOneLiner.innerHTML = "";
         searchOneLiner.appendChild(text);
         searchOneLiner.innerHTML += tooltip;
@@ -1329,7 +1243,7 @@ class Mmx {
             downloadJSONButton.onclick = function() {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
                 Mmx.LoadJsonAsync(url, function(result) {
-                    downloadJson(`matches-${mmx_dict.searchKey}`, result);
+                    downloadJsonSingleMatch(mmx_dict.searchSuppressId, result);
                     }
                 )
             }
@@ -1338,7 +1252,7 @@ class Mmx {
             downloadCSVButton.onclick = function() {
                 let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
                 Mmx.LoadJsonAsync(url, (result) => {
-                    downloadCSV(`matches-${mmx_dict.searchKey}`,result);
+                    downloadCsvSingleMatch(mmx_dict.searchSuppressId,result);
                     }
                 )
             }

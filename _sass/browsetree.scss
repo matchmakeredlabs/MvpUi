@@ -10,7 +10,7 @@
 }
 
 #mmx_browse_tree {
-    
+
     h2 {
         @include title2;
     }
@@ -86,4 +86,81 @@
     .mmb_selected {
         background-color: lighten($mm-blue, 50%);
     }
+
+   
+    /* Basic styles for the button-like div */
+    /* Basic styles for the button-like div */
+    .button-div {
+        display: inline-block; /* Inline-block to allow width and height */
+        padding: 4px; /* Padding to give it button-like dimensions */
+        font-size: 12px; /* Font size to match button text */
+        font-family: inherit; /* Inherit font from parent */
+        text-align: center; /* Center the text */
+        text-decoration: none; /* Remove any text decoration */
+        color: #000; /* Black text color */
+        background-color: #f0f0f0; /* Light grey background */
+        border: 1px solid #ccc; /* Light grey border */
+        cursor: pointer; /* Change cursor to pointer */
+        box-sizing: border-box; /* Include padding and border in element's total width and height */
+        user-select: none; /* Prevent text selection on click */
+        border-radius: 4px; /* Rounded corners to match button */
+        outline: none; /* Remove default focus outline */
+        float: right;
+        margin: 1px; 
+    }
+
+    /* Hover effect to mimic traditional button */
+    .button-div:hover {
+        background-color: #e0e0e0; /* Slightly darker grey background on hover */
+        border-color: #bbb; /* Slightly darker grey border on hover */
+    }
+
+    /* Active state to mimic button press effect */
+    .button-div:active {
+        background-color: #d0d0d0; /* Darker grey for active state */
+        border-color: #aaa; /* Darker border for active state */
+    }
+
+    /* Focus state for keyboard accessibility */
+    .button-div:focus {
+        outline: 2px solid #000; /* Black outline for focus */
+    }
+
+    /* Group the buttons vertically */
+    .button-group {
+        display: flex; /* Enable flexbox */
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: flex-end; /* Align buttons to the right */
+        float: right;
+    }
+
+
+
+
+    // .reset-button {
+    //     appearance: auto;
+    //     text-rendering: auto;
+    //     //color: buttontext;
+    //     letter-spacing: normal;
+    //     word-spacing: normal;
+    //     line-height: normal;
+    //     text-transform: none;
+    //     text-indent: 0px;
+    //     text-shadow: none;
+    //     display: inline-block;
+    //     text-align: center;
+    //     align-items: flex-start;
+    //     cursor: default;
+    //     box-sizing: border-box;
+    //     //background-color: buttonface;
+    //     margin: 0em;
+    //     padding-block: 1px;
+    //     padding-inline: 6px;
+    //     border-width: 2px;
+    //     border-style: outset;
+    //     border-color: buttonborder;
+    //     border-image: initial;
+    // }
+    
+
 }

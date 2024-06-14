@@ -32,6 +32,7 @@ main {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: scroll; /* Show scrollbars */
 }
 
 .mm_flex_vert>* {
@@ -52,6 +53,17 @@ main {
     padding: 8px 16px; /* Adjust padding as needed */
     cursor: pointer;
     border-radius: 4px; /* Add border radius for rounded corners */
+    float: right;
+}
+
+#match-collections-button {
+    background-color: #0068b3;
+    color: white;
+    border: none; /* Remove border */
+    padding: 8px 16px; /* Adjust padding as needed */
+    cursor: pointer;
+    border-radius: 4px; /* Add border radius for rounded corners */
+    margin: 10px;
     float: right;
 }
 
