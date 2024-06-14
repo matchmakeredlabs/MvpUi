@@ -139,7 +139,7 @@ export default class MmCollection {
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
-                bdoc.attr("href", "/api/Match?stmtId=" + encodeURIComponent(desc.id)),
+                bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
                 "View descriptor and matches")));
         }
     }
@@ -225,18 +225,21 @@ export default class MmCollection {
             let currentCollection = window.currentCollection;
 
             let leafDescriptors = [];
+            console.log(currentCollection);
             
             for (let i = 0; i < currentCollection.length; i++) {
                 if (currentCollection[i].intHasPart.length === 0) {
                     let paletKey = currentCollection[i].key
-                    paletKey = paletKey.split('/')
-                    paletKey = paletKey[paletKey.length - 1];
-
-                    currentCollection[i]['requestURL'] = `/descriptors?searchKey=${paletKey}&eleType=any&${localStorage.getItem("matchWeights")}`
-                    leafDescriptors.push(currentCollection[i]);
+                    if (paletKey != "") {
+                        paletKey = paletKey.split('/')
+                        paletKey = paletKey[paletKey.length - 1];
+                        currentCollection[i]['requestURL'] = `/descriptors?searchKey=${paletKey}&eleType=any&${localStorage.getItem("matchWeights")}`
+                        leafDescriptors.push(currentCollection[i]);
+                    }                    
                 }
             }
 
+            console.log(leafDescriptors);
             let allDescriptors = {}
 
             for (let leaf of leafDescriptors) {
@@ -298,6 +301,8 @@ export default class MmCollection {
         expandElement.classList.add("button-div");
         
         function expandli() {
+            let mmx_browse_detail = document.getElementById("mmx_browse_detail")
+            let preActionHTML = mmx_browse_detail.outerHTML;
             window.closelevel += 1;
 
             // Select all li elements
@@ -311,13 +316,17 @@ export default class MmCollection {
             // Iterate over the NodeList of leaf-level li elements and perform actions
             leafLevelLis.forEach(function(li) {
                 li.firstChild.click()
-        });
+            });
+            mmx_browse_detail.outerHTML = preActionHTML;
         }
         function closeli() {
+            let mmx_browse_detail = document.getElementById("mmx_browse_detail")
+            let preActionHTML = mmx_browse_detail.outerHTML;
             if (window.closelevel >= 0) {
                 clickOnLevel(window.closelevel);
                 window.closelevel -= 1;
             }
+            mmx_browse_detail.outerHTML = preActionHTML;
         }
         
         function clickOnLevel(level) {
