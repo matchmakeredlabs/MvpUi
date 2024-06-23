@@ -1354,6 +1354,10 @@ class Mmx {
 
         localStorage.setItem("matchFilter", null)
 
+        if (localStorage.getItem("matchProfiles") === null) {
+            localStorage.setItem("matchProfiles", JSON.stringify({"MM Default": defaultMatchWeightsObj}));
+        } 
+
         let profiles = document.getElementById("match-profiles");
         let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
         let matchProfileNames = Object.keys(matchProfiles);
@@ -1390,6 +1394,5 @@ class Mmx {
 
 }
 
-
-window.addEventListener("load", Mmx.OnPageLoad);
 window.addEventListener('popstate', (event) => {location.reload();});
+window.addEventListener("load", Mmx.OnPageLoad);
