@@ -31,6 +31,22 @@ function extractAddedIds() {
     return extractAfterSecondId(extractStmtIDs())
 }
 
+function jsonToQueryString(jsonString) {
+    // Parse the JSON string into an object
+    let jsonObject = JSON.parse(jsonString);
+  
+    // Create an array of key-value pairs
+    let queryParams = [];
+    for (let key in jsonObject) {
+      if (jsonObject.hasOwnProperty(key)) {
+        queryParams.push(`${key}=${jsonObject[key]}`);
+      }
+    }
+  
+    // Join the array into a single string with '&' separator
+    return queryParams.join('&');
+  }
+
 // Using the class like a namespace. All members are static.
 class Mmx {
 
@@ -538,7 +554,7 @@ class Mmx {
         mmx_dict.searchEleType = eleType;
         if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
         
-        let matchWeights = localStorage.getItem("matchWeights");
+        let matchWeights = jsonToQueryString(localStorage.getItem("matchWeightsObj"));
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}`;
         if(matchWeights) {
             url += `&${matchWeights}`

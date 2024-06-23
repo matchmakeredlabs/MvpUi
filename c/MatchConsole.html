@@ -1,8 +1,20 @@
 ---
 title: Match Console
 ---
+<script src="https://kit.fontawesome.com/9e617e5901.js"></script>
 
-<div class="mm_flex_vert">
+    <div class="mm_flex_vert" style="width:800px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2>Match Console</h2>
+            <div style="display: flex; align-items: center;">
+                <label for="profile" style="margin-right: 10px;">Display Match Profile</label>
+                <select id="match-profiles">
+                <option value="--">--</option>
+            </select>
+        </div>
+    </div>
+
+    <span><i id ="shrinker" class="fa-solid fa-angle-up" style=" cursor: pointer;float:right;"></i></span>
     <form id="algForm" class="con_algForm">
         <div class="con-row">
             <span class="con-col1 con-heading">Match</span>
@@ -63,15 +75,25 @@ title: Match Console
         </div>
         <div class="con-row" style="margin-top: 0.75em;">
             <span class="con-colspan">
-                <button>Save Match Settings</button>
+                <button>Apply Match Settings</button>
+                <div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Profile settings are only applied to the matching workflow after clicking "Apply Match Settings"</span> </div> </div>
             </span>
+            
         </div>
     </form>
-    <span style="display: flex; justify-content: center; align-items: center; padding: 0.5em;">
-        <button id="set-defaults">Set Default</button>
+    <span id = "buttonspan" style="display: flex; justify-content: center; align-items: center; padding: 0.5em;">        
+        <button id="view-profile">View Current  Settings</button>
+        &nbsp; &nbsp;
+        <button id="add-profile">Add New Match Profile</button>
+        &nbsp; &nbsp;
+        <button id="update-profile">Update Selected Profile</button>
+        &nbsp; &nbsp;
+        <button id="delete-profile">Delete Selected Profile</button>
+
+        <!-- <button id="set-defaults">Set Default</button> -->
     </span>    
     <hr />
-    <h2 id="matches-from-header"></h2>
+    <b id="matches-from-header"></b>
     <p>
         <span id="matchKey"></span>
     </p>
@@ -80,176 +102,10 @@ title: Match Console
     </div>
 </div>
 
+
+
 <script src="/c/script/mm-range.js"></script>
+<script type="module" src="/c/script/mmx_console.js"></script>
+
 <!--<script type="module" src="/c/script/bdoc.js"></script>-->
 
-<script type="module">
-    import bdoc from "/c/script/bdoc.js";
-    import config from '/config.js';
-    import bsession from '/c/script/bsession.js';
-    const session = new bsession(config.backEndUrl, config.sessionTag);
-
-    function on_load() {
-        let form = document.getElementById("algForm");
-        if (form) {
-            form.onsubmit = on_alg_submit;
-        }
-        
-        // Selecting all mm-range elements
-        let mmRanges = document.querySelectorAll('mm-range');
-        let matchWeightsObj = localStorage.getItem("matchWeightsObj")
-        if (!matchWeightsObj) {
-            matchWeightsObj = {
-                'alg-w-cc': '2',
-                'alg-t-cc': '0',
-                'alg-w-cp': '1',
-                'alg-t-cp': '0',
-                'alg-w-pc': '0.5',
-                'alg-t-pc': '0',
-                'alg-w-pp': '0.25',
-                'alg-t-pp': '0',
-                'alg-w-k': '1',
-                'alg-t-k': '0',
-                'alg-w-c': '1',
-                'alg-t-c': '0',
-                'alg-w-p': '1',
-                'alg-t-p': '0',
-                'alg-w-d': '0',
-                'alg-t-d': '0'
-                }
-        } else {
-            matchWeightsObj = JSON.parse(matchWeightsObj);
-        }
-    
-        // Looping through each mm-range element
-        mmRanges.forEach((mmRange) => {
-            // Change the value of each mm-range element
-            let name = mmRange.getAttribute('name')
-            mmRange.updateValue(matchWeightsObj[name]); 
-            console.log(mmRange);
-        });
-
-        let key = new URLSearchParams(window.location.search).get("matchKey");
-        if (key) {
-            document.getElementById("matchKey").textContent = key;
-            document.getElementById("matches-from-header").textContent = "Matches from";
-            updateMatches(form);
-        } 
-    }
-
-    async function on_alg_submit(event) {
-        event.preventDefault();
-        updateMatches(event.currentTarget);
-    }
-
-    function extractQueryParams(url) {
-        let params = new URLSearchParams(url.substring(url.indexOf('?')));
-        let queryParams = {};
-        for (let param of params.entries()) {
-            if (param[0] !== 'searchKey' && param[0] !== 'eleType') {
-                queryParams[param[0]] = param[1];
-            }
-        }
-        queryParams = JSON.stringify(queryParams);
-        return queryParams;
-    }
-
-    async function updateMatches(formEle) {
-        // Get the algorithm weights
-        let weights = new URLSearchParams(new FormData(formEle)).toString();
-        localStorage.setItem("matchWeights", weights)
-
-        let matchWeightsObj = extractQueryParams(weights);
-        localStorage.setItem("matchWeightsObj", matchWeightsObj)
-
-        // Get the key
-        let key = document.getElementById("matchKey").textContent;
-
-        if (!key) {
-            window.history.back();
-            return;
-        }
-
-        let eleType = "any";
-        let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&${weights}`;
-        console.log(url);
-
-        const response = await session.fetch(url);
-        const result = await response.json();
-
-        // document.getElementById("matchKey").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance} - ${result.descriptors[0].description} <br> Palet Key: ${key}`
-        let ele = document.getElementById("matchResult");
-
-        for (;;) {
-            let next = ele.nextElementSibling;
-            if (!next) break;
-            next.parentElement.removeChild(next);
-        }
-        ele = ele.parentElement;
-
-        ele.appendChild(bdoc.ele("div", bdoc.class("con_matchHead"),
-            bdoc.ele("span", bdoc.class("con_matchIndex"), "Index"),
-            bdoc.ele("span", bdoc.class("con_matchKey"), "Name - Provenance - Description")));
-
-        ele.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
-
-        if (result.descriptors.length == 0) {
-            ele.textContent = "No matches found.";
-            return;
-        }
-
-        let matches = bdoc.ele("div", bdoc.class("con_matches"));
-       
-        for (let desc of result.descriptors) {
-            // let abstr = desc.description.substring(0,150)
-            // if (desc.description.length > 150) {
-            //     abstr +="..."
-            // }
-            matches.appendChild(bdoc.ele("div", bdoc.class("con_match"),
-                bdoc.ele("span", bdoc.class("con_matchIndex"), desc.matchIndex),
-                bdoc.ele("span", bdoc.class("con_matchKey"), desc.name + " - " + desc.provenance),
-                bdoc.ele("span", bdoc.class("con_matchIndex")),
-                bdoc.ele("span", bdoc.class("con_matchKey"),desc.description),
-                bdoc.ele("span", bdoc.class("con_matchIndex")),
-                bdoc.ele("span", bdoc.class("con_matchKey"), "Palet Key: " + StripKeyPrefix(desc.key))));
-        }
-
-        ele.appendChild(matches);
-    }
-
-    function StripKeyPrefix(key) {
-        let slash = key.lastIndexOf("/");
-        return (slash >= 0) ? key.substring(slash + 1) : key;
-    }
-
-    let setDefault = document.getElementById("set-defaults");
-    setDefault.onclick = function () {
-        let matchWeightsObj = {
-            'alg-w-cc': '2',
-            'alg-t-cc': '0',
-            'alg-w-cp': '1',
-            'alg-t-cp': '0',
-            'alg-w-pc': '0.5',
-            'alg-t-pc': '0',
-            'alg-w-pp': '0.25',
-            'alg-t-pp': '0',
-            'alg-w-k': '1',
-            'alg-t-k': '0',
-            'alg-w-c': '1',
-            'alg-t-c': '0',
-            'alg-w-p': '1',
-            'alg-t-p': '0',
-            'alg-w-d': '0',
-            'alg-t-d': '0'
-        }
-        let mmRanges = document.querySelectorAll('mm-range');
-        mmRanges.forEach((mmRange) => {
-            // Change the value of each mm-range element
-            let name = mmRange.getAttribute('name')
-            mmRange.updateValue(matchWeightsObj[name]); 
-            console.log(mmRange);
-        });
-    }
-
-    window.addEventListener("load", on_load);
-</script>

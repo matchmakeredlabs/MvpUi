@@ -8,7 +8,6 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 
 const addKeyword = document.getElementById('addKeyword');
 const keywordElement = document.getElementById('keywordElement');
-const keywordContainer = document.getElementById('keywordContainer');
 const tableBody = document.getElementById("table-body");
 
 let filterDropdowns = document.getElementById('filterDropdowns');
@@ -124,6 +123,13 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
     let data = await response.json();
     window.data = data;
     let table = document.getElementById("table-titles")
+
+     // Append container for keyword container
+     let spanElement = document.createElement("span");
+     spanElement.setAttribute("id", `keyword-container`);
+     filterContainers.appendChild(spanElement);
+     const keywordContainer = document.getElementById('keyword-container');
+
 
     addKeyword.addEventListener('click', function() {
         let newKeyword = keywordElement.value;
@@ -254,13 +260,14 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
         allCollections[collection.id] = collection;
     }
     
-
+   
+    
     const selectNodes = Array.from(filterDropdowns.childNodes).filter(node => node.tagName === 'SELECT');
     for (let node of selectNodes) {
-        let filter = node.id.split("-")[0];
-        node = document.getElementById(node.id);
-        node.setAttribute("onchange", `selectOption("${node.id.split("-")[0]
-    }")`);
+            let filter = node.id.split("-")[0];
+            node = document.getElementById(node.id);
+            node.setAttribute("onchange", `selectOption("${node.id.split("-")[0]
+        }")`);
     }
 
     console.log(selectedOptions);
