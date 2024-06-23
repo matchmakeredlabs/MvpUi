@@ -1391,7 +1391,5 @@ class Mmx {
 }
 
 
-
-
 window.addEventListener("load", Mmx.OnPageLoad);
 window.addEventListener('popstate', (event) => {location.reload();});

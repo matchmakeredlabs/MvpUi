@@ -221,7 +221,7 @@ function minimizeDisplay() {
 function updateMatchProfile() {
     let profiles = document.getElementById("match-profiles")
     if (profiles.value === "MM Default") {
-        alert("Can not update default match profile.")
+        alert("Can not update MM Default Match Profile")
     } 
     else if (profiles.value === "--") {
         alert("Can not update null match profile.")
@@ -264,6 +264,7 @@ function addMatchProfile() {
     currentOption.textContent = profileName;
     currentOption.value = profileName;
     profiles.appendChild(currentOption);
+    profiles.value = profileName;
 }
 
 function selectMatchProfile(event)  {
@@ -285,6 +286,9 @@ function viewProfile() {
 function deleteMatchProfile () {
     let profiles = document.getElementById("match-profiles")
     let valueToDelete = profiles.value;
+    if (valueToDelete == "MM Default") {
+        alert("Cannot delete MM Default Match Profile")
+    } else {
     removeOption(valueToDelete);
 
     let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
@@ -292,6 +296,7 @@ function deleteMatchProfile () {
     localStorage.setItem("matchProfiles", JSON.stringify(matchProfiles))
     
     profiles.value = "--";
+    }
 }
 
 document.getElementById("match-profiles").onchange = selectMatchProfile;
