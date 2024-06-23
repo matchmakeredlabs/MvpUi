@@ -14,6 +14,25 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 let mmx_dict = {};
 window.searchProperty = "Text"
 
+let defaultMatchWeightsObj = {
+    'alg-w-cc': '2',
+    'alg-t-cc': '0',
+    'alg-w-cp': '1',
+    'alg-t-cp': '0',
+    'alg-w-pc': '0.5',
+    'alg-t-pc': '0',
+    'alg-w-pp': '0.25',
+    'alg-t-pp': '0',
+    'alg-w-k': '1',
+    'alg-t-k': '0',
+    'alg-w-c': '1',
+    'alg-t-c': '0',
+    'alg-w-p': '1',
+    'alg-t-p': '0',
+    'alg-w-d': '0',
+    'alg-t-d': '0'
+}
+
 function toggleOneElement(element) {
     let currentElement = document.getElementById(element)
     if (currentElement.style.display === 'none') {
@@ -22,6 +41,22 @@ function toggleOneElement(element) {
         currentElement.style.display = 'none';
     }
 }
+
+function jsonToQueryString(jsonString) {
+    // Parse the JSON string into an object
+    let jsonObject = JSON.parse(jsonString);
+  
+    // Create an array of key-value pairs
+    let queryParams = [];
+    for (let key in jsonObject) {
+      if (jsonObject.hasOwnProperty(key)) {
+        queryParams.push(`${key}=${jsonObject[key]}`);
+      }
+    }
+  
+    // Join the array into a single string with '&' separator
+    return queryParams.join('&');
+  }
 
 function extractStmtIDs() {
     const stmtIdElements = document.querySelectorAll('.mm_stmtId');
@@ -405,27 +440,51 @@ class Mmx {
             }
         }
 
+        let profiles = document.createElement("select");
+        profiles.id = "match-profiles";
+        profiles.style.marginLeft = "auto";
+
         mmx_dict.descriptorTypeFilter = typeSelect;
+        if (localStorage.getItem("matchProfiles") === null) {
+            localStorage.setItem("matchProfiles", JSON.stringify({"MM Default": defaultMatchWeightsObj}));
+        } 
+        let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
+        let matchProfileNames = Object.keys(matchProfiles);
+        let matchProfileSettings = Object.values(matchProfiles);
 
-        // Create typeSelect2 (second select element)
-        let typeSelect2 = document.createElement("select");
-        let dummySettings = ["Console Settings 1", "Console Settings 2", "Console Settings 3"];
-        for (let key of dummySettings) {
-            let opt = document.createElement("option");
-            opt.value = key;
-            opt.textContent = key;
-            typeSelect2.appendChild(opt);
+        matchProfileNames = ["--"].concat(matchProfileNames);
+    
+        matchProfileNames.forEach(name => {
+            let currentOption  = document.createElement("option");
+            currentOption.textContent = name;
+            currentOption.value = name;
+            profiles.appendChild(currentOption);
+        })
+
+        matchProfileNames = matchProfileNames.slice(1);
+        let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
+    
+        for (let i = 0; i < matchProfileSettings.length; i++) {
+            console.log(matchWeightsObj, matchProfileSettings[i])
+            if (JSON.stringify(matchProfileSettings[i]) == JSON.stringify(matchWeightsObj)) {
+                console.log(matchProfileNames[i]);
+                profiles.value = matchProfileNames[i];
+            }
         }
-        typeSelect2.style.marginLeft = "auto";
 
+        profiles.onchange = function () {
+            let updatedWeights = matchProfiles[profiles.value];
+            localStorage.setItem("matchWeightsObj", JSON.stringify(updatedWeights));
+
+            Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
+        }
+        
         // Append select elements to the container
         container.appendChild(typeSelect);
-        container.appendChild(typeSelect2);
+        container.appendChild(profiles);
 
         // Append the flexbox container to the element
         element.appendChild(container);
-
-
     }
 
 
@@ -644,7 +703,7 @@ class Mmx {
         mmx_dict.searchEleType = eleType;
         if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
         
-        let matchWeights = localStorage.getItem("matchWeights");
+        let matchWeights = jsonToQueryString(localStorage.getItem("matchWeightsObj"));
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}`;
         if(matchWeights) {
             url += `&${matchWeights}`
@@ -1241,7 +1300,7 @@ class Mmx {
         let downloadCSVButton = document.getElementById("download-csv")
         if (downloadJSONButton) {
             downloadJSONButton.onclick = function() {
-                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${jsonToQueryString(localStorage.getItem("matchWeightsObj"))}`
                 Mmx.LoadJsonAsync(url, function(result) {
                     downloadJsonSingleMatch(mmx_dict.searchSuppressId, result);
                     }
@@ -1250,7 +1309,7 @@ class Mmx {
         }
         if (downloadCSVButton) {
             downloadCSVButton.onclick = function() {
-                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${localStorage.getItem("matchWeights")}`
+                let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${mmx_dict.searchEleType}&${jsonToQueryString(localStorage.getItem("matchWeightsObj"))}`
                 Mmx.LoadJsonAsync(url, (result) => {
                     downloadCsvSingleMatch(mmx_dict.searchSuppressId,result);
                     }

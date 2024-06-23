@@ -12,10 +12,9 @@ title: MatchMaker Browser
     </div>
 <script type="module">
     import MmCollection from "/c/script/mmx_browse.js";
-    import config from '/config.js';
-    import bsession from './script/bsession.js';
+    //import bsession from './script/bsession.js';
 
-    const session = new bsession(config.backEndUrl, config.sessionTag);
+    //const session = new bsession(config.backEndUrl, config.sessionTag);
 
     async function loadCollection() {
         console.log("Load");
@@ -32,44 +31,6 @@ title: MatchMaker Browser
     }
     
     loadCollection()
-
-    let downloadMatchButton = document.getElementById("match-collections-button")
-
-        function downloadMatches() {
-            let currentCollection = window.currentCollection;
-
-            let leafDescriptors = [];
-            
-            for (let i = 0; i < currentCollection.length; i++) {
-                if (currentCollection[i].intHasPart.length === 0) {
-                    let paletKey = currentCollection[i].key
-                    paletKey = paletKey.split('/')
-                    paletKey = paletKey[paletKey.length - 1];
-
-                    currentCollection[i]['requestURL'] = `/Match?stmtId=${paletKey}`
-                    leafDescriptors.push(currentCollection[i]);
-                }
-            }
-
-            let allDescriptors = {}
-
-            function LoadJsonAsync(url, callback, arg) {
-                session.fetch(url)
-                    .then(response => response.json())
-                    .then(json => callback(json, arg))
-            }
-
-            leafDescriptors = [leafDescriptors[0],leafDescriptors[1]];
-            for (let leaf of leafDescriptors) {
-                session.fetch(leaf.requestURL)
-                .then(response => response.json())
-                .then(result => allDescriptors[leaf.id] = result)
-            }
-
-            console.log(allDescriptors);
-        }
-
-        downloadMatchButton.onclick = downloadMatches
 
 
 </script>

@@ -8,6 +8,22 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 window.closelevel = 0;
 window.currentCollection = {};
 
+function jsonToQueryString(jsonString) {
+    // Parse the JSON string into an object
+    let jsonObject = JSON.parse(jsonString);
+  
+    // Create an array of key-value pairs
+    let queryParams = [];
+    for (let key in jsonObject) {
+      if (jsonObject.hasOwnProperty(key)) {
+        queryParams.push(`${key}=${jsonObject[key]}`);
+      }
+    }
+  
+    // Join the array into a single string with '&' separator
+    return queryParams.join('&');
+  }
+
 export default class MmCollection {
 
     static thisCollection;
@@ -233,7 +249,7 @@ export default class MmCollection {
                     if (paletKey != "") {
                         paletKey = paletKey.split('/')
                         paletKey = paletKey[paletKey.length - 1];
-                        currentCollection[i]['requestURL'] = `/descriptors?searchKey=${paletKey}&eleType=any&${localStorage.getItem("matchWeights")}`
+                        currentCollection[i]['requestURL'] = `/descriptors?searchKey=${paletKey}&eleType=any&${jsonToQueryString(localStorage.getItem("matchWeightsObj"))}`
                         leafDescriptors.push(currentCollection[i]);
                     }                    
                 }
