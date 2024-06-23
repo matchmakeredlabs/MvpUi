@@ -445,41 +445,6 @@ class Mmx {
         profiles.style.marginLeft = "auto";
 
         mmx_dict.descriptorTypeFilter = typeSelect;
-        if (localStorage.getItem("matchProfiles") === null) {
-            localStorage.setItem("matchProfiles", JSON.stringify({"MM Default": defaultMatchWeightsObj}));
-        } 
-        let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
-        let matchProfileNames = Object.keys(matchProfiles);
-        let matchProfileSettings = Object.values(matchProfiles);
-
-        matchProfileNames = ["--"].concat(matchProfileNames);
-    
-        matchProfileNames.forEach(name => {
-            let currentOption  = document.createElement("option");
-            currentOption.textContent = name;
-            currentOption.value = name;
-            profiles.appendChild(currentOption);
-        })
-
-        matchProfileNames = matchProfileNames.slice(1);
-        let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
-    
-        for (let i = 0; i < matchProfileSettings.length; i++) {
-            console.log(matchWeightsObj, matchProfileSettings[i])
-            if (JSON.stringify(matchProfileSettings[i]) == JSON.stringify(matchWeightsObj)) {
-                console.log(matchProfileNames[i]);
-                profiles.value = matchProfileNames[i];
-            }
-        }
-
-        profiles.onchange = function () {
-            let updatedWeights = matchProfiles[profiles.value];
-            localStorage.setItem("matchWeightsObj", JSON.stringify(updatedWeights));
-
-            Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
-        }
-        
-        // Append select elements to the container
         container.appendChild(typeSelect);
         container.appendChild(profiles);
 
@@ -1388,6 +1353,38 @@ class Mmx {
         }
 
         localStorage.setItem("matchFilter", null)
+
+        let profiles = document.getElementById("match-profiles");
+        let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
+        let matchProfileNames = Object.keys(matchProfiles);
+        let matchProfileSettings = Object.values(matchProfiles);
+
+        matchProfileNames = ["--"].concat(matchProfileNames);
+    
+        matchProfileNames.forEach(name => {
+            let currentOption  = document.createElement("option");
+            currentOption.textContent = name;
+            currentOption.value = name;
+            profiles.appendChild(currentOption);
+        })
+
+        matchProfileNames = matchProfileNames.slice(1);
+        let matchWeightsObj = JSON.parse(localStorage.getItem("matchWeightsObj"))
+    
+        for (let i = 0; i < matchProfileSettings.length; i++) {
+            console.log(matchWeightsObj, matchProfileSettings[i])
+            if (JSON.stringify(matchProfileSettings[i]) == JSON.stringify(matchWeightsObj)) {
+                console.log(matchProfileNames[i]);
+                profiles.value = matchProfileNames[i];
+            }
+        }
+
+        profiles.onchange = function () {
+            let updatedWeights = matchProfiles[profiles.value];
+            localStorage.setItem("matchWeightsObj", JSON.stringify(updatedWeights));
+
+            Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
+        }
 
     }
 
