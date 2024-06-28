@@ -168,12 +168,15 @@ async function updateMatches(formEle) {
     }
 
     let matches = bdoc.ele("div", bdoc.class("con_matches"));
+
+    document.getElementById("matchKeyDetails").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance}<br>${result.descriptors[0].description}`;
    
     for (let desc of result.descriptors) {
         // let abstr = desc.description.substring(0,150)
         // if (desc.description.length > 150) {
         //     abstr +="..."
         // }
+
         matches.appendChild(bdoc.ele("div", bdoc.class("con_match"),
             bdoc.ele("span", bdoc.class("con_matchIndex"), desc.matchIndex),
             bdoc.ele("span", bdoc.class("con_matchKey"), desc.name + " - " + desc.provenance),
