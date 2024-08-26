@@ -277,7 +277,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
 
         // Generate HTML
         let htmlCode = `<tr id=${elementId}>
-        <td><a href="Browse?id=${collection.id}">
+        <td><a href="SelectSubset?id=${collection.id}">
         ${collection.name}</a></td>${elementData}</tr>`
 
         // Append and store for later
@@ -311,7 +311,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
         }
         else {
             let selectedId = sessionStorage.getItem("selectedCheckbox");
-            window.location.href = "./SelectSubset.html"
+            window.location.href = `./SelectSubset?id=${        sessionStorage.getItem("selectedCheckbox")}`
         }
     }
     createSetButton.onclick = createSetOnclick;
