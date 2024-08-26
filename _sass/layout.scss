@@ -32,7 +32,6 @@ main {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: scroll; /* Show scrollbars */
 }
 
 .mm_flex_vert>* {
