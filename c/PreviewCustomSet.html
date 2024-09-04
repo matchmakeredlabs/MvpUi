@@ -5,13 +5,13 @@ title: MatchMaker Browser
         <article id="mmx_browse_tree">Loading...</article>
     </div>
     <div>
-        <button id="match-collections-button">Preview Custom Set →
+        <button id="match-collections-button">Save Custom Set →
         </button>
         <br><br>
         <article id="mmx_browse_detail"></article>
     </div>
 <script type="module">
-    import MmCollection from "/c/script/mmx_select_subset.js";
+    import MmCollection from "/c/script/mmx_preview_custom_set.js";
     //import bsession from './script/bsession.js';
 
     //const session = new bsession(config.backEndUrl, config.sessionTag);
@@ -21,7 +21,7 @@ title: MatchMaker Browser
         let query = new URLSearchParams(window.location.search);
         let id = query.get("id");
     
-        const collection = await MmCollection.LoadFromId(id);
+        const collection = await MmCollection.LoadFromSessionStorage(id);
         collection.attachTo(document.getElementById("mmx_browse_tree"));
 
         const mainElement = document.querySelector('main');

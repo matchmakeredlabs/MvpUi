@@ -8,258 +8,36 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 window.closelevel = 0;
 window.currentCollection = {};
 
-function createParentMap(data) {
-    const parentMap = {};
-
-    // Populate the parent map
-    data.forEach(node => {
-        if (node.isPartOfId) {
-            // Find the parent node by matching the isPartOfId with the parent's id
-            const parent = data.find(parentNode => parentNode.id === node.isPartOfId);
-            if (parent) {
-                parentMap[node.intId] = parent.intId;
-            }
-        } else {
-            // Root node (no parent)
-            parentMap[node.intId] = null;
-        }
-    });
-
-    return parentMap;
-}
-
-function createAdjacencyList(data) {
-    const adjacencyList = {};
-
-    // Initialize the adjacency list with empty arrays for each node
-    data.forEach(node => {
-        adjacencyList[node.intId] = [];
-    });
-
-    // Populate the adjacency list
-    data.forEach(node => {
-        if (node.isPartOfId) {
-            // Find the parent node by matching the isPartOfId with its intId
-            const parent = data.find(parentNode => parentNode.id === node.isPartOfId);
-            if (parent) {
-                adjacencyList[parent.intId].push(node.intId);
-            }
-        }
-    });
-
-    return adjacencyList;
-}
-
-// Function to handle checkbox click event
-function checkBoxOnClick(currentNodeId) {
-    if (MmCollection.checkStatus.get(Number(currentNodeId))) {
-        // If the current node is checked, uncheck it and all its children
-        uncheckAllChildren(currentNodeId, MmCollection.adjacencyList);
-        uncheckAllParents(currentNodeId);
-    } else {
-        // If the current node is unchecked, check it and all its children
-        checkAllChildren(currentNodeId, MmCollection.adjacencyList);
-    }
-    // Visually update the nodes (implementation depends on your UI framework)
-    updateVisualStatus();
-}
-
-// Function to check all children of a given node
-function checkAllChildren(nodeId, adjacencyList) {
-    // console.log(adjacencyList);
-    // console.log(nodeId);
-    
-    // Set the status of the current node to true (checked)
-    MmCollection.checkStatus.set(Number(nodeId), true);
-
-    // Get the list of children from the adjacency list
-    const children = adjacencyList[Number(nodeId)];
-    // console.log("children", children);
-
-    // Recursively check all children
-    children.forEach(childId => {
-        checkAllChildren(childId, adjacencyList);
-    });
-}
-
-
-// Function to uncheck all children of a given node
-function uncheckAllChildren(nodeId, adjacencyList) {
-    // Set the status of the current node to false (unchecked)
-    MmCollection.checkStatus.set(Number(nodeId), false);
-
-    // Get the list of children from the adjacency list
-    const children = adjacencyList[Number(nodeId)];
-
-    // Recursively uncheck all children
-    children.forEach(childId => {
-        uncheckAllChildren(childId, adjacencyList);
-    });
-}
-
-function checkParents(depthParentSiblingMap, checkStatus) {
-
-    let depths = Object.keys(depthParentSiblingMap).map(item => Number(item));
-    let deepestDepth = Math.max(...depths);
-    for (let i = deepestDepth; i > 0; i--) {
-        let currentDepth = depthParentSiblingMap[i]
-        let currentDepthKeys = Object.keys(currentDepth);
-        let currentDepthValues = Object.values(currentDepth);
-    
-        for (let j = 0; j < currentDepthValues.length; j++) {
-            let arrOfChildren = currentDepthValues[j];
-    
-            let counter = 0;
-            for (let child of arrOfChildren) {
-                let currentNode = checkStatus.get(child);
-                if (currentNode !== null && currentNode !== undefined) {
-                    if (currentNode == true) {
-                        counter +=1 
-                    }
-                }
-            }
-            if (counter == arrOfChildren.length){ 
-                checkStatus.set(Number(currentDepthKeys[j]), true);
-            }
-        }
-    }    
-    return checkStatus;
-}
-
-// Function to uncheck all parent nodes up the tree
-function uncheckAllParents(currentNodeId) {
-    let parentNode =  MmCollection.parentMap[currentNodeId];
-    while (parentNode) {
-        MmCollection.checkStatus.set(parentNode, false);
-        parentNode =  MmCollection.parentMap[parentNode];
-    }
-    // Visually update the parent nodes (implementation depends on your UI framework)
-    updateVisualStatus();
-}
-
 // Function to visually update the status of all checkboxes
 function updateVisualStatus() {
     // Grab all checkboxes on the screen
     const checkboxes = document.querySelectorAll('.custom-checkbox');
 
-    MmCollection.checkStatus = checkParents(MmCollection.depthParentSiblingMap, MmCollection.checkStatus);
-
-    // Iterate over each checkbox
     checkboxes.forEach(checkbox => {
         const inputElement = checkbox
         const nodeId = Number(inputElement.id); // The ID of the input element corresponds to the node ID
 
         // Update the checkbox's visual state based on MmCollection.checkStatus
-        console.log(MmCollection.checkStatus.get(Number(nodeId))); // Should output true or false
-        inputElement.previousElementSibling.checked = MmCollection.checkStatus.get(Number(nodeId)) || false;
-        // inputElement.dispatchEvent(new Event('change'));
+        let status = MmCollection.thisCollection.descriptors[nodeId].checked;
+        inputElement.previousElementSibling.checked = status || false;
     });
-
-    console.log(MmCollection.checkStatus);
 }
 
-function createDepthParentSiblingMapFromParentMap(parentMap) {
-    const childMap = {};
+function saveCustomSet() {
+    let name = prompt("Provide a name for this custom set") 
+    let customSets = JSON.parse(localStorage.getItem("customSets"));
+    let currentCustomSet = JSON.parse(localStorage.getItem("currentCustomSet"));
 
-    // Convert the parentMap to a childMap
-    for (const [child, parent] of Object.entries(parentMap)) {
-        if (parent !== null) {
-            if (!childMap[parent]) {
-                childMap[parent] = [];
-            }
-            childMap[parent].push(parseInt(child));
-        }
+    if (customSets == undefined) {
+        customSets = {}
     }
+    customSets[name] =currentCustomSet;
 
-    const depthParentSiblingMap = {};
-    const queue = [{ node: 0, depth: 0 }]; // Start with the root node at depth 0
+    localStorage.setItem("customSets", JSON.stringify(customSets));
 
-    while (queue.length > 0) {
-        const { node, depth } = queue.shift(); // Dequeue the next node
+    alert(`Custom set ${name} has been saved!`)
 
-        // Check if the current node has children
-        if (childMap[node]) {
-            // Initialize the depth level in the map if it doesn't exist
-            if (!depthParentSiblingMap[depth + 1]) {
-                depthParentSiblingMap[depth + 1] = {};
-            }
-            
-            // Add the parent node with its children (siblings) at the current depth
-            depthParentSiblingMap[depth + 1][node] = childMap[node];
-
-            // Enqueue the children with incremented depth
-            childMap[node].forEach(child => {
-                queue.push({ node: child, depth: depth + 1 });
-            });
-        }
-    }
-
-    return depthParentSiblingMap;
-}
-
-function getAncestors(leafNodes, parentMap) {
-    const ancestors = new Set(); // Using a Set to avoid duplicates
-
-    // Helper function to recursively find all ancestors
-    function findAncestors(node) {
-        if (parentMap[node] !== undefined) { // If there's a parent for the node
-            const parent = parentMap[node];
-            if (parent !== null && !ancestors.has(parent)) { // Avoid adding null and duplicates
-                ancestors.add(parent); // Add the parent to the list of ancestors
-                findAncestors(parent); // Recursively find the parent's ancestors
-            }
-        }
-    }
-
-    // For each leaf node, find all its ancestors
-    leafNodes.forEach(leafNode => {
-        ancestors.add(leafNode); // Include the leaf itself in the set
-        findAncestors(leafNode); // Find its ancestors
-    });
-
-    return Array.from(ancestors); // Convert the Set to an array before returning
-}
-
-function previewCustomSet() { 
-    let customSet = {}; 
-    let checkedDescriptors = []; // Array to store the descriptors corresponding to checked items
-
-    MmCollection.checkStatus.forEach((isChecked, nodeId) => {
-        if (isChecked) {
-            // Assuming nodeId is 1-based, so we need to subtract 1 to match the array's zero-index
-            let descriptor = MmCollection.thisCollection.descriptors[nodeId];
-            checkedDescriptors.push(descriptor);
-        }
-    });
-
-    let checkedLeafDescriptors  = checkedDescriptors.filter(descriptor => descriptor.intHasPart.length === 0);
-
-    customSet['leafNodes'] = [];
-    for (let leaf of checkedLeafDescriptors) {
-        customSet['leafNodes'].push(leaf.intId)
-    }
-    customSet['associatedCollectionId'] = MmCollection.thisCollection.descriptors[0].id;
-
-    let allAncestors = getAncestors(customSet['leafNodes'], MmCollection.parentMap);
-
-    let finalDescriptorsArr = [...new Set([...allAncestors, ...customSet['leafNodes']])];
-
-    // console.log(finalDescriptorsArr.sort());
-    let descriptorObj = {};
-
-    for (let intId of finalDescriptorsArr) {
-        let currentDescriptor = MmCollection.thisCollection.descriptors[intId];
-        currentDescriptor['parent'] = MmCollection.parentMap[intId];
-        currentDescriptor['checked'] = MmCollection.checkStatus.get(intId);
-
-        descriptorObj[intId] = currentDescriptor;
-    }
-    customSet['descriptors'] = descriptorObj;
-    console.log(customSet);
-
-    localStorage.setItem("currentCustomSet", JSON.stringify(customSet));
-    window.location.href = `./PreviewCustomSet`
-
+    window.location.href = "./GenerateReport"
 }
 
 export default class MmCollection {
@@ -270,27 +48,15 @@ export default class MmCollection {
 
     static thisCollection;
 
-    static async LoadFromId(id) {
-        let response = await session.fetch("/api/collections/" + id);
-        let data = await response.json();
-
-        window.currentCollection = data.collection;
-
-        MmCollection.adjacencyList = createAdjacencyList(data.collection);
-        MmCollection.parentMap = createParentMap(data.collection);
-        MmCollection.depthParentSiblingMap = createDepthParentSiblingMapFromParentMap(MmCollection.parentMap);
-
-        data.collection.forEach(num => {
-            MmCollection.checkStatus.set(num['intId'], false);
-        });
-
-        console.log("data.collection", data.collection);
-        return new MmCollection(data.collection);
-    }
-
     static async LoadFromSessionStorage(id) {
-        window.currentCollection = sessionStorage.get("currentCustomSet");
+        // let response = await session.fetch("/api/collections/" + id);
+        // let data = await response.json();
 
+        let currentCustomSet = JSON.parse(localStorage.getItem("currentCustomSet"));
+        console.log(currentCustomSet);
+        window.currentCollection = currentCustomSet.descriptors;
+
+        return new MmCollection(Object.values(currentCustomSet.descriptors));
     }
 
     static async LoadFromExternalUrl(url) {
@@ -411,6 +177,7 @@ export default class MmCollection {
                 bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
                 "View descriptor and matches")));
         }
+
     }
 
     expand(id, parentEle) {
@@ -476,34 +243,9 @@ export default class MmCollection {
             }
         }
         parentEle.expanded = true;
-        parentEle.appendChild(ul);
-
-        // document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
-        //     if (!checkbox._hasClickListener) {
-        //         checkbox.addEventListener('click', function() {
-        //             var input = this.previousElementSibling;
-        //             input.checked = !input.checked;
-        //             checkBoxOnClick(input); // Call the hierarchical check/uncheck logic
-        //             input.dispatchEvent(new Event('change')); // Trigger any event listeners
-        //         });
-        //         checkbox._hasClickListener = true; // Mark that the listener has been added
-        //     }
-        // });      
-        
-        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
-            if (!checkbox._hasClickListener) {
-                checkbox.addEventListener('click', function() {
-                    const inputElement = this //.previousElementSibling;
-                    inputElement.checked = !inputElement.checked;
-                    checkBoxOnClick(inputElement.id); // Pass the nodeId to the checkBoxOnClick function
-                    inputElement.dispatchEvent(new Event('change')); // Trigger any event listeners
-                });
-                checkbox._hasClickListener = true; // Mark that the listener has been added
-            }
-        });
-        
+        parentEle.appendChild(ul);    
+            
         updateVisualStatus();
-    
     }
 
     contract(parentEle) {
@@ -527,12 +269,13 @@ export default class MmCollection {
 
         // let buttonGroup = document.createElement("div")
         // buttonGroup.classList.add("button-group");
+
+        document.getElementById('match-collections-button').onclick = saveCustomSet;
         
         let expandElement = document.createElement("span");
         expandElement.innerText = "Expand";
         expandElement.classList.add("button-div");
         
-        document.getElementById('match-collections-button').onclick = previewCustomSet;
 
         function expandli() {
             let mmx_browse_detail = document.getElementById("mmx_browse_detail")
@@ -611,15 +354,6 @@ export default class MmCollection {
 
         this.expand(0, element);
 
-        let currentCustomSet = JSON.parse(localStorage.getItem("currentCustomSet"));
-
-        console.log(currentCustomSet);
-
-        if (currentCustomSet && currentCustomSet.associatedCollectionId == MmCollection.thisCollection.descriptors[0].id) {
-            for (let descriptor of Object.values(currentCustomSet.descriptors)) {
-                MmCollection.checkStatus.set(Number(descriptor.intId), descriptor.checked)
-            }
-        }
         updateVisualStatus();
     }
 
@@ -634,19 +368,6 @@ export default class MmCollection {
             this.classList.add("mmb_expanded");
         }
         MmCollection.thisCollection.select(this);
-
-        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
-            if (!checkbox._hasClickListener) {
-                checkbox.addEventListener('click', function() {
-                    const inputElement = this.previousElementSibling;
-                    inputElement.checked = !inputElement.checked;
-                    checkBoxOnClick(inputElement.id); // Pass the nodeId to the checkBoxOnClick function
-                    inputElement.dispatchEvent(new Event('change')); // Trigger any event listeners
-                });
-                checkbox._hasClickListener = true; // Mark that the listener has been added
-            }
-        });
-
     }
 
     static clickSelect() {

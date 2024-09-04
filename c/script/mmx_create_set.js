@@ -153,7 +153,6 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
      filterContainers.appendChild(spanElement);
      const keywordContainer = document.getElementById('keyword-container');
 
-
     addKeyword.addEventListener('click', function() {
         let newKeyword = keywordElement.value;
         keywordElement.value = "";
@@ -277,7 +276,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
 
         // Generate HTML
         let htmlCode = `<tr id=${elementId}>
-        <td><a href="SelectSubset?id=${collection.id}">
+        <td><a href="Browse?id=${collection.id}">
         ${collection.name}</a></td>${elementData}</tr>`
 
         // Append and store for later
@@ -311,7 +310,8 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
         }
         else {
             let selectedId = sessionStorage.getItem("selectedCheckbox");
-            window.location.href = `./SelectSubset?id=${        sessionStorage.getItem("selectedCheckbox")}`
+            localStorage.removeItem("currentCustomSet");
+            window.location.href = `./SelectSubset?id=${selectedId}`
         }
     }
     createSetButton.onclick = createSetOnclick;
