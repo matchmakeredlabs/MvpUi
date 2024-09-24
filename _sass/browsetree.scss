@@ -134,7 +134,72 @@
         float: right;
     }
 
-
+    /* Hide the default checkbox */
+    input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        height: 0;
+        width: 0;
+    }
+    
+    /* Create a custom checkbox */
+    .custom-checkbox {
+        position: relative;
+        display: inline-block;
+        width: 18px; /* Adjusted size */
+        height: 18px; /* Adjusted size */
+        background-color: #eee;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s;
+        cursor: pointer;
+        margin-right: 5px; /* Reduced margin */
+        vertical-align: middle; /* Aligns checkbox with the text */
+    }
+    
+    /* On mouse-over, add a grey background color */
+    .custom-checkbox:hover {
+        background-color: #ccc;
+    }
+    
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .custom-checkbox::after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 6px; /* Adjusted position */
+        top: 3px; /* Adjusted position */
+        width: 4px; /* Adjusted size */
+        height: 8px; /* Adjusted size */
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    /* Show the checkmark when checked */
+    input[type="checkbox"]:checked + .custom-checkbox {
+        background-color: #4CAF50; /* Green */
+    }
+    
+    input[type="checkbox"]:checked + .custom-checkbox::after {
+        display: block;
+    }
+    
+    /* Add labels for better UX */
+    .checkbox-label {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #333;
+        vertical-align: middle; /* Aligns text with the checkbox */
+        margin-left: 0; /* Ensures no extra margin on the left */
+    }
+    
+    /* Ensure the entire container is aligned */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px; /* Adjusted bottom margin */
+    }
 
 
     // .reset-button {

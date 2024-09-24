@@ -32,7 +32,6 @@ main {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: scroll; /* Show scrollbars */
 }
 
 .mm_flex_vert>* {
@@ -56,6 +55,12 @@ main {
     float: right;
 }
 
+#match-console-button:hover {
+    background-color: #367d39
+;
+}
+
+
 #match-collections-button {
     background-color: #0068b3;
     color: white;
@@ -65,6 +70,10 @@ main {
     border-radius: 4px; /* Add border radius for rounded corners */
     margin: 10px;
     float: right;
+}
+
+#match-collections-button:hover {
+    background-color: #045a8d;
 }
 
 .button-container_console {

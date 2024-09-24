@@ -1,0 +1,36 @@
+---
+title: MatchMaker Browser
+---
+    <div>
+        <article id="mmx_browse_tree">Loading...</article>
+    </div>
+    <div>
+        <button id="match-collections-button">Preview Custom Set →
+        </button>
+        <br><br>
+        <article id="mmx_browse_detail"></article>
+    </div>
+<script type="module">
+    import MmCollection from "/c/script/mmx_select_subset.js";
+    //import bsession from './script/bsession.js';
+
+    //const session = new bsession(config.backEndUrl, config.sessionTag);
+
+    async function loadCollection() {
+        console.log("Load");
+        let query = new URLSearchParams(window.location.search);
+        let id = query.get("id");
+    
+        const collection = await MmCollection.LoadFromId(id);
+        collection.attachTo(document.getElementById("mmx_browse_tree"));
+
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.classList.add('mm_columns');
+        }
+    }
+    
+    loadCollection()
+
+</script>
+    
