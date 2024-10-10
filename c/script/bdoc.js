@@ -1,6 +1,5 @@
 export default class bdoc {
-    static ele(tagName, ...children) {
-        let ele = document.createElement(tagName);
+    static appendList(ele, children) {
         for (let cn of children) {
             if (cn === undefined || cn === null) {
                 ele.appendChild(document.createTextNode(""));
@@ -17,6 +16,14 @@ export default class bdoc {
             }
         }
         return ele;
+    }
+
+    static append(ele, ...children) {
+        this.appendList(ele, children);
+    }
+
+    static ele(tagName, ...children) {
+        return bdoc.appendList(document.createElement(tagName), children);
     }
 
     static attr(name, value) {
