@@ -31,7 +31,7 @@ export default class bdoc {
     }
 
     static class(className) {
-        return new bdocAttr("className", className);
+        return new bdocAttr("class", className);
     }
 
     static preText(value) {
@@ -46,7 +46,7 @@ class bdocAttr {
     }
 
     addToEle(ele) {
-        ele[this.name] = this.value;
+        ele.setAttribute(this.name, this.value);
     }
 }
 
