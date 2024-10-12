@@ -41,12 +41,14 @@ class MmUser extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     static #properties = [
-        {id: "fullname", label: "Full Name"},
+        {id: "name", label: null},
+        {id: "fullName", label: "Full Name"},
         {id: "email", label: "Email"}
         // Other properties could be added here because the back-end supports custom properties
     ];
 
     //#internals; // This class doesn't need #internals but elements that participate in forms do need it
+    #userid;
 
     constructor() {
         // Call the constructor on the parent class
@@ -65,6 +67,7 @@ class MmUser extends HTMLElement {
 
         const propList = bdoc.ele("dl");
         for (const prop of MmUser.#properties) {
+            if (!prop.label) continue; // Suppress username and anything else with special treatment
             propList.append(
                 bdoc.ele("div",
                     bdoc.ele("dt", prop.label),
@@ -80,9 +83,9 @@ class MmUser extends HTMLElement {
             ),
             bdoc.ele("div", bdoc.class("user-form"),
                 bdoc.ele("div", bdoc.class("button-bar"),
-                    bdoc.ele("button", bdoc.eventListener("click", this.#onClickSave), "Save")
+                    bdoc.ele("button", bdoc.eventListener("click", (event) => this.#onClickSave(this, event)), "Save")
                 ),
-                bdoc.ele("h2", bdoc.id("userid")),
+                bdoc.ele("h2", bdoc.id("name")),
                 bdoc.ele("h3", "Details"),
                 propList
             )
@@ -97,14 +100,41 @@ class MmUser extends HTMLElement {
             this.#loadUser(newValue);
     }
 
-    #loadUser(userid) {
-        const ctl = this.shadowRoot.getElementById("userid");
-        if (ctl == null) return; // Not yet loaded.
-        ctl.textContent = userid;
+    async #loadUser(userid) {
+        if (!userid) return;
+        this.#userid = userid;
+
+        const response = await MmUser.session.fetch("/api/users/" + encodeURIComponent(userid));
+        const data = await response.json();
+        // Error handling should be added to the above by way of a try/catch block
+
+        const shadow = this.shadowRoot;
+        for (const prop of MmUser.#properties) {
+            const val = data[prop.id];
+            shadow.getElementById(prop.id).textContent = val ? val : "";
+        }
     }
 
-    #onClickSave(event) {
-        alert("Save");
+    async #onClickSave(ele, event) {
+        const payload = {id: ele.#userid}
+        const shadow = ele.shadowRoot;
+        for (const prop of MmUser.#properties) {
+            payload[prop.id] = shadow.getElementById(prop.id).textContent;
+        }
+        
+        const response = await MmUser.session.fetch("/api/users/" + encodeURIComponent(ele.#userid),
+            {
+                method: "PUT",
+                body: JSON.stringify(payload),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8"
+                }
+            }
+        );
+
+        // Need better error handling here.
+        const text = await response.text();
+        alert(text);
     }
 }
 
