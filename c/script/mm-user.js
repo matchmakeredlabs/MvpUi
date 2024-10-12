@@ -48,6 +48,7 @@ class MmUser extends HTMLElement {
     ];
 
     //#internals; // This class doesn't need #internals but elements that participate in forms do need it
+    #connected = false;
     #userid;
 
     constructor() {
@@ -93,14 +94,17 @@ class MmUser extends HTMLElement {
 
         const userid = this.getAttribute("userid");
         if (userid) this.#loadUser(userid);
+        this.#connected = true;
     }
 
     attributeChangedCallback(attrName, oldValue, newValue) {
+        if (!this.#connected) return;
         if (attrName == "userid")
             this.#loadUser(newValue);
     }
 
     async #loadUser(userid) {
+        console.log("LoadUser: " + userid)
         if (!userid) return;
         this.#userid = userid;
 
