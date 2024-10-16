@@ -17,12 +17,21 @@ export default class mmxAuth {
         const token = localStorage.getItem(mmxAuth.sessionKey)
         if (!token) return false;
 
-        // Having found the cookie, parse it and check its expiration
+        // Having found the token, parse it and check its expiration
         const tokenParts = new URLSearchParams(decodeURIComponent(token));
         const expiration = tokenParts.get("x");
         if (expiration && mmxAuth.dateParse(expiration) > Date.now()) return true;
 
         return false;
+    }
+
+    static getUserid() {
+        const token = localStorage.getItem(mmxAuth.sessionKey)
+        if (!token) return false;
+
+        // Having found the cookie, parse it and return the userid
+        const tokenParts = new URLSearchParams(decodeURIComponent(token));
+        return tokenParts.get("un");
     }
 
     static redirectToLogin() {

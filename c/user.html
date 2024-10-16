@@ -1,0 +1,12 @@
+---
+title: Edit User
+---
+<mm-user class="card" style="max-width: 30em;"/>
+<script type="module" src="/c/script/mm-user.js"></script>
+<script type="module" defer>
+    import mmxAuth from "/c/script/mmx_auth.js";
+    let userid = mmxAuth.getUserid();
+    console.log(userid);
+    let userEle = document.getElementsByTagName("mm-user")[0];
+    userEle.setAttribute("userid", mmxAuth.getUserid());
+</script>

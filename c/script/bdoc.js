@@ -1,6 +1,5 @@
 export default class bdoc {
-    static ele(tagName, ...children) {
-        let ele = document.createElement(tagName);
+    static appendList(ele, children) {
         for (let cn of children) {
             if (cn === undefined || cn === null) {
                 ele.appendChild(document.createTextNode(""));
@@ -19,12 +18,28 @@ export default class bdoc {
         return ele;
     }
 
+    static append(ele, ...children) {
+        this.appendList(ele, children);
+    }
+
+    static ele(tagName, ...children) {
+        return bdoc.appendList(document.createElement(tagName), children);
+    }
+
     static attr(name, value) {
         return new bdocAttr(name, value);
     }
 
+    static id(idvalue) {
+        return new bdocAttr("id", idvalue);
+    }
+
     static class(className) {
-        return new bdocAttr("className", className);
+        return new bdocAttr("class", className);
+    }
+
+    static eventListener(eventName, callback) {
+        return new bdocListener(eventName, callback);
     }
 
     static preText(value) {
@@ -39,7 +54,18 @@ class bdocAttr {
     }
 
     addToEle(ele) {
-        ele[this.name] = this.value;
+        ele.setAttribute(this.name, this.value);
+    }
+}
+
+class bdocListener {
+    constructor(eventName, callback) {
+        this.eventName = eventName
+        this.callback = callback;
+    }
+
+    addToEle(ele) {
+        ele.addEventListener(this.eventName, this.callback);
     }
 }
 
