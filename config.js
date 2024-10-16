@@ -1,4 +1,4 @@
 export default class config {
-    static backEndUrl = "https://app.matchmakeredlabs.net";
-    static sessionTag = "mm";
+  static backEndUrl = "http://localhost:7071";
+  static sessionTag = "mm";
 }
