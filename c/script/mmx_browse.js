@@ -28,6 +28,19 @@ export default class MmCollection {
 
     static thisCollection;
 
+    static root;
+
+    static async LoadFromLocalStorage(key, root) {
+        let customSet = JSON.parse(localStorage.getItem("currentCustomSet"));
+        if (key) {
+            customSet = JSON.parse(localStorage.getItem("customSets"))[key];
+        }
+
+        window.currentCollection = customSet.descriptors;
+
+        return new MmCollection(Object.values(customSet.descriptors), root);
+    }
+
     static async LoadFromId(id) {
         let response = await session.fetch("/api/collections/" + id);
         let data = await response.json();
@@ -70,7 +83,7 @@ export default class MmCollection {
         return new MmCollection(data.collection);    
     }
 
-    constructor(collection) {
+    constructor(collection, root) {
 
         // Descriptors with root
         let descriptors = [];
@@ -82,8 +95,14 @@ export default class MmCollection {
 
         this.descriptors = descriptors;
         
-
+        if (root) {
+            MmCollection.root = root;
+        }else{
+            MmCollection.root = document;
+        }
+        
     }
+
 
     select(ele) {
         function addRow(dl, label, value) {
@@ -114,7 +133,7 @@ export default class MmCollection {
         // Save the selected statement
         this.selDesc = desc;
 
-        let detail = document.getElementById("mmx_browse_detail");
+        let detail = MmCollection.root.getElementById("mmx_browse_detail");
         if (!detail) return;
 
         // Clear the existing detail
@@ -235,7 +254,7 @@ export default class MmCollection {
         // let buttonGroup = document.createElement("div")
         // buttonGroup.classList.add("button-group");
 
-        let downloadMatchButton = document.getElementById("match-collections-button")
+        let downloadMatchButton = MmCollection.root.getElementById("match-collections-button")
 
         async function downloadMatches() {
             let currentCollection = window.currentCollection;
@@ -284,9 +303,9 @@ export default class MmCollection {
                 element.setAttribute('href', dataUrl);
                 element.setAttribute('download', `collection-matches-${id}` + '.json');
                 element.style.display = 'none';
-                document.body.appendChild(element);
+                MmCollection.root.body.appendChild(element);
                 element.click();
-                document.body.removeChild(element);
+                MmCollection.root.body.removeChild(element);
             }
             else {
                 let finalCSV = "";
@@ -304,25 +323,25 @@ export default class MmCollection {
                 element.setAttribute('href', dataUrl);
                 element.setAttribute('download', `collection-matches-${id}` + '.csv');
                 element.style.display = 'none';
-                document.body.appendChild(element);
+                MmCollection.root.body.appendChild(element);
                 element.click();
-                document.body.removeChild(element);
+                MmCollection.root.body.removeChild(element);
             }
         }
-
-        downloadMatchButton.onclick = downloadMatches
-
+        if(downloadMatchButton) {
+            downloadMatchButton.onclick = downloadMatches
+        }
         let expandElement = document.createElement("span");
         expandElement.innerText = "Expand";
         expandElement.classList.add("button-div");
         
         function expandli() {
-            let mmx_browse_detail = document.getElementById("mmx_browse_detail")
+            let mmx_browse_detail = MmCollection.root.getElementById("mmx_browse_detail")
             let preActionHTML = mmx_browse_detail.outerHTML;
             window.closelevel += 1;
 
             // Select all li elements
-            let allLis = document.querySelectorAll('li');
+            let allLis = MmCollection.root.querySelectorAll('li');
 
             // Filter to get only the leaf-level li elements
             let leafLevelLis = Array.from(allLis).filter(function(li) {
@@ -336,7 +355,7 @@ export default class MmCollection {
             mmx_browse_detail.outerHTML = preActionHTML;
         }
         function closeli() {
-            let mmx_browse_detail = document.getElementById("mmx_browse_detail")
+            let mmx_browse_detail = MmCollection.root.getElementById("mmx_browse_detail")
             let preActionHTML = mmx_browse_detail.outerHTML;
             if (window.closelevel >= 0) {
                 clickOnLevel(window.closelevel);
@@ -367,7 +386,7 @@ export default class MmCollection {
             }
         
             // Start with top level li elements
-            let topLevelLis = Array.from(document.querySelectorAll('ul > li'));
+            let topLevelLis = Array.from(MmCollection.root.querySelectorAll('ul > li'));
             clickLevel(topLevelLis, 0);
         }
         
@@ -408,7 +427,7 @@ export default class MmCollection {
     }
 
     static clickSelect() {
-        const spans = document.querySelectorAll('li span');
+        const spans = MmCollection.root.querySelectorAll('li span');
         spans.forEach(span => {
             // Check if the clicked span is the same as the currently highlighted one
                 if (span === this) {
