@@ -1,0 +1,205 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+
+@import "globals.scss";
+
+:host {
+    
+    display: flex;
+    flex-direction: row;
+    height: 96%;
+
+    mm-element-card {
+        width: 500px;
+        display: block;
+    }
+
+
+    .matches-container {
+        flex: 1;
+    }
+
+    .matches-showing {
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 1;
+
+    }
+
+    .matches {
+        height: 93%;
+        overflow: auto;
+    }
+
+    .matches-header-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .match-profile-container {
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        gap: 1em;
+    }
+
+    
+    .independent-sets-container {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .independent-sets {
+        height: 92%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .set-collections-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        padding-bottom: 1em;
+        
+        margin-left: 2em;
+
+    }
+
+    .collection-container {
+        position: relative;
+        
+        display: grid;
+        grid-template-rows: min-content 0fr;
+        // transition: grid-template-rows 0.1s ease;
+    }
+    .collection-container.show {
+        grid-template-rows: min-content 1fr;
+    }
+
+    .collection-display-container {
+        overflow: hidden;
+    }
+
+    .collection-header-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background-color: white;
+
+
+        position: sticky;
+        top: 0;
+
+        p {
+            margin: 0;
+            font-size: medium;
+            font-weight: bold;
+        }
+
+        button {
+                background-color: inherit;
+                width: 1.5em;
+                height: 1em;
+                background-image: var(--svg-triangle-right);
+                background-repeat: no-repeat;
+                background-origin: padding-box;
+                border: none;
+                text-decoration: none;
+                cursor: pointer;
+        }
+
+            button.mmb_partial {
+                background-image: var(--svg-triangle-right-partial);
+            }
+    
+            button.mmb_desc {
+                background-image: var(--svg-triangle-right-desc);
+            }
+    
+            button.mmb_expanded {
+                background-image: var(--svg-triangle-down);
+            }
+    
+            button.mmb_expanded.mmb_partial {
+                background-image: var(--svg-triangle-down-partial);
+            }
+    
+            button.mmb_expanded.mmb_desc {
+                background-image: var(--svg-triangle-down-desc);
+            }
+    
+            button.mmb_leaf {
+                background-image: var(--svg-square);
+            }
+    
+            button.mmb_leaf.mmb_desc {
+                background-image: var(--svg-square-desc);
+            }
+    }
+
+    .header-button {
+
+
+        color: white;
+        border: none;
+
+        padding: 8px 16px;
+
+        cursor: pointer;
+        border-radius: 4px;
+
+        text-wrap: nowrap;
+        width: min-content;
+
+        margin-top: 1em;
+    }
+
+    .header-button.match-profile {
+        background-color: #5D9732;
+
+    }
+
+    .header-button.match-profile:hover {
+
+        background-color: #497528;
+    }
+
+}
+
+    .info-button {
+        vertical-align: top;
+        margin-left: 0.5em;
+        font-family: Arial, sans-serif;
+        width: 10px;
+        /* Small width for the button */
+        height: 10px;
+        /* Small height for the button */
+        font-style: normal;
+        background-color: #6c757d;
+        color: white;
+        text-align: center;
+        line-height: 12px;
+        /* Aligns the 'i' vertically within the button */
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        font-size: 8px;
+        /* Small font size for the 'i' */
+        display: inline-block;
+        /* Moves the button up to give a superscript effect */
+        
+    }
+
+
+
+
+

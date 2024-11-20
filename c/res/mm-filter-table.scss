@@ -1,0 +1,49 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 100%;
+}
+
+// prevent scrolling
+mm-table {
+    height: 85%;
+}
+
+.filter {
+    display: inline-block;
+    background-color: #e0e0e0;
+    font-size: 13px;
+    padding: 0.1rem;
+    margin: 0.1rem;
+    border-radius: 2px;
+}
+
+.filter .close {
+    margin-left: 2px;
+    cursor: pointer;
+}
+
+.filter-table-header {
+    padding-left: 2em;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+   
+}
+
+.table-name {
+    width: 60%;
+}
+
+.filter-table-container {
+    overflow: auto;
+    height: 100%;
+}
+

@@ -30,7 +30,7 @@ class MmTable extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-collections.css")
+                bdoc.attr("href", "/c/res/mm-table.css")
             ),
             bdoc.ele(
                 "link",
@@ -72,6 +72,10 @@ class MmTable extends HTMLElement {
         );
     }
 
+    getShadowRoot() {
+        return this.shadowRoot;
+    }
+
     render() {
         const tableHead = this.shadowRoot.getElementById("table-titles");
         if (!tableHead) return;
@@ -106,9 +110,11 @@ class MmTable extends HTMLElement {
                                 element = col;
                                 element.item = item;
                             case "function":
-                                element = col(item);
+                                element = col(item, this.shadowRoot);
                         }
-                        return bdoc.ele("td", element);
+                        return element.tagName === "TD"
+                            ? element
+                            : bdoc.ele("td", element);
                     })
                 )
             )

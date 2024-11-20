@@ -2,13 +2,18 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 
-class MmCollections extends HTMLElement {
+export default class MmCollections extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
     }
+
+    static fetchCollections = async () => {
+        const response = await MmCollections.session.fetch("/api/collections");
+        return (await response.json()).collections;
+    };
 
     connectedCallback() {
         bdoc.append(
@@ -41,12 +46,11 @@ class MmCollections extends HTMLElement {
                 bdoc.attr("src", "/c/script/mm-filter-table.js")
             )
         );
-        this.#fetchCollections();
+        this.#renderCollections();
     }
 
-    #fetchCollections = async () => {
-        const response = await MmCollections.session.fetch("/api/collections");
-        const collections = (await response.json()).collections;
+    #renderCollections = async () => {
+        const collections = await MmCollections.fetchCollections();
 
         customElements.whenDefined("mm-filter-table").then(() => {
             this.shadowRoot

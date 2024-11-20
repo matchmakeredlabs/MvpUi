@@ -1,0 +1,87 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+
+@import "globals.scss";
+
+:host {
+    --svg-chevron-right: #{url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.0' viewBox='0 0 100 100'%3E%3Cpolygon points='22,8 22,3 79,50 22,98 22,93 74,50' stroke='black' fill='black' stroke-width='10' /%3E%3C/svg%3E")};
+    align-self: flex-start;
+    position: relative;
+    width: 96%;
+
+    display: grid;
+
+    grid-template-rows: min-content 0fr;
+
+    transition: grid-template-rows 0.4s ease;
+
+    .dropdown-button {
+        display: flex;
+        justify-content: space-between;
+        gap: 1em;
+        align-items: center;
+        padding: 0.5em 1em;
+        cursor: pointer;
+        position: relative;
+        background-color: white;
+        border: none;
+
+        h2 {
+            margin: 0;
+        }
+
+    }
+
+    .chevron {
+        width: 15px;
+        height: 15px;
+        background-image: var(--svg-chevron-right);
+        background-repeat: no-repeat;
+        background-origin: padding-box;
+        background-size: contain;
+
+        transition: transform 0.4s ease;
+    }
+
+    .chevron.down {
+        transform: rotate(90deg);
+    }
+
+    span.close {
+        font-size: 1.5em;
+        cursor: pointer;
+    }
+
+    .dropdown-button-container {
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        
+
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+
+        background-color: white;
+
+        cursor: pointer;
+
+    }
+
+    .dropdown-body-container {
+
+        overflow: auto;
+
+    }
+
+}
+
+
+:host(.show) {
+    grid-template-rows: min-content 1fr;
+}
+
+
+

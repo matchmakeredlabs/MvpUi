@@ -20,6 +20,39 @@ class MmFilterTable extends HTMLElement {
 
     #selectedOptions = {};
 
+    addCustomHeaderElements(elements) {
+        bdoc.append(
+            this.shadowRoot.querySelector(".filter-table-header"),
+            ...elements
+        );
+    }
+
+    addCustomStylesheets(stylesheets) {
+        if (!Array.isArray(stylesheets)) {
+            stylesheets = [stylesheets];
+        }
+        stylesheets.forEach((stylesheet) => {
+            bdoc.append(
+                this.shadowRoot,
+                bdoc.ele(
+                    "link",
+                    bdoc.attr("rel", "stylesheet"),
+                    bdoc.attr("href", stylesheet)
+                )
+            );
+        });
+    }
+
+    getInnerTableRoot = async () => {
+        let shadowRoot;
+        await customElements.whenDefined("mm-table").then(() => {
+            shadowRoot = this.shadowRoot
+                .querySelector("mm-table")
+                .getShadowRoot();
+        });
+        return shadowRoot;
+    };
+
     #sortAttribute = "";
 
     nameElementCallback = (item) =>
@@ -291,33 +324,42 @@ class MmFilterTable extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-collections.css")
+                bdoc.attr("href", "/c/res/mm-filter-table.css")
             ),
             bdoc.ele(
                 "div",
-                bdoc.attr("style", "padding-left:2em;"),
-
+                bdoc.class("filter-table-container"),
                 bdoc.ele(
                     "div",
-                    bdoc.id("filterContainers"),
-                    keywordContainer,
-                    ...filterContainers
+                    bdoc.class("filter-table-header"),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("filters-container"),
+
+                        bdoc.ele(
+                            "div",
+                            bdoc.id("filterContainers"),
+                            keywordContainer,
+                            ...filterContainers
+                        ),
+
+                        bdoc.ele("b", "Search by Keyword: "),
+                        keywordElement,
+                        addKeyword,
+                        bdoc.ele("br"),
+                        filterDropdownsContainer,
+
+                        bdoc.ele("b", "Sort by: "),
+                        sortDropdown
+                    )
                 ),
 
-                bdoc.ele("b", "Search by Keyword: "),
-                keywordElement,
-                addKeyword,
-                bdoc.ele("br"),
-                filterDropdownsContainer,
-
-                bdoc.ele("b", "Sort by: "),
-                sortDropdown
-            ),
-            bdoc.ele("mm-table"),
-            bdoc.ele(
-                "script",
-                bdoc.attr("type", "module"),
-                bdoc.attr("src", "/c/script/mm-table.js")
+                bdoc.ele("mm-table"),
+                bdoc.ele(
+                    "script",
+                    bdoc.attr("type", "module"),
+                    bdoc.attr("src", "/c/script/mm-table.js")
+                )
             )
         );
     }

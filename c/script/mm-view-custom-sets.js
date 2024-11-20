@@ -1,10 +1,6 @@
 import bdoc from "./bdoc.js";
 
-class MmViewCustomSets extends HTMLElement {
-    #summarizedCustomSets = [];
-    #displayCustomSets = {};
-    #customSetsData = {};
-
+export default class MmViewCustomSets extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -21,7 +17,7 @@ class MmViewCustomSets extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-collections.css")
+                bdoc.attr("href", "/c/res/mm-view-custom-sets.css")
             ),
             bdoc.ele(
                 "div",
@@ -41,14 +37,18 @@ class MmViewCustomSets extends HTMLElement {
                 bdoc.attr("src", "/c/script/mm-filter-table.js")
             )
         );
-        this.#fetchCustomSets();
+        this.#renderCustomSets();
     }
 
-    #fetchCustomSets = async () => {
-        this.#customSetsData = JSON.parse(localStorage.getItem("customSets"));
+    // marked async in case we want to store custom sets in backend
+    static fetchCustomSets = async () =>
+        JSON.parse(localStorage.getItem("customSets"));
 
-        Object.keys(this.#customSetsData).forEach((customSetName) => {
-            const customSet = this.#customSetsData[customSetName];
+    static generateSummarizedAndDisplayCustomSets = (customSetsData) => {
+        const summarizedCustomSets = [];
+
+        Object.keys(customSetsData).forEach((customSetName) => {
+            const customSet = customSetsData[customSetName];
 
             let summarizedCustomSet = {};
 
@@ -66,12 +66,14 @@ class MmViewCustomSets extends HTMLElement {
                 });
             });
 
-            this.#summarizedCustomSets.push(summarizedCustomSet);
+            summarizedCustomSets.push(summarizedCustomSet);
         });
 
-        this.#summarizedCustomSets.forEach((summarizedCustomSet) => {
+        const displayCustomSets = {};
+
+        summarizedCustomSets.forEach((summarizedCustomSet) => {
             // generate display properties
-            this.#displayCustomSets[summarizedCustomSet.name] = {};
+            displayCustomSets[summarizedCustomSet.name] = {};
             Object.keys(summarizedCustomSet).forEach((key) => {
                 let displayValue = "";
                 if (summarizedCustomSet[key] instanceof Set) {
@@ -85,91 +87,111 @@ class MmViewCustomSets extends HTMLElement {
                 } else {
                     displayValue = summarizedCustomSet[key];
                 }
-                this.#displayCustomSets[summarizedCustomSet.name][key] =
-                    displayValue;
+                displayCustomSets[summarizedCustomSet.name][key] = displayValue;
             });
         });
+
+        return [summarizedCustomSets, displayCustomSets];
+    };
+
+    static generateFilterOptionsCallback =
+        (summarizedCustomSets) =>
+        (_displayElements, filters, selectedOptions, root) => {
+            summarizedCustomSets.forEach((summarizedCustomSet) => {
+                filters.forEach((filter) => {
+                    summarizedCustomSet[filter].forEach((currentValue) => {
+                        if (
+                            currentValue === null ||
+                            currentValue === "" ||
+                            currentValue === undefined
+                        ) {
+                            currentValue = "Null";
+                        }
+
+                        if (!(currentValue in selectedOptions[filter])) {
+                            selectedOptions[filter][currentValue] = false;
+                            bdoc.append(
+                                root.getElementById(`${filter}-dropdown`),
+                                bdoc.ele(
+                                    "option",
+                                    currentValue,
+                                    bdoc.attr("value", currentValue)
+                                )
+                            );
+                        }
+                    });
+                });
+            });
+        };
+
+    static generateDataFilteredBySearchKeywordsCallback =
+        (summarizedCustomSets) => (_displayData, keywords) =>
+            keywords.length > 0
+                ? summarizedCustomSets.filter((summarizedCustomSet) =>
+                      keywords.some((keyword) =>
+                          JSON.stringify(summarizedCustomSet.name)
+                              .toLowerCase()
+                              .includes(keyword.toLowerCase())
+                      )
+                  )
+                : summarizedCustomSets;
+
+    static generateDataFilteredByFilterOptionsCallback =
+        (displayCustomSets) => (filteredBySearch, filters) =>
+            filteredBySearch
+                .filter((item) =>
+                    Object.keys(filters).every((filter) =>
+                        Object.keys(filters[filter]).some(
+                            (selected) => filters[filter][selected]
+                        )
+                            ? Object.keys(filters[filter]).some((selected) =>
+                                  filters[filter][selected]
+                                      ? item[filter].has(selected)
+                                      : false
+                              )
+                            : true
+                    )
+                )
+                .map(
+                    (summarizedCustomSet) =>
+                        displayCustomSets[summarizedCustomSet.name]
+                );
+
+    static nameElementCallback = (customSet) =>
+        bdoc.ele(
+            "a",
+            bdoc.attr("href", `/c/ViewCustomSet?key=${customSet.name}`),
+            customSet.name
+        );
+
+    #renderCustomSets = async () => {
+        const customSetsData = await MmViewCustomSets.fetchCustomSets();
+
+        const [summarizedCustomSets, displayCustomSets] =
+            MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
+                customSetsData
+            );
 
         customElements.whenDefined("mm-filter-table").then(() => {
             const filterTable =
                 this.shadowRoot.querySelector("mm-filter-table");
-            filterTable.generateFilterOptions = (
-                _displayElements,
-                filters,
-                selectedOptions,
-                root
-            ) => {
-                this.#summarizedCustomSets.forEach((summarizedCustomSet) => {
-                    filters.forEach((filter) => {
-                        summarizedCustomSet[filter].forEach((currentValue) => {
-                            if (
-                                currentValue === null ||
-                                currentValue === "" ||
-                                currentValue === undefined
-                            ) {
-                                currentValue = "Null";
-                            }
-
-                            if (!(currentValue in selectedOptions[filter])) {
-                                selectedOptions[filter][currentValue] = false;
-                                bdoc.append(
-                                    root.getElementById(`${filter}-dropdown`),
-                                    bdoc.ele(
-                                        "option",
-                                        currentValue,
-                                        bdoc.attr("value", currentValue)
-                                    )
-                                );
-                            }
-                        });
-                    });
-                });
-            };
-            filterTable.dataFilteredBySearchKeywords = (
-                _displayData,
-                keywords
-            ) =>
-                keywords.length > 0
-                    ? this.#summarizedCustomSets.filter((summarizedCustomSet) =>
-                          keywords.some((keyword) =>
-                              JSON.stringify(summarizedCustomSet.name)
-                                  .toLowerCase()
-                                  .includes(keyword.toLowerCase())
-                          )
-                      )
-                    : this.#summarizedCustomSets;
-
-            filterTable.dataFilteredByFilterOptions = (
-                filteredBySearch,
-                filters
-            ) =>
-                filteredBySearch
-                    .filter((item) =>
-                        Object.keys(filters).every((filter) =>
-                            Object.keys(filters[filter]).some(
-                                (selected) => filters[filter][selected]
-                            )
-                                ? Object.keys(filters[filter]).some(
-                                      (selected) =>
-                                          filters[filter][selected]
-                                              ? item[filter].has(selected)
-                                              : false
-                                  )
-                                : true
-                        )
-                    )
-                    .map(
-                        (summarizedCustomSet) =>
-                            this.#displayCustomSets[summarizedCustomSet.name]
-                    );
-            filterTable.nameElementCallback = (customSet) =>
-                bdoc.ele(
-                    "a",
-                    bdoc.attr("href", `/c/ViewCustomSet?key=${customSet.name}`),
-                    customSet.name
+            filterTable.generateFilterOptions =
+                MmViewCustomSets.generateFilterOptionsCallback(
+                    summarizedCustomSets
+                );
+            filterTable.dataFilteredBySearchKeywords =
+                MmViewCustomSets.generateDataFilteredBySearchKeywordsCallback(
+                    summarizedCustomSets
+                );
+            filterTable.dataFilteredByFilterOptions =
+                MmViewCustomSets.generateDataFilteredByFilterOptionsCallback(
+                    displayCustomSets
                 );
 
-            filterTable.loadData(Object.values(this.#displayCustomSets));
+            filterTable.nameElementCallback =
+                MmViewCustomSets.nameElementCallback;
+
+            filterTable.loadData(Object.values(displayCustomSets));
         });
     };
 }
