@@ -1,0 +1,76 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+ @import "globals.scss";
+
+:host {
+    ul {
+        list-style: none;
+        margin: 0;
+        padding-left: 1em;
+    }
+
+    li {
+        width: fit-content;
+        margin: 0;
+    }
+
+    .selected {
+        background-color: rgb(175, 201, 228);
+    }
+
+    button {
+        background-color: inherit;
+        width: 1.5em;
+        height: 1em;
+        background-image: var(--svg-triangle-right);
+        background-repeat: no-repeat;
+        background-origin: padding-box;
+        border: none;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    button.search_select {
+        background-color: red;
+        /* Gray background color */
+        color: #888;
+        /* Gray text color */
+        cursor: not-allowed;
+        /* Change cursor to indicate it's disabled */
+        margin: 5px;
+    }
+
+    button.mmb_partial {
+        background-image: var(--svg-triangle-right-partial);
+    }
+
+    button.mmb_desc {
+        background-image: var(--svg-triangle-right-desc);
+    }
+
+    button.mmb_expanded {
+        background-image: var(--svg-triangle-down);
+    }
+
+    button.mmb_expanded.mmb_partial {
+        background-image: var(--svg-triangle-down-partial);
+    }
+
+    button.mmb_expanded.mmb_desc {
+        background-image: var(--svg-triangle-down-desc);
+    }
+
+    button.mmb_leaf {
+        background-image: var(--svg-square);
+    }
+
+    button.mmb_leaf.mmb_desc {
+        background-image: var(--svg-square-desc);
+    }
+
+    .mmb_selected {
+        background-color: lighten($mm-blue, 50%);
+    }
+}
+

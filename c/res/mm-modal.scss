@@ -1,0 +1,70 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+
+@import "globals.scss";
+
+:host {
+    
+    position: absolute;
+
+
+    .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            justify-content: center;
+            /* Center horizontally */
+            align-items: center;
+            /* Center vertically */
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+    
+        .modal-content {
+            background-color: #fefefe;
+            margin: 0 auto;
+            /* Center horizontally */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 700px;
+            /* Fixed width for the modal content */
+            box-sizing: border-box;
+            /* Include padding and border in the width */
+            position: relative;
+            /* Ensure relative positioning */
+            top: 10%;
+        }
+    
+    
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+    
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+}
+
+
+

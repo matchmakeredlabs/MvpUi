@@ -30,8 +30,16 @@ export default class bdoc {
         return new bdocAttr(name, value);
     }
 
+    static id(idvalue) {
+        return new bdocAttr("id", idvalue);
+    }
+
     static class(className) {
-        return new bdocAttr("className", className);
+        return new bdocAttr("class", className);
+    }
+
+    static eventListener(eventName, callback) {
+        return new bdocListener(eventName, callback);
     }
 
     static preText(value) {
@@ -46,7 +54,18 @@ class bdocAttr {
     }
 
     addToEle(ele) {
-        ele[this.name] = this.value;
+        ele.setAttribute(this.name, this.value);
+    }
+}
+
+class bdocListener {
+    constructor(eventName, callback) {
+        this.eventName = eventName
+        this.callback = callback;
+    }
+
+    addToEle(ele) {
+        ele.addEventListener(this.eventName, this.callback);
     }
 }
 

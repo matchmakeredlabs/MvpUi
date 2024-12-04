@@ -1,0 +1,36 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+}
+
+#create-set-button {
+    background-color: #0068b3;
+    color: white;
+    border: none;
+
+    padding: 8px 16px;
+
+    cursor: pointer;
+    border-radius: 4px;
+
+    margin-right: 2em;
+    position: absolute;
+    right: 0;
+    z-index: 2;
+}
+
+#create-set-button:hover {
+    background-color: #045a8d;
+}
+
+.create-sets-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}

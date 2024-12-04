@@ -4,56 +4,61 @@
  * objects like I've done here.
  */
 
-import bdoc from './bdoc.js';
-import config from '/config.js';
-import bsession from './bsession.js';
+import bdoc from "./bdoc.js";
+import config from "/config.js";
+import bsession from "./bsession.js";
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Container for MMX Globals
 let mmx_dict = {};
-window.searchProperty = "Text"
+window.searchProperty = "Text";
 
 function extractStmtIDs() {
-    const stmtIdElements = document.querySelectorAll('.mm_stmtId');
-    const stmtIds = Array.from(stmtIdElements).map(element => element.textContent);
+    const stmtIdElements = document.querySelectorAll(".mm_stmtId");
+    const stmtIds = Array.from(stmtIdElements).map(
+        (element) => element.textContent
+    );
     return stmtIds;
 }
 
 function extractAfterSecondId(entries) {
-    let secondIdIndex = entries.indexOf('Id', entries.indexOf('Id') + 1);
+    let secondIdIndex = entries.indexOf("Id", entries.indexOf("Id") + 1);
     if (secondIdIndex === -1) {
-      return [];
+        return [];
     }
     return entries.slice(secondIdIndex + 1);
 }
-  
+
 function extractAddedIds() {
-    return extractAfterSecondId(extractStmtIDs())
+    return extractAfterSecondId(extractStmtIDs());
 }
 
 function jsonToQueryString(jsonString) {
     // Parse the JSON string into an object
     let jsonObject = JSON.parse(jsonString);
-  
+
     // Create an array of key-value pairs
     let queryParams = [];
     for (let key in jsonObject) {
-      if (jsonObject.hasOwnProperty(key)) {
-        queryParams.push(`${key}=${jsonObject[key]}`);
-      }
+        if (jsonObject.hasOwnProperty(key)) {
+            queryParams.push(`${key}=${jsonObject[key]}`);
+        }
     }
-  
+
     // Join the array into a single string with '&' separator
-    return queryParams.join('&');
-  }
+    return queryParams.join("&");
+}
 
 // Using the class like a namespace. All members are static.
 class Mmx {
-
     static keyPrefix = "https://palet.codes/key/";
 
     static descProps = [
-        { label: "Type", prop: "eleType", inner: "<select name='eleType'><option value='o'>Other</option><option value='lr'>Learning Resource</option><option value='cs'>Competency Statement</option><option value='c'>Curriculum</option></select>" },
+        {
+            label: "Type",
+            prop: "eleType",
+            inner: "<select name='eleType'><option value='o'>Other</option><option value='lr'>Learning Resource</option><option value='cs'>Competency Statement</option><option value='c'>Curriculum</option></select>",
+        },
         { label: "Name", prop: "name" },
         { label: "URL", prop: "url" },
         { label: "Subject", prop: "subject" },
@@ -62,8 +67,8 @@ class Mmx {
         { label: "Ed. Level", prop: "educationalLevel" },
         { label: "Creator", prop: "creator" },
         { label: "Provenance", prop: "provenance" },
-        { label: "Date Published", prop: "datePublished"},
-        { label: "Repository Date", prop: "sdDatePublished"}
+        { label: "Date Published", prop: "datePublished" },
+        { label: "Repository Date", prop: "sdDatePublished" },
     ];
 
     static keyLabel = "Key";
@@ -72,32 +77,32 @@ class Mmx {
     // === Support Functions =======
 
     static EleTypeTranslate = {
-        "any": "Any",
-        "lr": "Learning Resource",
-        "cs": "Competency Statement",
-        "c": "Curriculum",
-        "o": "Other"
+        any: "Any",
+        lr: "Learning Resource",
+        cs: "Competency Statement",
+        c: "Curriculum",
+        o: "Other",
     };
 
     static LoadJsonAsync(url, callback, arg) {
-        session.fetch(url)
-            .then(response => response.json())
-            .then(json => callback(json, arg))
+        session
+            .fetch(url)
+            .then((response) => response.json())
+            .then((json) => callback(json, arg));
     }
 
     static StripKeyPrefix(key) {
         let slash = key.lastIndexOf("/");
-        return (slash >= 0) ? key.substring(slash + 1) : key;
+        return slash >= 0 ? key.substring(slash + 1) : key;
     }
 
     static CopyProperties(dst, src) {
         for (let attr in template) {
             let prop = template[attr];
-            if (typeof prop === 'object' && !!prop) {
+            if (typeof prop === "object" && !!prop) {
                 dst[attr] = {};
                 Mmx.CopyProperties(dst[attr], prop);
-            }
-            else {
+            } else {
                 dst[attr] = prop;
             }
         }
@@ -120,15 +125,18 @@ class Mmx {
 
     // Render an intermediary key
     static RenderKey(key, element) {
-        Mmx.LoadJsonAsync("/key/" + Mmx.StripKeyPrefix(key), Mmx.RenderKey_Callback, element)
+        Mmx.LoadJsonAsync(
+            "/key/" + Mmx.StripKeyPrefix(key),
+            Mmx.RenderKey_Callback,
+            element
+        );
     }
 
     static RenderKeyFromElement(ele) {
         let key = ele.dataset.mmxKey;
         if (!key) {
             return;
-        }
-        else {
+        } else {
             if (key == "urlKey") {
                 let query = new URLSearchParams(window.location.search);
                 key = query.get("key");
@@ -137,52 +145,66 @@ class Mmx {
         }
     }
 
-    static RenderKey_Callback(jskey, element)
-    {
+    static RenderKey_Callback(jskey, element) {
         element.innerHTML = "";
 
         console.log("whatever");
 
-        element.appendChild(bdoc.ele("div",
-            bdoc.class("mm_stmtHead"),
-            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
-            bdoc.ele("span", bdoc.class("mm_stmtCentralWide"), "Rel"),
-            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
-            bdoc.ele("span", bdoc.class("mm_stmtWideText"), "Statement")));
+        element.appendChild(
+            bdoc.ele(
+                "div",
+                bdoc.class("mm_stmtHead"),
+                bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+                bdoc.ele("span", bdoc.class("mm_stmtCentralWide"), "Rel"),
+                bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+                bdoc.ele("span", bdoc.class("mm_stmtWideText"), "Statement")
+            )
+        );
 
         element.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
         for (let val of jskey.statements) {
-           element.appendChild(
-                bdoc.ele("div", bdoc.class("mm_stmt"),
+            element.appendChild(
+                bdoc.ele(
+                    "div",
+                    bdoc.class("mm_stmt"),
                     bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
                     bdoc.ele("span", bdoc.class("mm_stmtCentralWide"), val.rel),
                     bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
-                    bdoc.ele("span", bdoc.class("mm_stmtWideText"), val.statement)));
+                    bdoc.ele(
+                        "span",
+                        bdoc.class("mm_stmtWideText"),
+                        val.statement
+                    )
+                )
+            );
         }
     }
 
     static setActive(event) {
         window.searchProperty = event.target.textContent;
-        
-        let element = event.target
+
+        let element = event.target;
         // Remove 'active' class from all buttons
-        var buttons = document.querySelectorAll('.toggle-button');
-        buttons.forEach(function(button){
-            button.classList.remove('active');
+        var buttons = document.querySelectorAll(".toggle-button");
+        buttons.forEach(function (button) {
+            button.classList.remove("active");
         });
 
         let mmid_search = document.getElementById("mmid_search");
-        let searchOneLiner = document.getElementById("searchOneLiner")
+        let searchOneLiner = document.getElementById("searchOneLiner");
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         if (event.target.textContent === "Text") {
             mmid_search.placeholder = "Add key words to search";
-            let text = document.createElement("span")
-            text.style = "margin-right: 0.5em;"
-            text.textContent = "Returned statements match one or more of the search keywords"
-            document.querySelectorAll('.mmc_stmtSearchResult').forEach(element => {
-                element.innerHTML = '';
-            });   
+            let text = document.createElement("span");
+            text.style = "margin-right: 0.5em;";
+            text.textContent =
+                "Returned statements match one or more of the search keywords";
+            document
+                .querySelectorAll(".mmc_stmtSearchResult")
+                .forEach((element) => {
+                    element.innerHTML = "";
+                });
             searchOneLiner.innerHTML = "";
             searchOneLiner.appendChild(text);
             searchOneLiner.innerHTML += tooltip;
@@ -192,130 +214,186 @@ class Mmx {
 
             let requestBody = "";
             if (window.searchProperty == "AI") {
-                requestBody += JSON.stringify({matchText: window.description + keywords});
-                let text = document.createElement("span")
-                text.style = "margin-right: 0.5em;"
-                text.textContent = "Returned statements based on the descriptor abstract"
+                requestBody += JSON.stringify({
+                    matchText: window.description + keywords,
+                });
+                let text = document.createElement("span");
+                text.style = "margin-right: 0.5em;";
+                text.textContent =
+                    "Returned statements based on the descriptor abstract";
                 searchOneLiner.innerHTML = "";
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
-            } 
-            else if (window.searchProperty == "AI + Context") {
-                requestBody += JSON.stringify({matchText: window.descriptorContext + keywords});
-                let text = document.createElement("span")
-                text.style = "margin-right: 0.5em;"
-                text.textContent = "Returned statements based on the descriptor abstract and associated context"
+            } else if (window.searchProperty == "AI + Context") {
+                requestBody += JSON.stringify({
+                    matchText: window.descriptorContext + keywords,
+                });
+                let text = document.createElement("span");
+                text.style = "margin-right: 0.5em;";
+                text.textContent =
+                    "Returned statements based on the descriptor abstract and associated context";
                 searchOneLiner.innerHTML = "";
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
             }
             console.log(requestBody);
-            let url = "/api/match/palet"
+            let url = "/api/match/palet";
             let options = {
-            method: "POST",
-                body: JSON.stringify({matchText: requestBody}),
+                method: "POST",
+                body: JSON.stringify({ matchText: requestBody }),
                 headers: {
-                    "Content-type": "application/json; charset=UTF-8"
-                }
+                    "Content-type": "application/json; charset=UTF-8",
+                },
             };
-            session.fetch(url, options)
-            .then(response => response.json())
-            .then(json => {
-                console.log(json);
-                Mmx.SearchStatements_Callback(json)
-            })
-
+            session
+                .fetch(url, options)
+                .then((response) => response.json())
+                .then((json) => {
+                    console.log(json);
+                    Mmx.SearchStatements_Callback(json);
+                });
         }
 
         // Add 'active' class to the clicked button
-        element.classList.add('active');
+        element.classList.add("active");
     }
 
     static RenderStatementSearch(element) {
         // Search replaces this element rather than going into it
         // This won't work when we make search into a webElement
         // but we'll cross that bridge later.
-        
+
         let parent = element.parentElement;
         parent.removeChild(element);
-        parent.appendChild(bdoc.ele("div", 
-            bdoc.attr("style", "display: flex; margin-left: 9.5rem;"),
-            bdoc.ele("span", 
-            bdoc.attr("innerHTML", "┌──Bionic──┐"))
-        ))
 
-        parent.appendChild(bdoc.ele("div",
-            // bdoc.class("control"),
-            bdoc.attr("style", "display: flex; flex-wrap: wrap; margin-bottom: 0.5rem;"),
-            bdoc.class("toggle-container"),
-            bdoc.ele("div",
-            bdoc.attr("style","display: flex;"),
-            bdoc.ele("span", 
-                bdoc.attr("innerHTML", "Search Type:&nbsp;&nbsp;")),
-            bdoc.ele("div",
-                bdoc.class("toggle-button active"),
-                bdoc.attr("onclick", Mmx.setActive),
-                bdoc.attr("innerHTML", "Text")),
-            bdoc.ele("div",
-                bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
-                bdoc.attr("innerHTML", "AI")),
-            bdoc.ele("div",
-                bdoc.class("toggle-button"),
-                bdoc.attr("onclick", Mmx.setActive),
-                bdoc.attr("innerHTML", "AI + Context"),
-                bdoc.attr("style", "margin-right: 10px;"))),
-            bdoc.ele("div",
-            bdoc.ele("span", 
-                bdoc.attr("innerHTML", "AI Algorithm:&nbsp;&nbsp;")),
-            bdoc.ele("select",
-                bdoc.attr("style", "width: 70px;"),
-                bdoc.ele("option", 
-                    bdoc.attr("value", "Cosine Similarity"),
-                    bdoc.attr("innerHTML", "Cosine Similarity")
-                )))
-        ))
+        parent.appendChild(
+            bdoc.ele(
+                "div",
+                // bdoc.class("control"),
+                bdoc.attr(
+                    "style",
+                    "display: flex; flex-wrap: wrap; margin-bottom: 0.5rem; align-items: flex-end;"
+                ),
+                bdoc.class("toggle-container"),
+                bdoc.ele(
+                    "div",
+                    bdoc.attr(
+                        "style",
+                        "display: flex; align-items: flex-end; margin-right: 10px;"
+                    ),
+                    bdoc.ele(
+                        "span",
+                        "Search Type:",
+                        bdoc.attr(
+                            "style",
+                            "margin-right: 0.5em; margin-bottom: 0.25em;"
+                        )
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("toggle-button active"),
+                        bdoc.eventListener("click", Mmx.setActive),
+                        "Text"
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("toggle-button-bionic-container"),
+                        "Bionic",
+                        bdoc.ele(
+                            "div",
+                            bdoc.class("toggle-button-container"),
+                            bdoc.ele(
+                                "div",
+                                bdoc.class("toggle-button"),
+                                bdoc.eventListener("click", Mmx.setActive),
+                                "AI"
+                            ),
+                            bdoc.ele(
+                                "div",
+                                bdoc.class("toggle-button"),
+                                bdoc.eventListener("click", Mmx.setActive),
+                                "AI + Context"
+                            )
+                        )
+                    )
+                ),
+                bdoc.ele(
+                    "div",
+                    bdoc.attr(
+                        "style",
+                        "display: flex; align-items: flex-end; padding-bottom: 0.25em; gap: 0.5em;"
+                    ),
+                    bdoc.ele("span", "AI Algorithm:  "),
+                    bdoc.ele(
+                        "select",
+                        bdoc.attr("style", "width: 70px;"),
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", "Cosine Similarity"),
+                            "Cosine Similarity"
+                        )
+                    )
+                )
+            )
+        );
 
         let searchOneLiner = document.createElement("div");
-        searchOneLiner.id = "searchOneLiner"
-        searchOneLiner.textContent = "Returned statements match one or more of the search keywords"
+        searchOneLiner.id = "searchOneLiner";
+        searchOneLiner.textContent =
+            "Returned statements match one or more of the search keywords";
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
-        let text = document.createElement("span")
-        text.style = "margin-right: 0.5em;"
-        text.textContent = "Returned statements match one or more of the search keywords"
+        let text = document.createElement("span");
+        text.style = "margin-right: 0.5em;";
+        text.textContent =
+            "Returned statements match one or more of the search keywords";
         searchOneLiner.innerHTML = "";
         searchOneLiner.appendChild(text);
         searchOneLiner.innerHTML += tooltip;
-        searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`
-        parent.appendChild(searchOneLiner)
+        searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`;
+        parent.appendChild(searchOneLiner);
 
         // Search bar
-        parent.appendChild(bdoc.ele("div",
-            bdoc.class("mmx_stmtSearchBar"),
-            bdoc.ele("input",
-                bdoc.attr("type", "search"),
-                bdoc.attr("id", "mmid_search"),
-                bdoc.class("mmc_stmtSearch"),
-                bdoc.attr("onsearch", Mmx.SearchStatements)),
-            bdoc.ele("input",
-                bdoc.attr("type", "button"),
-                bdoc.class("mmc_stmtSearchButton"),
-                bdoc.attr("value", "\uD83D\uDD0D"),
-                bdoc.attr("onclick", Mmx.SearchStatements))));
+        parent.appendChild(
+            bdoc.ele(
+                "div",
+                bdoc.class("mmx_stmtSearchBar"),
+                bdoc.ele(
+                    "input",
+                    bdoc.attr("type", "search"),
+                    bdoc.attr("id", "mmid_search"),
+                    bdoc.class("mmc_stmtSearch"),
+                    bdoc.eventListener("search", Mmx.SearchStatements)
+                ),
+                bdoc.ele(
+                    "input",
+                    bdoc.attr("type", "button"),
+                    bdoc.class("mmc_stmtSearchButton"),
+                    bdoc.attr("value", "\uD83D\uDD0D"),
+                    bdoc.eventListener("click", Mmx.SearchStatements)
+                )
+            )
+        );
 
         // The remainder gets
 
         // Results header
-        parent.appendChild(bdoc.ele("div",
-            bdoc.class("mm_stmtHead"),
-            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "+"),
-            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
-            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
-            bdoc.ele("span", bdoc.class("mm_stmtText"), "Statement")));
+        parent.appendChild(
+            bdoc.ele(
+                "div",
+                bdoc.class("mm_stmtHead"),
+                bdoc.ele("span", bdoc.class("mm_stmtAdd"), "+"),
+                bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+                bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+                bdoc.ele("span", bdoc.class("mm_stmtText"), "Statement")
+            )
+        );
 
         parent.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
-        mmx_dict.stmtSearchResult = bdoc.ele("div", bdoc.class("mmc_stmtSearchResult"));
+        mmx_dict.stmtSearchResult = bdoc.ele(
+            "div",
+            bdoc.class("mmc_stmtSearchResult")
+        );
         parent.appendChild(mmx_dict.stmtSearchResult);
     }
 
@@ -349,78 +427,157 @@ class Mmx {
     }
 
     static RenderLrmiForm(element) {
-
         function addRow(dl, label, id) {
-            dl.appendChild(bdoc.ele("div",
-                bdoc.attr("style", "align-items: flex-end;"),
-                bdoc.ele("dt", label),
-                bdoc.ele("dd",
-                    bdoc.class("mmc_editable"),
-                    bdoc.attr("contentEditable", "true"),
-                    bdoc.attr("id", id))));
+            dl.appendChild(
+                bdoc.ele(
+                    "div",
+                    bdoc.attr("style", "align-items: flex-end;"),
+                    bdoc.ele("dt", label),
+                    bdoc.ele(
+                        "dd",
+                        bdoc.class("mmc_editable"),
+                        bdoc.attr("contentEditable", "true"),
+                        bdoc.attr("id", id)
+                    )
+                )
+            );
         }
         console.log(form);
 
         element.innerHTML = "";
 
-        var form = bdoc.ele("div", bdoc.class("mmc_lrmiForm"), bdoc.attr("id", "p_lrmiForm"));
+        var form = bdoc.ele(
+            "div",
+            bdoc.class("mmc_lrmiForm"),
+            bdoc.attr("id", "p_lrmiForm")
+        );
 
         {
             let controlsLeft = bdoc.ele("span", bdoc.class("controls_left"));
             let controlsRight = bdoc.ele("span", bdoc.class("controls_right"));
-            let controls = bdoc.ele("div", bdoc.class("controls"), controlsLeft, controlsRight);
-            controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.MatchDescriptor), "Match"));
+            let controls = bdoc.ele(
+                "div",
+                bdoc.class("controls"),
+                controlsLeft,
+                controlsRight
+            );
+            controlsLeft.appendChild(
+                bdoc.ele(
+                    "button",
+                    bdoc.eventListener("click", Mmx.MatchDescriptor),
+                    "Match"
+                )
+            );
             controlsLeft.appendChild(document.createTextNode(" "));
-            controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.ClearLrmiForm), "Clear"));
+            controlsLeft.appendChild(
+                bdoc.ele(
+                    "button",
+                    bdoc.eventListener("click", Mmx.ClearLrmiForm),
+                    "Clear"
+                )
+            );
             controlsLeft.appendChild(document.createTextNode(" "));
-            controlsLeft.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.SaveDescriptor), "Save"));
+            controlsLeft.appendChild(
+                bdoc.ele(
+                    "button",
+                    bdoc.eventListener("click", Mmx.SaveDescriptor),
+                    "Save"
+                )
+            );
 
-            controlsRight.appendChild(bdoc.ele("span", bdoc.class("mm_toggleSurround"),
-                document.createTextNode("All"),
-                bdoc.ele("input", bdoc.attr("type", "checkbox"),
-                    bdoc.attr("id", "input_nokey"),
-                    bdoc.class("toggle-switch")),
-                document.createTextNode("Keyless")
-            ));
-            controlsRight.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.PrevDescriptor), "←"));
+            controlsRight.appendChild(
+                bdoc.ele(
+                    "span",
+                    bdoc.class("mm_toggleSurround"),
+                    document.createTextNode("All"),
+                    bdoc.ele(
+                        "input",
+                        bdoc.attr("type", "checkbox"),
+                        bdoc.attr("id", "input_nokey"),
+                        bdoc.class("toggle-switch")
+                    ),
+                    document.createTextNode("Keyless")
+                )
+            );
+            controlsRight.appendChild(
+                bdoc.ele(
+                    "button",
+                    bdoc.eventListener("click", Mmx.PrevDescriptor),
+                    "←"
+                )
+            );
             controlsRight.appendChild(document.createTextNode("\u00A0")); // Insert a non-breaking space
-            controlsRight.appendChild(bdoc.ele("button",
-                bdoc.attr("onclick", Mmx.NextDescriptor), "→"));
+            controlsRight.appendChild(
+                bdoc.ele(
+                    "button",
+                    bdoc.eventListener("click", Mmx.NextDescriptor),
+                    "→"
+                )
+            );
             form.appendChild(controls);
         }
-        form.appendChild(bdoc.ele("p",
-            bdoc.attr("id", "p_parent")));
+        form.appendChild(bdoc.ele("p", bdoc.attr("id", "p_parent")));
 
-        form.appendChild(bdoc.ele("h2", bdoc.class("mmc_editable"),
-            bdoc.attr("id", "p_name"),
-            bdoc.attr("contentEditable", "true")));
-        
-        form.appendChild(bdoc.ele("section", bdoc.class("mmc_editable"),
-            bdoc.attr("id", "p_description"),
-            bdoc.attr("contentEditable", "true")));
+        form.appendChild(
+            bdoc.ele(
+                "h2",
+                bdoc.class("mmc_editable"),
+                bdoc.attr("id", "p_name"),
+                bdoc.attr("contentEditable", "true")
+            )
+        );
+
+        form.appendChild(
+            bdoc.ele(
+                "section",
+                bdoc.class("mmc_editable"),
+                bdoc.attr("id", "p_description"),
+                bdoc.attr("contentEditable", "true")
+            )
+        );
 
         form.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
 
         // Element type
-        dl.appendChild(bdoc.ele("div",
-            bdoc.attr("style", "align-items: flex-end;"),
-            bdoc.ele("dt", "Element Type"),
-            bdoc.attr("style", "align-items: flex-end;"),
-            bdoc.ele("dd",
-                bdoc.ele("select",
-                bdoc.attr("name", "eleType"),
-                bdoc.attr("id", "p_eleType"),
-                bdoc.ele("option", bdoc.attr("value", ""), "(Element Type)"),
-                bdoc.ele("option", bdoc.attr("value", "lr"), "Learning Resource"),
-                bdoc.ele("option", bdoc.attr("value", "cs"), "Competency Statement"),
-                bdoc.ele("option", bdoc.attr("value", "c"), "Curriculum"),
-                bdoc.ele("option", bdoc.attr("value", "o"), "Other")))));
+        dl.appendChild(
+            bdoc.ele(
+                "div",
+                bdoc.attr("style", "align-items: flex-end;"),
+                bdoc.ele("dt", "Element Type"),
+                bdoc.attr("style", "align-items: flex-end;"),
+                bdoc.ele(
+                    "dd",
+                    bdoc.ele(
+                        "select",
+                        bdoc.attr("name", "eleType"),
+                        bdoc.attr("id", "p_eleType"),
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", ""),
+                            "(Element Type)"
+                        ),
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", "lr"),
+                            "Learning Resource"
+                        ),
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", "cs"),
+                            "Competency Statement"
+                        ),
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", "c"),
+                            "Curriculum"
+                        ),
+                        bdoc.ele("option", bdoc.attr("value", "o"), "Other")
+                    )
+                )
+            )
+        );
 
         addRow(dl, "URL", "p_url");
 
@@ -438,13 +595,17 @@ class Mmx {
         addRow(dl2, "Provenance", "p_provenance");
         form.appendChild(dl2);
 
-        form.appendChild(bdoc.ele("div",
-            bdoc.class("mm_stmtHead"),
-            bdoc.ele("span", bdoc.class("mm_stmtAdd"), "\u2212"), // Minus sign
-            bdoc.ele("span", bdoc.class("mm_stmtCentral"), "Cen"),
-            bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
-            bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
-            bdoc.ele("span", bdoc.class("mm_stmtKeyText"), "Statement")));
+        form.appendChild(
+            bdoc.ele(
+                "div",
+                bdoc.class("mm_stmtHead"),
+                bdoc.ele("span", bdoc.class("mm_stmtAdd"), "\u2212"), // Minus sign
+                bdoc.ele("span", bdoc.class("mm_stmtCentral"), "Cen"),
+                bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
+                bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
+                bdoc.ele("span", bdoc.class("mm_stmtKeyText"), "Statement")
+            )
+        );
 
         form.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
@@ -460,7 +621,7 @@ class Mmx {
         let button = document.createElement("input");
         button.type = "button";
         button.value = "Match";
-        button.onclick = Mmx.SearchDescriptorsByComposedKey;
+        button.addEventListener("click", Mmx.SearchDescriptorsByKeywords);
         element.appendChild(button);
     }
 
@@ -472,15 +633,41 @@ class Mmx {
         const data = await response.json();
 
         for (let val of data.statements) {
-            mmx_dict.keyTable.appendChild(bdoc.ele("div", bdoc.class("mm_stmt"),
-                bdoc.ele("span", bdoc.class("mm_stmtAdd"), bdoc.ele("input", bdoc.attr("type", "button"),
-                    bdoc.attr("value", "\u2212"),
-                    bdoc.attr("onclick", Mmx.RemoveStatementFromKey))),
-                bdoc.ele("span", bdoc.class("mm_stmtCentral"), bdoc.ele("input", bdoc.attr("type", "checkbox"),
-                    bdoc.attr("checked", val.rel == "Central"))),
-                bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
-                bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
-                bdoc.ele("span", bdoc.class("mm_stmtKeyText"), val.statement)));
+            mmx_dict.keyTable.appendChild(
+                bdoc.ele(
+                    "div",
+                    bdoc.class("mm_stmt"),
+                    bdoc.ele(
+                        "span",
+                        bdoc.class("mm_stmtAdd"),
+                        bdoc.ele(
+                            "input",
+                            bdoc.attr("type", "button"),
+                            bdoc.attr("value", "\u2212"),
+                            bdoc.eventListener(
+                                "click",
+                                Mmx.RemoveStatementFromKey
+                            )
+                        )
+                    ),
+                    bdoc.ele(
+                        "span",
+                        bdoc.class("mm_stmtCentral"),
+                        bdoc.ele(
+                            "input",
+                            bdoc.attr("type", "checkbox"),
+                            bdoc.attr("checked", val.rel == "Central")
+                        )
+                    ),
+                    bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
+                    bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
+                    bdoc.ele(
+                        "span",
+                        bdoc.class("mm_stmtKeyText"),
+                        val.statement
+                    )
+                )
+            );
         }
     }
 
@@ -489,32 +676,36 @@ class Mmx {
     static SearchStatements() {
         let keywords = document.getElementById("mmid_search").value;
         if (window.searchProperty == "Text") {
-            let url = "/statements?keywords=" + encodeURIComponent(keywords);         
+            let url = "/statements?keywords=" + encodeURIComponent(keywords);
             Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
         } else {
             let requestBody = "";
             if (window.searchProperty == "AI") {
-                requestBody += JSON.stringify({matchText: window.description + keywords});
-            } 
-            else if (window.searchProperty == "AI + Context") {
-                requestBody += JSON.stringify({matchText: window.descriptorContext + keywords});
+                requestBody += JSON.stringify({
+                    matchText: window.description + keywords,
+                });
+            } else if (window.searchProperty == "AI + Context") {
+                requestBody += JSON.stringify({
+                    matchText: window.descriptorContext + keywords,
+                });
             }
             console.log(requestBody);
-            let url = "/api/match/palet"
+            let url = "/api/match/palet";
             let options = {
-            method: "POST",
-                body: JSON.stringify({matchText: requestBody}),
+                method: "POST",
+                body: JSON.stringify({ matchText: requestBody }),
                 headers: {
-                    "Content-type": "application/json; charset=UTF-8"
-                }
+                    "Content-type": "application/json; charset=UTF-8",
+                },
             };
-            session.fetch(url, options)
-            .then(response => response.json())
-            .then(json => {
-                console.log(json);
-                Mmx.SearchStatements_Callback(json)
-            })
-        }        
+            session
+                .fetch(url, options)
+                .then((response) => response.json())
+                .then((json) => {
+                    console.log(json);
+                    Mmx.SearchStatements_Callback(json);
+                });
+        }
     }
 
     static SearchStatements_Callback(result) {
@@ -524,21 +715,31 @@ class Mmx {
         let count = 0;
         for (let val of result.statements) {
             mmx_dict.stmtSearchResult.appendChild(
-                bdoc.ele("div", bdoc.class("mm_stmt"),
-                    bdoc.ele("span", bdoc.class("mm_stmtAdd"),
-                        bdoc.ele("input",
+                bdoc.ele(
+                    "div",
+                    bdoc.class("mm_stmt"),
+                    bdoc.ele(
+                        "span",
+                        bdoc.class("mm_stmtAdd"),
+                        bdoc.ele(
+                            "input",
                             bdoc.attr("type", "button"),
                             bdoc.attr("value", "+"),
-                            bdoc.attr("onclick", Mmx.AddStatementToKey))),
+                            bdoc.eventListener("click", Mmx.AddStatementToKey)
+                        )
+                    ),
                     bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
                     bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
-                    bdoc.ele("span", bdoc.class("mm_stmtText"), val.statement)));
+                    bdoc.ele("span", bdoc.class("mm_stmtText"), val.statement)
+                )
+            );
             ++count;
         }
 
         if (count == 0) {
             mmx_dict.stmtSearchResult.appendChild(
-                bdoc.ele("div", "No statements found to match search terms."));
+                bdoc.ele("div", "No statements found to match search terms.")
+            );
         }
     }
 
@@ -553,11 +754,15 @@ class Mmx {
         mmx_dict.searchKey = key;
         mmx_dict.searchEleType = eleType;
         if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
-        
-        let matchWeights = jsonToQueryString(localStorage.getItem("matchWeightsObj"));
-        let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}`;
-        if(matchWeights) {
-            url += `&${matchWeights}`
+
+        let matchWeights = jsonToQueryString(
+            localStorage.getItem("matchWeightsObj")
+        );
+        let url = `/descriptors?searchKey=${encodeURIComponent(
+            key
+        )}&eleType=${eleType}`;
+        if (matchWeights) {
+            url += `&${matchWeights}`;
         }
 
         Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsByKey_Callback);
@@ -566,13 +771,21 @@ class Mmx {
     static SearchDescriptorsByKey_Callback(result) {
         if (mmx_dict.descriptorMatchResults == null) return;
 
-        Mmx.RenderDescriptorSearchResult(result, mmx_dict.descriptorMatchResults, "newPage");
+        Mmx.RenderDescriptorSearchResult(
+            result,
+            mmx_dict.descriptorMatchResults,
+            "newPage"
+        );
     }
 
     static SearchDescriptorsByKeywords() {
         let keywords = mmx_dict.descriptorKeywords.value;
         let eleType = mmx_dict.descriptorType.value;
-        let url = "/descriptors?searchKeywords=" + encodeURIComponent(keywords) + "&eleType=" + encodeURIComponent(eleType);
+        let url =
+            "/descriptors?searchKeywords=" +
+            encodeURIComponent(keywords) +
+            "&eleType=" +
+            encodeURIComponent(eleType);
         Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsByKeywords_Callback);
         mmx_dict.searchKeywords = keywords;
         mmx_dict.searchKeywordsEleType = eleType;
@@ -581,7 +794,11 @@ class Mmx {
     static SearchDescriptorsByKeywords_Callback(result) {
         if (mmx_dict.keywordSearchResult == undefined) return;
 
-        Mmx.RenderDescriptorSearchResult(result, mmx_dict.keywordSearchResult, true);
+        Mmx.RenderDescriptorSearchResult(
+            result,
+            mmx_dict.keywordSearchResult,
+            true
+        );
     }
 
     static SearchDescriptorsById(stmtId) {
@@ -592,18 +809,22 @@ class Mmx {
     static SearchDescriptorsById_Callback(result) {
         if (mmx_dict.keywordSearchResult == undefined) return;
 
-        Mmx.RenderDescriptorSearchResult(result, mmx_dict.keywordSearchResult, true);
+        Mmx.RenderDescriptorSearchResult(
+            result,
+            mmx_dict.keywordSearchResult,
+            true
+        );
         mmx_dict.afterSearchDescriptorsById();
     }
 
     static RenderDescriptor(val, matchButton) {
         function addRow(dl, label, value) {
-            if (!(value)) return;
-            dl.appendChild(bdoc.ele("div",
-                bdoc.ele("dt", label),
-                bdoc.ele("dd", value)));
+            if (!value) return;
+            dl.appendChild(
+                bdoc.ele("div", bdoc.ele("dt", label), bdoc.ele("dd", value))
+            );
         }
-        
+
         let descriptor = bdoc.ele("div", bdoc.class("mmc_descriptor"));
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
@@ -612,16 +833,23 @@ class Mmx {
             let annotation = bdoc.ele("div", bdoc.class("annotation"));
 
             if (val.matchIndex != undefined) {
-                annotation.appendChild(bdoc.ele("div",
-                    bdoc.class("mmc_matchindex"),
-                     "MatchIndex: " + val.matchIndex));
+                annotation.appendChild(
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("mmc_matchindex"),
+                        "MatchIndex: " + val.matchIndex
+                    )
+                );
             }
 
             if (matchButton) {
                 let button = bdoc.ele("button", "Find Matches");
-                button.onclick = (matchButton == "newPage")
-                    ? Mmx.OnClickFindMatchesToMatchResult
-                    :  Mmx.OnClickFindMatchesToSearchResult;
+                button.addEventListener(
+                    "click",
+                    matchButton === "newPage"
+                        ? Mmx.OnClickFindMatchesToMatchResult
+                        : Mmx.OnClickFindMatchesToSearchResult
+                );
                 annotation.appendChild(button);
             }
 
@@ -629,26 +857,35 @@ class Mmx {
         }
 
         if (val.eleType) {
-            descriptor.appendChild(bdoc.ele("h3", this.EleTypeTranslate[val.eleType]));
+            descriptor.appendChild(
+                bdoc.ele("h3", this.EleTypeTranslate[val.eleType])
+            );
         }
         if (val.name) {
             descriptor.appendChild(bdoc.ele("h2", val.name));
-        }
-        else {
+        } else {
             descriptor.appendChild(bdoc.ele("h2", "Unnamed"));
         }
         if (val.description) {
-            descriptor.appendChild(bdoc.ele("section", bdoc.preText(val.description)));
+            descriptor.appendChild(
+                bdoc.ele("section", bdoc.preText(val.description))
+            );
         }
         descriptor.appendChild(bdoc.ele("h3", "Detail"));
 
         let dl = document.createElement("dl");
 
         if (val.url) {
-            addRow(dl, "URL", bdoc.ele("a",
-                bdoc.attr("href", val.url),
-                bdoc.attr("target", "_blank"),
-                val.url));
+            addRow(
+                dl,
+                "URL",
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", val.url),
+                    bdoc.attr("target", "_blank"),
+                    val.url
+                )
+            );
         }
         addRow(dl, "Subject", val.subject);
         addRow(dl, "Identifier", val.identifier);
@@ -659,9 +896,18 @@ class Mmx {
         addRow(dl, "Repository Date", val.sdDatePublished);
 
         if (val.key) {
-            addRow(dl, "Key", bdoc.ele("a",
-                bdoc.attr("href", Mmx.keyLinkPrefix + Mmx.StripKeyPrefix(val.key)),
-                Mmx.StripKeyPrefix(val.key)));
+            addRow(
+                dl,
+                "Key",
+                bdoc.ele(
+                    "a",
+                    bdoc.attr(
+                        "href",
+                        Mmx.keyLinkPrefix + Mmx.StripKeyPrefix(val.key)
+                    ),
+                    Mmx.StripKeyPrefix(val.key)
+                )
+            );
         }
         descriptor.appendChild(dl);
 
@@ -680,7 +926,9 @@ class Mmx {
         }
 
         if (count == 0) {
-            ele.appendChild(bdoc.ele("div", "No descriptions found to match search key."));
+            ele.appendChild(
+                bdoc.ele("div", "No descriptions found to match search key.")
+            );
         }
     }
 
@@ -690,90 +938,142 @@ class Mmx {
         //console.log(value.id);
         var form = document.getElementById("p_lrmiForm");
         form.sourceData = value;
-        console.log(value.mainEntityId)
+        console.log(value.mainEntityId);
 
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
             if (ele) {
                 if (ele instanceof HTMLSelectElement) {
                     ele.value = value[p];
-                }
-                else if (p == "url" && value[p].startsWith("http")) {
+                } else if (p == "url" && value[p].startsWith("http")) {
                     ele.contentEditable = false;
-                    ele.innerHTML = "<a href='" + value["url"] + "' target='_blank'>" + value["url"] + "</a>";
-                }
-                else if (p === "description") {
+                    ele.innerHTML =
+                        "<a href='" +
+                        value["url"] +
+                        "' target='_blank'>" +
+                        value["url"] +
+                        "</a>";
+                } else if (p === "description") {
                     ele.innerHTML = value[p];
                     window.description = value[p];
-                }
-                else {
+                } else {
                     ele.textContent = value[p];
                 }
             }
         }
 
         function parentOf(id, collectionObject) {
-            let keys = Object.keys(collectionObject)
+            let keys = Object.keys(collectionObject);
             for (let i = 0; i < keys.length; i++) {
                 if (collectionObject[keys[i]].includes(id)) {
-                    return keys[i]
+                    return keys[i];
                 }
             }
             return -1;
         }
 
-        let data = await session.fetch("/api/collections/" + value.mainEntityId)
+        let data = await session.fetch(
+            "/api/collections/" + value.mainEntityId
+        );
         data = await data.json();
 
         let collectionObject = {};
         let nodeParents = {};
         let nodes = [];
         let currentIntID;
-        
-        for (let i = 0; i < data['collection'].length; i++) {
-            collectionObject[i] = data['collection'][i]['intHasPart'];
+
+        for (let i = 0; i < data["collection"].length; i++) {
+            collectionObject[i] = data["collection"][i]["intHasPart"];
             nodeParents[i] = [];
             nodes.push(i);
-            if (data['collection'][i].id === value.id) {
+            if (data["collection"][i].id === value.id) {
                 currentIntID = i;
             }
         }
-    
-        let currentNode = nodes[currentIntID]
-        let parentOfCurrentNode = parentOf(currentNode, collectionObject)
+
+        let currentNode = nodes[currentIntID];
+        let parentOfCurrentNode = parentOf(currentNode, collectionObject);
         while (parentOfCurrentNode !== -1) {
-            nodeParents[currentNode].push(parentOfCurrentNode)
-            parentOfCurrentNode = parentOf(parseInt(parentOfCurrentNode), collectionObject)
+            nodeParents[currentNode].push(parentOfCurrentNode);
+            parentOfCurrentNode = parentOf(
+                parseInt(parentOfCurrentNode),
+                collectionObject
+            );
         }
         let parents = nodeParents[currentNode];
         parents.reverse();
-        let parentText = ""
-        
+        let parentText = "";
+
         let contextDescription = "";
 
         for (let i = 0; i < parents.length; i++) {
-            let abstr = data['collection'][parents[i]].description.substring(0,100)
-            if (data['collection'][parents[i]].description) {
-                contextDescription += data['collection'][parents[i]].description + " ";
+            let abstr = data["collection"][parents[i]].description.substring(
+                0,
+                100
+            );
+            if (data["collection"][parents[i]].description) {
+                contextDescription +=
+                    data["collection"][parents[i]].description + " ";
             }
-            if (data['collection'][parents[i]].description.length > 100) {
-                abstr += "..."
+            if (data["collection"][parents[i]].description.length > 100) {
+                abstr += "...";
             }
-            
+
             let spacing = 0;
             for (let j = 0; j < i; j++) {
-                spacing += 0.5
+                spacing += 0.5;
             }
-            parentText += `<div style = "margin-left: ${spacing}rem;">` + data['collection'][parents[i]].name + " - " + abstr + "</div>"
+            parentText +=
+                `<div style = "margin-left: ${spacing}rem;">` +
+                data["collection"][parents[i]].name +
+                " - " +
+                abstr +
+                "</div>";
         }
 
         window.descriptorContext = contextDescription;
         let ele = document.getElementById("p_parent");
-        ele.setAttribute('onclick', "document.getElementById('lineage_title').textContent  = (document.getElementById('lineage_title').textContent === '▼ Descriptor Context' ) ? '► Descriptor Context' : '▼ Descriptor Context'")
-        ele.setAttribute("style", "style='cursor: pointer;'")
+        ele.addEventListener("click", () => {
+            document.getElementById("lineage_title").textContent =
+                document.getElementById("lineage_title").textContent ===
+                "▼ Descriptor Context"
+                    ? "► Descriptor Context"
+                    : "▼ Descriptor Context";
+        });
+
+        ele.setAttribute("style", "style='cursor: pointer;'");
+
         ele.innerHTML = "";
-        ele.innerHTML += `<span onclick="document.getElementById('descriptor_lineage').style.display = (document.getElementById('descriptor_lineage').style.display === 'none') ? 'block' : 'none';"><strong id='lineage_title'>► Descriptor Context</strong><br><span id="descriptor_lineage" style="display: none;">` + parentText + "</span>"
-        
+
+        const descriptorLineageSpan = bdoc.ele(
+            "span",
+            bdoc.attr("id", "descriptor_lineage"),
+            bdoc.attr("style", "display: none;"),
+            parentText
+        );
+        descriptorLineageSpan.innerHTML = parentText;
+        ele.appendChild(
+            bdoc.ele(
+                "span",
+                bdoc.eventListener("click", () => {
+                    document.getElementById(
+                        "descriptor_lineage"
+                    ).style.display =
+                        document.getElementById("descriptor_lineage").style
+                            .display === "none"
+                            ? "block"
+                            : "none";
+                }),
+                bdoc.ele(
+                    "strong",
+                    bdoc.attr("id", "lineage_title"),
+                    "► Descriptor Context"
+                ),
+                bdoc.ele("br"),
+                descriptorLineageSpan
+            )
+        );
+
         // Load Key
         Mmx.LoadKeyIntoDescriptorSearchForm(value.key);
     }
@@ -784,7 +1084,7 @@ class Mmx {
             var stmt = JSON.parse(sessionStorage.describeStmt);
             //sessionStorage.removeItem('describeStmt');
 
-            if (!(stmt.provenance)) {
+            if (!stmt.provenance) {
                 var provenance = sessionStorage.provenance;
                 if (!provenance) provenance = "Demo";
                 stmt.provenance = provenance;
@@ -813,27 +1113,35 @@ class Mmx {
         if (addedIds.includes(cellId.textContent)) {
             alert("Error: Palet Statement already selected");
         } else {
+            // Convert first cell to remove
+            cellAdd.innerHTML = "";
+            cellAdd.appendChild(
+                bdoc.ele(
+                    "input",
+                    bdoc.attr("type", "button"),
+                    bdoc.attr("value", "\u2212"), // Minus sign
+                    bdoc.eventListener("click", Mmx.RemoveStatementFromKey)
+                )
+            );
 
-        // Convert first cell to remove
-        cellAdd.innerHTML = "";
-        cellAdd.appendChild(bdoc.ele("input", bdoc.attr("type", "button"),
-            bdoc.attr("value", "\u2212"), // Minus sign
-            bdoc.attr("onclick", Mmx.RemoveStatementFromKey)));
+            // Insert central cell
+            row.insertBefore(
+                bdoc.ele(
+                    "span",
+                    bdoc.class("mm_stmtCentral"),
+                    bdoc.ele(
+                        "input",
+                        bdoc.attr("type", "checkbox"),
+                        bdoc.attr("textContent", "Central"),
+                        bdoc.attr("checked", true)
+                    )
+                ),
+                cellId
+            );
 
-        // Insert central cell
-        row.insertBefore(
-            bdoc.ele("span", 
-                bdoc.class("mm_stmtCentral"),
-                bdoc.ele("input",
-                    bdoc.attr("type", "checkbox"),
-                    bdoc.attr("textContent", "Central"),
-                    bdoc.attr("checked", true))),
-            cellId);
-
-        // Change class of last element
-        cellStmt.className = "mm_stmtKeyText";        
-        mmx_dict.keyTable.appendChild(row);
-
+            // Change class of last element
+            cellStmt.className = "mm_stmtKeyText";
+            mmx_dict.keyTable.appendChild(row);
         }
     }
 
@@ -852,13 +1160,15 @@ class Mmx {
     }
 
     static MatchFirstSearchResult() {
-        Mmx.SelectAndMatchDescriptor(mmx_dict.keywordSearchResult.firstElementChild);
+        Mmx.SelectAndMatchDescriptor(
+            mmx_dict.keywordSearchResult.firstElementChild
+        );
     }
 
     static SelectAndMatchDescriptor(descriptor) {
         // Deselect
         if (mmx_dict.selectedDescriptor) {
-            mmx_dict.selectedDescriptor.classList.remove("mm_active")
+            mmx_dict.selectedDescriptor.classList.remove("mm_active");
         }
 
         // Select new
@@ -879,11 +1189,10 @@ class Mmx {
             let val;
             if (ele instanceof HTMLSelectElement) {
                 val = ele.value;
-            }
-            else {
+            } else {
                 val = ele.textContent;
             }
-            
+
             lrmi[e.prop] = val;
         }
 
@@ -899,8 +1208,8 @@ class Mmx {
                 rel: keyRow.children[1].firstElementChild.checked ? "C" : "P",
                 id: Number(keyRow.children[2].textContent),
                 stmtType: keyRow.children[3].textContent,
-                statement: keyRow.children[4].textContent
-            }
+                statement: keyRow.children[4].textContent,
+            };
             keyArray.push(data);
             keyRow = keyRow.nextElementSibling;
         }
@@ -935,12 +1244,10 @@ class Mmx {
             let ele = document.getElementById("p_" + e.prop);
             if (ele instanceof HTMLSelectElement) {
                 ele.value = "o";
-            }
-            else if (ele) {
+            } else if (ele) {
                 ele.contentEditable = true;
                 ele.textContent = "";
-            }
-            else {
+            } else {
                 console.log(e.prop);
             }
         }
@@ -959,24 +1266,24 @@ class Mmx {
         if (record.id) {
             verb = "PUT";
             url = "/api/descriptors/" + record.id;
-        }
-        else {
+        } else {
             verb = "POST";
-            url = "/api/descriptors"
+            url = "/api/descriptors";
         }
 
         const response = await session.fetch(url, {
             method: verb,
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: json
+            body: json,
         });
         if (response.ok) {
             alert("Saved!");
-        }
-        else {
-            alert(`Save error: ${response.status} ${response.statusText}: ${text}`);
+        } else {
+            alert(
+                `Save error: ${response.status} ${response.statusText}: ${text}`
+            );
         }
     }
 
@@ -1004,26 +1311,31 @@ class Mmx {
         if (!sourceData) return;
         const id = sourceData.id;
         if (!id) return;
-        const response = await session.fetch("/api/collections/" + id + "/" + (nextPrev ? "next" : "prev") + (nokey ? "?skipWithKey" : ""));
+        const response = await session.fetch(
+            "/api/collections/" +
+                id +
+                "/" +
+                (nextPrev ? "next" : "prev") +
+                (nokey ? "?skipWithKey" : "")
+        );
         const data = await response.json();
         if (data.success) {
             Mmx.LoadLrmiFormFromDatabase(data.id);
-        }
-        else {
+        } else {
             if (nextPrev) {
-                alert("No more descriptors.")
+                alert("No more descriptors.");
             } else {
-                alert("No preceding descriptors.")
+                alert("No preceding descriptors.");
             }
         }
     }
- 
+
     // === Initialization ===================
 
     static getCookie(cname) {
         var name = cname + "=";
         var decodedCookie = decodeURIComponent(document.cookie);
-        var ca = decodedCookie.split(';');
+        var ca = decodedCookie.split(";");
         for (var i = 0; i < ca.length; i++) {
             var c = ca[i].trim();
             if (c.indexOf(name) == 0) {
@@ -1034,7 +1346,6 @@ class Mmx {
     }
 
     static OnPageLoad(keyParent) {
-
         // Check for style override in the query string
         let query = new URLSearchParams(window.location.search);
         {
@@ -1049,7 +1360,6 @@ class Mmx {
 
         // Read options from the MMT token cookie
         let token = new URLSearchParams(Mmx.getCookie("MMT"));
-
 
         let hasFindDescriptor = false;
         let hasComposeKey = false;
@@ -1069,11 +1379,9 @@ class Mmx {
 
         for (ele of document.getElementsByClassName("mmx_lrmiCompose")) {
             Mmx.RenderLrmiForm(ele);
-            if (query.get("src") == "dynamic")
-            {
+            if (query.get("src") == "dynamic") {
                 Mmx.LoadLrmiFormFromStorage();
-            }
-            else {
+            } else {
                 const descId = query.get("id");
                 if (descId) {
                     Mmx.LoadLrmiFormFromDatabase(descId);
@@ -1081,12 +1389,16 @@ class Mmx {
             }
         }
 
-        for (ele of document.getElementsByClassName("mmx_descriptorSearchForm")) {
+        for (ele of document.getElementsByClassName(
+            "mmx_descriptorSearchForm"
+        )) {
             hasFindDescriptor = true;
             Mmx.RenderDescriptorSearchForm(ele);
         }
 
-        for (ele of document.getElementsByClassName("mmx_descriptorSearchDisplay")) {
+        for (ele of document.getElementsByClassName(
+            "mmx_descriptorSearchDisplay"
+        )) {
             Mmx.RenderDescriptorSearchDisplay(ele);
         }
 
@@ -1094,32 +1406,35 @@ class Mmx {
             Mmx.RenderSearchButton(ele);
         }
 
-        for (ele of document.getElementsByClassName("mmx_descriptorMatchFilter")) {
+        for (ele of document.getElementsByClassName(
+            "mmx_descriptorMatchFilter"
+        )) {
             Mmx.RenderDescriptorMatchFilter(ele);
         }
 
-        for (ele of document.getElementsByClassName("mmx_descriptorMatchDisplay")) {
+        for (ele of document.getElementsByClassName(
+            "mmx_descriptorMatchDisplay"
+        )) {
             Mmx.RenderDescriptorMatchDisplay(ele);
         }
 
-    
         if (hasFindDescriptor) {
             let stmtId = query.get("stmtId");
             if (stmtId) {
                 mmx_dict.afterSearchDescriptorsById = function () {
                     Mmx.MatchFirstSearchResult();
                     mmx_dict.afterSearchDescriptorsById = undefined;
-                }
+                };
 
                 Mmx.SearchDescriptorsById(stmtId);
-            }
-            else if (query.get("src") == "dynamic") {
+            } else if (query.get("src") == "dynamic") {
                 console.log("dynamic");
                 if (sessionStorage.matchDescriptor) {
                     console.log(sessionStorage.matchDescriptor);
                     let val = JSON.parse(sessionStorage.matchDescriptor);
                     mmx_dict.keywordSearchResult.appendChild(
-                        Mmx.RenderDescriptor(val, true));
+                        Mmx.RenderDescriptor(val, true)
+                    );
                     Mmx.MatchFirstSearchResult();
                 }
             }
@@ -1133,14 +1448,14 @@ class Mmx {
             }
         }
 
-        const mainElement = document.querySelector('main');
+        const mainElement = document.querySelector("main");
         if (mainElement) {
-            mainElement.classList.add('mm_descColumns');
+            mainElement.classList.add("mm_descColumns");
         }
-
     }
-
 }
 
 window.addEventListener("load", Mmx.OnPageLoad);
-window.addEventListener('popstate', (event) => {location.reload();});
+window.addEventListener("popstate", (event) => {
+    location.reload();
+});

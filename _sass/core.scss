@@ -1,6 +1,7 @@
 @import "globals.scss";
 @import "colors.scss";
 @import "fonts.scss";
+@import "card.scss";
 
 :root {
     // ==== Constants ====
@@ -444,4 +445,8 @@ table.custom th, table.custom td {
 
   .header_console:last-child {
     border-right:none;
+}
+
+.card {
+    @include mmx_card;
 }
