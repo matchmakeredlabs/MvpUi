@@ -3,4 +3,4 @@ _site/
 .jekyll-cache/
 .vs/
 
-config.js
+# config.js
