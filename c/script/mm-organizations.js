@@ -2,7 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 
-class MmOrganizations extends HTMLElement {
+export default class MmOrganizations extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     constructor() {
@@ -24,14 +24,33 @@ class MmOrganizations extends HTMLElement {
                 bdoc.attr("href", "/c/res/styles.css")
             ),
             bdoc.ele(
-                "h2",
-                "Organizations",
-                bdoc.attr("style", "margin-left: 1.5em")
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-organizations.css")
             ),
             bdoc.ele(
                 "div",
-                bdoc.attr("style", "max-height: 80%"),
-                bdoc.ele("mm-table"),
+                bdoc.class("header-container"),
+
+                bdoc.ele(
+                    "h2",
+                    "Organizations",
+                    bdoc.attr("style", "margin-left: 1.5em")
+                )
+
+                // bdoc.ele(
+                //     "button",
+                //     bdoc.class("header-button add-entity-button2"),
+                //     "✐  Create New Organization"
+                // )
+            ),
+            bdoc.ele(
+                "div",
+                bdoc.attr("style", "max-height: 80%; margin: 20px"),
+                bdoc.ele(
+                    "mm-table",
+                    bdoc.attr("sort-properties", "name,description")
+                ),
                 bdoc.ele(
                     "script",
                     bdoc.attr("type", "module"),
@@ -51,10 +70,15 @@ class MmOrganizations extends HTMLElement {
                 name: (org) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/Organization?org=${org.id}`),
+                        bdoc.attr("href", `/c/Organization/${org.id}`),
                         org.name
                     ),
                 description: (org) => org.description,
+            };
+            table.customSorts = {
+                name: (a, b) => a.name.localeCompare(b.name),
+                description: (a, b) =>
+                    (a.description || "").localeCompare(b.description || ""),
             };
             table.data = organizations;
         });

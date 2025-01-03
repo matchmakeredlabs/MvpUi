@@ -7,53 +7,16 @@
     display: block;
     height: 96%;
 
-    .headers-container {
+    .header-container {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         justify-content: space-between;
-        margin-left: 1em;
-        gap: 0.5em;
-        height: 12%;
-        margin-bottom: 1em;
+        align-items: flex-end;
+        width: 97%;
 
-        h3 {
-            margin: 0;
-        }
-    
-        p {
-            margin: 0;
-    
-        }
-
-
-        .info-container {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            gap: 1em;
-            padding-right: 1em;
-        }
-    
-        #description {
-            display: inline-block;
-            max-width: 700px;
-            max-height: 50px;
-            text-overflow: ellipsis;
-            overflow: auto;
-        }
-    
-    
-        #description-container {
-            display: flex;
-            flex-direction: row;
-            gap: 1em;
-            align-items: flex-end;
-        }
-    
-        .edit-buttons {
-            gap: 0.5em;
-        }
+        padding-right: 1em;
     }
+
 
     .button-group {
         display: flex;

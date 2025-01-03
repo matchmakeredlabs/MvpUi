@@ -3,15 +3,11 @@ export default class bdoc {
         for (let cn of children) {
             if (cn === undefined || cn === null) {
                 ele.appendChild(document.createTextNode(""));
-            }
-            else if (cn instanceof Node) {
+            } else if (cn instanceof Node) {
                 ele.appendChild(cn);
-            }
-            else if (cn.addToEle !== undefined)
-            {
+            } else if (cn.addToEle !== undefined) {
                 cn.addToEle(ele);
-            }
-            else {
+            } else {
                 ele.appendChild(document.createTextNode(cn));
             }
         }
@@ -45,6 +41,14 @@ export default class bdoc {
     static preText(value) {
         return new bdocPre(value);
     }
+
+    static script(src) {
+        return bdoc.ele(
+            "script",
+            bdoc.attr("type", "module"),
+            bdoc.attr("src", `/c/script/${src}`)
+        );
+    }
 }
 
 class bdocAttr {
@@ -60,7 +64,7 @@ class bdocAttr {
 
 class bdocListener {
     constructor(eventName, callback) {
-        this.eventName = eventName
+        this.eventName = eventName;
         this.callback = callback;
     }
 
@@ -79,14 +83,12 @@ class bdocPre {
     }
 }
 
-function appendPreformattedText(element, text)
-{
+function appendPreformattedText(element, text) {
     let first = true;
     for (let part of text.split("\n")) {
         if (first) {
             first = false;
-        }
-        else {
+        } else {
             element.appendChild(document.createElement("br"));
         }
 
