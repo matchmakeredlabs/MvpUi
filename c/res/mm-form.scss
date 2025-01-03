@@ -25,11 +25,21 @@
         font-weight: bold;
     }
 
+    textarea {
+        min-width: 620px;
+        max-width: 620px;
+        height: 100px;
+        min-height: 60px;
+        max-height: 300px;
+    }
+
     .form-group input,
     .form-group select {
         padding: 8px;
         border: 1px solid #ccc;
         border-radius: 4px;
+        box-sizing: border-box;
+        width: 100%;
     }
 
     button[type="submit"] {

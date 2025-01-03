@@ -9,14 +9,16 @@ class MmFilterTable extends HTMLElement {
         "filter-properties",
         "sort-properties",
         "display-properties",
+        "first-col-width",
     ];
 
     #data = [];
     #searchKeywords = [];
 
     #listToFilter = [];
-    #listToSort = [];
+    #sortProperties;
     #displayProperties = [];
+    #firstColWidth = false;
 
     #selectedOptions = {};
 
@@ -25,6 +27,19 @@ class MmFilterTable extends HTMLElement {
             this.shadowRoot.querySelector(".filter-table-header"),
             ...elements
         );
+    }
+
+    set customSorts(customSorts) {
+        customElements.whenDefined("mm-table").then(() => {
+            this.shadowRoot.querySelector("mm-table").customSorts = customSorts;
+        });
+    }
+
+    set customColStyles(customColStyles) {
+        customElements.whenDefined("mm-table").then(() => {
+            this.shadowRoot.querySelector("mm-table").customColStyles =
+                customColStyles;
+        });
     }
 
     addCustomStylesheets(stylesheets) {
@@ -53,7 +68,7 @@ class MmFilterTable extends HTMLElement {
         return shadowRoot;
     };
 
-    #sortAttribute = "";
+    // #sortAttribute = "";
 
     nameElementCallback = (item) =>
         bdoc.ele("a", bdoc.attr("href", `Browse?id=${item.id}`), item.name);
@@ -80,7 +95,7 @@ class MmFilterTable extends HTMLElement {
         keywords.length > 0
             ? data.filter((item) =>
                   keywords.some((keyword) =>
-                      JSON.stringify(item.name)
+                      JSON.stringify(item)
                           .toLowerCase()
                           .includes(keyword.toLowerCase())
                   )
@@ -148,23 +163,23 @@ class MmFilterTable extends HTMLElement {
         this.render();
     }
 
-    getSortedItems = (items, attribute) =>
-        items.sort((a, b) => {
-            // put items with no attribute at the end
-            if (
-                (!(attribute in b) && attribute in a) ||
-                a[attribute] < b[attribute]
-            ) {
-                return -1;
-            }
-            if (
-                (!(attribute in a) && attribute in b) ||
-                a[attribute] > b[attribute]
-            ) {
-                return 1;
-            }
-            return 0;
-        });
+    // getSortedItems = (items, attribute) =>
+    //     items.sort((a, b) => {
+    //         // put items with no attribute at the end
+    //         if (
+    //             (!(attribute in b) && attribute in a) ||
+    //             a[attribute] < b[attribute]
+    //         ) {
+    //             return -1;
+    //         }
+    //         if (
+    //             (!(attribute in a) && attribute in b) ||
+    //             a[attribute] > b[attribute]
+    //         ) {
+    //             return 1;
+    //         }
+    //         return 0;
+    //     });
 
     firstLetterUppercase(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -176,10 +191,14 @@ class MmFilterTable extends HTMLElement {
                 this.#listToFilter = newValue.split(",");
                 break;
             case "sort-properties":
-                this.#listToSort = newValue.split(",");
+                this.#sortProperties = newValue;
                 break;
             case "display-properties":
                 this.#displayProperties = newValue.split(",");
+                break;
+            case "first-col-width":
+                this.#firstColWidth = newValue;
+
                 break;
         }
     }
@@ -231,34 +250,37 @@ class MmFilterTable extends HTMLElement {
             })
         );
 
-        const sortDropdown = bdoc.ele(
-            "select",
-            bdoc.id("sortDropdown"),
-            bdoc.ele("option", "--", bdoc.attr("value", "--")),
-            ...this.#listToSort.map((sortOption) =>
-                bdoc.ele(
-                    "option",
-                    this.firstLetterUppercase(sortOption),
-                    bdoc.attr("value", sortOption)
-                )
-            ),
+        // const sortDropdown = bdoc.ele(
+        //     "select",
+        //     bdoc.id("sortDropdown"),
+        //     bdoc.ele("option", "--", bdoc.attr("value", "--")),
+        //     ...this.#listToSort.map((sortOption) =>
+        //         bdoc.ele(
+        //             "option",
+        //             this.firstLetterUppercase(sortOption),
+        //             bdoc.attr("value", sortOption)
+        //         )
+        //     ),
 
-            bdoc.eventListener("change", ({ target }) => {
-                const selectedOption = target.options[target.selectedIndex];
-                if (selectedOption.value !== "--") {
-                    if (this.#sortAttribute !== selectedOption.value) {
-                        this.#sortAttribute = selectedOption.value;
-                        this.render();
-                    }
-                }
-            })
-        );
+        //     bdoc.eventListener("change", ({ target }) => {
+        //         const selectedOption = target.options[target.selectedIndex];
+        //         if (selectedOption.value !== "--") {
+        //             if (this.#sortAttribute !== selectedOption.value) {
+        //                 this.#sortAttribute = selectedOption.value;
+        //                 this.render();
+        //             }
+        //         }
+        //     })
+        // );
 
-        const filterDropdownsContainer = bdoc.ele(
-            "div",
-            bdoc.id("filterDropdowns"),
-            bdoc.ele("b", "Filter by: ")
-        );
+        const filterDropdownsContainer =
+            this.#listToFilter.length > 0
+                ? bdoc.ele(
+                      "div",
+                      bdoc.id("filterDropdowns"),
+                      bdoc.ele("b", "Filter by: ")
+                  )
+                : null;
 
         const filterContainers = this.#listToFilter.map((filter) => {
             const oneFilterDropdown = bdoc.ele(
@@ -314,6 +336,50 @@ class MmFilterTable extends HTMLElement {
             return spanForFilterContainer;
         });
 
+        const table = bdoc.ele("mm-table");
+
+        if (this.#firstColWidth) {
+            bdoc.append(
+                table,
+                bdoc.attr("first-col-width", this.#firstColWidth)
+            );
+        }
+
+        if (this.#sortProperties) {
+            bdoc.append(
+                table,
+                bdoc.attr("sort-properties", this.#sortProperties)
+            );
+        }
+
+        const filtersContainer = bdoc.ele(
+            "div",
+            bdoc.class("filters-container"),
+
+            bdoc.ele(
+                "div",
+                bdoc.id("filterContainers"),
+                keywordContainer,
+                ...filterContainers
+            ),
+
+            bdoc.ele("b", "Search by Keyword: "),
+            keywordElement,
+            addKeyword,
+            bdoc.ele("br")
+        );
+
+        if (this.#listToFilter.length > 0) {
+            bdoc.append(filtersContainer, filterDropdownsContainer);
+        }
+        // if (this.#listToSort.length > 0) {
+        //     bdoc.append(
+        //         filtersContainer,
+        //         bdoc.ele("b", "Sort by: "),
+        //         sortDropdown
+        //     );
+        // }
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -328,38 +394,16 @@ class MmFilterTable extends HTMLElement {
             ),
             bdoc.ele(
                 "div",
-                bdoc.class("filter-table-container"),
-                bdoc.ele(
-                    "div",
-                    bdoc.class("filter-table-header"),
-                    bdoc.ele(
-                        "div",
-                        bdoc.class("filters-container"),
+                bdoc.class("filter-table-header"),
+                filtersContainer,
+                bdoc.ele("slot", bdoc.attr("name", "header"))
+            ),
 
-                        bdoc.ele(
-                            "div",
-                            bdoc.id("filterContainers"),
-                            keywordContainer,
-                            ...filterContainers
-                        ),
-
-                        bdoc.ele("b", "Search by Keyword: "),
-                        keywordElement,
-                        addKeyword,
-                        bdoc.ele("br"),
-                        filterDropdownsContainer,
-
-                        bdoc.ele("b", "Sort by: "),
-                        sortDropdown
-                    )
-                ),
-
-                bdoc.ele("mm-table"),
-                bdoc.ele(
-                    "script",
-                    bdoc.attr("type", "module"),
-                    bdoc.attr("src", "/c/script/mm-table.js")
-                )
+            table,
+            bdoc.ele(
+                "script",
+                bdoc.attr("type", "module"),
+                bdoc.attr("src", "/c/script/mm-table.js")
             )
         );
     }
@@ -375,22 +419,20 @@ class MmFilterTable extends HTMLElement {
             this.#selectedOptions
         );
 
-        const sortedData =
-            this.#sortAttribute === ""
-                ? dataFilteredByFilter
-                : this.getSortedItems(
-                      dataFilteredByFilter,
-                      this.#sortAttribute
-                  );
+        // const sortedData =
+        //     this.#sortAttribute === ""
+        //         ? dataFilteredByFilter
+        //         : this.getSortedItems(
+        //               dataFilteredByFilter,
+        //               this.#sortAttribute
+        //           );
 
         // items render through setter; if custom element not defined then attribute is set without using setter
 
         const table = this.shadowRoot.querySelector("mm-table");
-
         customElements.whenDefined("mm-table").then(() => {
             table.cols = this.generateCols(this.#displayProperties);
-
-            table.data = sortedData;
+            table.data = dataFilteredByFilter;
         });
     }
 }

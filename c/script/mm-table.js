@@ -1,14 +1,46 @@
 import bdoc from "./bdoc.js";
 
 class MmTable extends HTMLElement {
+    static observedAttributes = [
+        "first-col-width",
+        "sort-properties",
+        "last-col-width",
+    ];
+
     #data = [];
 
     #cols = {};
+
+    #firstColWidth = "60%";
+
+    #sortProperties = [];
+
+    #sortBy = {};
 
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
     }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === "first-col-width") {
+            this.#firstColWidth = newValue;
+        }
+
+        if (name === "sort-properties") {
+            this.#sortProperties = newValue.split(",");
+            for (const sortProperty of this.#sortProperties) {
+                if (!this.#sortBy[sortProperty]) {
+                    this.#sortBy[sortProperty] = "none";
+                }
+            }
+            this.render();
+        }
+    }
+
+    customSorts = {};
+
+    customColStyles = {};
 
     set data(data) {
         this.#data = data;
@@ -55,12 +87,20 @@ class MmTable extends HTMLElement {
                                         colKey.charAt(0).toUpperCase() +
                                             colKey.slice(1)
                                     );
-                                    if (i == 0) {
+                                    if (i == 0 && this.#firstColWidth) {
+                                        heading.style.width =
+                                            this.#firstColWidth;
+                                    }
+                                    if (colKey in this.customColStyles) {
                                         bdoc.append(
                                             heading,
-                                            bdoc.class("table-name")
+                                            bdoc.attr(
+                                                "style",
+                                                this.customColStyles[colKey]
+                                            )
                                         );
                                     }
+
                                     return heading;
                                 })
                             )
@@ -80,6 +120,9 @@ class MmTable extends HTMLElement {
         const tableHead = this.shadowRoot.getElementById("table-titles");
         if (!tableHead) return;
         tableHead.innerHTML = "";
+        let activeSortProperty = Object.keys(this.#sortBy).find(
+            (key) => this.#sortBy[key] !== "none"
+        );
         bdoc.append(
             tableHead,
             ...Object.keys(this.#cols).map((colKey, i) => {
@@ -87,8 +130,58 @@ class MmTable extends HTMLElement {
                     "th",
                     colKey.charAt(0).toUpperCase() + colKey.slice(1)
                 );
-                if (i == 0) {
-                    bdoc.append(heading, bdoc.class("table-name"));
+                if (this.#sortProperties.includes(colKey)) {
+                    if (!activeSortProperty) {
+                        this.#sortBy[colKey] = "asc";
+                        activeSortProperty = colKey;
+                        this.#data.sort((a, b) => {
+                            if (this.customSorts[colKey]) {
+                                return this.customSorts[colKey](a, b);
+                            }
+                            return a[colKey] > b[colKey] ? 1 : -1;
+                        });
+                    }
+                    const sortIcon = bdoc.ele(
+                        "div",
+                        bdoc.class(`chevron ${this.#sortBy[colKey]}`)
+                    );
+
+                    bdoc.append(
+                        heading,
+                        sortIcon,
+                        bdoc.class("sort-header"),
+                        bdoc.eventListener("click", () => {
+                            const sortDirection = this.#sortBy[colKey];
+                            this.#sortProperties.forEach((key) => {
+                                this.#sortBy[key] = "none";
+                            });
+                            this.#sortBy[colKey] =
+                                sortDirection === "asc" ? "desc" : "asc";
+                            this.#data.sort((a, b) => {
+                                if (sortDirection === "asc") {
+                                    if (this.customSorts[colKey]) {
+                                        return this.customSorts[colKey](a, b);
+                                    }
+                                    return a[colKey] > b[colKey] ? 1 : -1;
+                                } else {
+                                    if (this.customSorts[colKey]) {
+                                        return this.customSorts[colKey](b, a);
+                                    }
+                                    return a[colKey] < b[colKey] ? 1 : -1;
+                                }
+                            });
+                            this.render();
+                        })
+                    );
+                }
+                if (i == 0 && this.#firstColWidth) {
+                    heading.style.width = this.#firstColWidth;
+                }
+                if (colKey in this.customColStyles) {
+                    bdoc.append(
+                        heading,
+                        bdoc.attr("style", this.customColStyles[colKey])
+                    );
                 }
                 return heading;
             })

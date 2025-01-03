@@ -37,7 +37,7 @@ export default class MmCollections extends HTMLElement {
             bdoc.ele(
                 "mm-filter-table",
                 bdoc.attr("filter-properties", "subject,publisher"),
-                bdoc.attr("sort-properties", "subject,publisher"),
+                bdoc.attr("sort-properties", "name,subject,publisher"),
                 bdoc.attr("display-properties", "subject,publisher")
             ),
             bdoc.ele(
