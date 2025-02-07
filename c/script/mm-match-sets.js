@@ -29,27 +29,27 @@ class MmMatchSets extends HTMLElement {
         const customSetsContainer = bdoc.ele(
             "div",
             bdoc.class("dropdown-table-container"),
-            bdoc.id("custom-sets-filter-table-container"),
-            bdoc.ele(
-                "mm-filter-table",
-                bdoc.id("custom-sets-table"),
-                bdoc.attr("filter-properties", "subject,creator"),
-                bdoc.attr("sort-properties", "subject,creator"),
-                bdoc.attr("display-properties", "subject,creator")
-            )
+            bdoc.id("custom-sets-filter-table-container")
+            // bdoc.ele(
+            //     "mm-filter-table",
+            //     bdoc.id("custom-sets-table"),
+            //     bdoc.attr("filter-properties", "subject,creator"),
+            //     bdoc.attr("sort-properties", "subject,creator"),
+            //     bdoc.attr("display-properties", "subject,creator")
+            // )
         );
 
         const collectionsContainer = bdoc.ele(
             "div",
             bdoc.class("dropdown-table-container"),
-            bdoc.id("collections-filter-table-container"),
-            bdoc.ele(
-                "mm-filter-table",
-                bdoc.id("collections-table"),
-                bdoc.attr("filter-properties", "subject,publisher"),
-                bdoc.attr("sort-properties", "subject,publisher"),
-                bdoc.attr("display-properties", "subject,publisher")
-            )
+            bdoc.id("collections-filter-table-container")
+            // bdoc.ele(
+            //     "mm-filter-table",
+            //     bdoc.id("collections-table"),
+            //     bdoc.attr("filter-properties", "subject,publisher"),
+            //     bdoc.attr("sort-properties", "subject,publisher"),
+            //     bdoc.attr("display-properties", "subject,publisher")
+            // )
         );
 
         bdoc.append(
@@ -432,7 +432,7 @@ class MmMatchSets extends HTMLElement {
             );
         };
 
-        const loadSavedSets = (setType, tableRoot) => {
+        const loadSavedSets = (setType, tableRoot, checkboxOnly) => {
             const savedSetIds = JSON.parse(
                 localStorage.getItem("currentGenerateMatchesWorkflow")
             );
@@ -454,17 +454,32 @@ class MmMatchSets extends HTMLElement {
                         );
 
                         checkbox.checked = true;
-
-                        addSet(set, setCategory, setType, tableRoot);
+                        if (!checkboxOnly) {
+                            addSet(set, setCategory, setType, tableRoot);
+                        }
                     }
                 }
             }
         };
 
+        const collectionsFilterTableContainer = this.shadowRoot.getElementById(
+            "collections-filter-table-container"
+        );
+
         customElements.whenDefined("mm-filter-table").then(() => {
             if (this.#collections) {
-                const collectionsTable =
-                    this.shadowRoot.getElementById("collections-table");
+                const collectionsTable = bdoc.ele(
+                    "mm-filter-table",
+                    bdoc.id("collections-table"),
+                    bdoc.attr("filter-properties", "subject,publisher"),
+                    bdoc.attr(
+                        "sort-properties",
+                        "name,subject,publisher,Add to Independent,Add to Dependent"
+                    ),
+                    bdoc.attr("display-properties", "subject,publisher")
+                );
+
+                bdoc.append(collectionsFilterTableContainer, collectionsTable);
                 // to change table height to prevent scrolling
                 collectionsTable.addCustomStylesheets(
                     "/c/res/mm-match-sets.css"
@@ -507,6 +522,44 @@ class MmMatchSets extends HTMLElement {
                         ),
                 });
 
+                collectionsTable.customSorts = {
+                    name: (a, b) => {
+                        return a.name > b.name ? 1 : -1;
+                    },
+                    subject: (a, b) => {
+                        if (!a.subject) {
+                            return 1;
+                        }
+                        if (!b.subject) {
+                            return -1;
+                        }
+                        return a.subject > b.subject ? 1 : -1;
+                    },
+                    publisher: (a, b) => {
+                        if (!a.publisher) {
+                            return 1;
+                        }
+                        if (!b.publisher) {
+                            return -1;
+                        }
+                        return a.publisher > b.publisher ? 1 : -1;
+                    },
+                    ["Add to Independent"]: (a, b) => {
+                        return this.#sets.independent.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
+                    ["Add to Dependent"]: (a, b) => {
+                        return this.#sets.dependent.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
+                };
+
                 collectionsTable.loadData(this.#collections);
 
                 // ensures that saved sets are loaded after table is loaded
@@ -514,13 +567,50 @@ class MmMatchSets extends HTMLElement {
                     const innerTableRoot =
                         await collectionsTable.getInnerTableRoot();
 
+                    const innerTable = await collectionsTable.getInnerTable();
+
                     loadSavedSets("collections", innerTableRoot);
+
+                    innerTable.onRendered = () => {
+                        loadSavedSets("collections", innerTableRoot, true);
+                    };
                 }, 0);
+            } else {
+                bdoc.append(
+                    collectionsFilterTableContainer,
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("style", "margin-left: 1em"),
+                        bdoc.ele("p", "No collections."),
+                        bdoc.ele(
+                            "a",
+                            bdoc.attr("href", "/c/ManageCollections"),
+                            "Make or import a collection to start matching collections."
+                        )
+                    )
+                );
             }
 
-            if (this.#customSetsData) {
-                const customSetsTable =
-                    this.shadowRoot.getElementById("custom-sets-table");
+            const customSetsFilterTableContainer =
+                this.shadowRoot.getElementById(
+                    "custom-sets-filter-table-container"
+                );
+
+            if (
+                this.#customSetsData &&
+                Object.keys(this.#customSetsData).length > 0
+            ) {
+                const customSetsTable = bdoc.ele(
+                    "mm-filter-table",
+                    bdoc.id("custom-sets-table"),
+                    bdoc.attr("filter-properties", "subject,creator"),
+                    bdoc.attr(
+                        "sort-properties",
+                        "name,subject,creator,Add to Independent,Add to Dependent"
+                    ),
+                    bdoc.attr("display-properties", "subject,creator")
+                );
+                bdoc.append(customSetsFilterTableContainer, customSetsTable);
 
                 customSetsTable.addCustomStylesheets(
                     "/c/res/mm-match-sets.css"
@@ -579,14 +669,71 @@ class MmMatchSets extends HTMLElement {
                         ),
                 });
 
+                customSetsTable.customSorts = {
+                    name: (a, b) => {
+                        return a.name > b.name ? 1 : -1;
+                    },
+                    subject: (a, b) => {
+                        if (!a.subject) {
+                            return 1;
+                        }
+                        if (!b.subject) {
+                            return -1;
+                        }
+                        return a.subject > b.subject ? 1 : -1;
+                    },
+                    creator: (a, b) => {
+                        if (!a.creator) {
+                            return 1;
+                        }
+                        if (!b.creator) {
+                            return -1;
+                        }
+                        return a.creator > b.creator ? 1 : -1;
+                    },
+                    ["Add to Independent"]: (a, b) => {
+                        return this.#sets.independent.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
+                    ["Add to Dependent"]: (a, b) => {
+                        return this.#sets.dependent.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
+                };
+
                 customSetsTable.loadData(Object.values(displayCustomSets));
 
                 setTimeout(async () => {
                     const innerTableRoot =
                         await customSetsTable.getInnerTableRoot();
+                    const innerTable = await customSetsTable.getInnerTable();
 
                     loadSavedSets("custom-set", innerTableRoot);
+
+                    innerTable.onRendered = () => {
+                        loadSavedSets("custom-set", innerTableRoot, true);
+                    };
                 }, 0);
+            } else {
+                bdoc.append(
+                    customSetsFilterTableContainer,
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("style", "margin-left: 1em"),
+                        bdoc.ele("p", "No custom sets."),
+                        bdoc.ele(
+                            "a",
+                            bdoc.attr("href", "/c/CreateSets"),
+                            "Make a custom set to start matching custom sets."
+                        )
+                    )
+                );
             }
         });
 

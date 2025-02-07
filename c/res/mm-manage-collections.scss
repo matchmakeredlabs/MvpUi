@@ -1,0 +1,58 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+
+    .button-group {
+        display: flex;
+        flex-direction: row;
+        margin-right: 2em;
+        gap: 1em;
+    }
+
+    .header-button {
+
+        color: white;
+        border: none;
+
+        height: 35px;
+
+        padding: 8px 16px;
+
+        cursor: pointer;
+        border-radius: 4px;
+
+        text-wrap: nowrap;
+        width: min-content;
+
+    }
+
+    .header-button.add-entity-button {
+        background-color: #5D9732;
+    }
+
+    .header-button.add-entity-button:hover {
+        background-color: #497528;
+    }
+
+    .header-button.add-entity-button2 {
+        background-color: #D18316;
+    }
+
+    .header-button.add-entity-button2:hover {
+        background-color: #905a0f;
+    }
+
+    .header-button.cancel-button {
+        background-color: #D32F2F;
+    }
+
+    .header-button.cancel-button:hover {
+        background-color: #B71C1C;
+    }
+
+}

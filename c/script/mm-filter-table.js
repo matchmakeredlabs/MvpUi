@@ -68,6 +68,14 @@ class MmFilterTable extends HTMLElement {
         return shadowRoot;
     };
 
+    getInnerTable = async () => {
+        let table;
+        await customElements.whenDefined("mm-table").then(() => {
+            table = this.shadowRoot.querySelector("mm-table");
+        });
+        return table;
+    };
+
     // #sortAttribute = "";
 
     nameElementCallback = (item) =>

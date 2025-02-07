@@ -25,6 +25,12 @@ class MmGenerateMatches extends HTMLElement {
 
     #collectionElements = {};
 
+    #matchDirectionsElement = bdoc.ele(
+        "p",
+        "Click on a described element to view matches.",
+        bdoc.attr("style", "display: none;")
+    );
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -51,7 +57,12 @@ class MmGenerateMatches extends HTMLElement {
                 bdoc.ele(
                     "div",
                     bdoc.class("independent-sets"),
-                    bdoc.id("independent-sets")
+                    bdoc.id("independent-sets"),
+                    bdoc.ele(
+                        "p",
+                        "Loading independent elements...",
+                        bdoc.id("loading")
+                    )
                 )
             ),
             bdoc.ele(
@@ -64,7 +75,31 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.ele(
                         "div",
                         bdoc.class("match-header"),
-                        bdoc.ele("h1", "Matching Elements"),
+                        bdoc.ele(
+                            "h1",
+                            "Matching Elements",
+                            bdoc.ele(
+                                "span",
+                                bdoc.attr(
+                                    "style",
+                                    "font-size: 15px; display: inline-block; vertical-align: middle; margin-left: 10px;"
+                                ),
+                                bdoc.ele(
+                                    "mm-tooltip",
+                                    bdoc.ele(
+                                        "slot",
+                                        bdoc.attr("name", "tooltip-button"),
+                                        bdoc.attr("slot", "tooltip-button")
+                                    ),
+                                    bdoc.ele(
+                                        "span",
+                                        bdoc.attr("slot", "tooltip-content"),
+                                        "Download Match Report"
+                                    )
+                                )
+                            )
+                        ),
+
                         bdoc.ele(
                             "select",
                             bdoc.id("type-select"),
@@ -92,7 +127,12 @@ class MmGenerateMatches extends HTMLElement {
                         bdoc.ele("mm-match-profile-select")
                     )
                 ),
-                bdoc.ele("div", bdoc.class("matches"), bdoc.id("matches"))
+                bdoc.ele(
+                    "div",
+                    bdoc.class("matches"),
+                    bdoc.id("matches"),
+                    this.#matchDirectionsElement
+                )
             ),
 
             bdoc.ele("mm-modal", bdoc.id("element-modal")),
@@ -125,7 +165,8 @@ class MmGenerateMatches extends HTMLElement {
                 "script",
                 bdoc.attr("type", "module"),
                 bdoc.attr("src", "/c/script/mm-modal.js")
-            )
+            ),
+            bdoc.script("mm-tooltip.js")
         );
 
         this.#fetchSets();
@@ -240,6 +281,9 @@ class MmGenerateMatches extends HTMLElement {
             }
         }
 
+        this.shadowRoot.getElementById("loading").style.display = "none";
+        this.#matchDirectionsElement.style.display = "block";
+
         this.#render();
     };
 
@@ -278,16 +322,27 @@ class MmGenerateMatches extends HTMLElement {
             return;
         }
         const { selectedElement, elementObj } = this.#currentlySelectedElement;
-        const selectedElementLi = selectedElement.parentElement;
+        const getSelectedLi = (element) => {
+            if (element.tagName === "LI") {
+                return element;
+            }
+            return getSelectedLi(element.parentElement);
+        };
+        const selectedElementLi = getSelectedLi(selectedElement);
         const selectedElementButton = selectedElementLi.querySelector("button");
 
-        if (!selectedElementButton.classList.contains("mmb_leaf")) {
+        if (
+            !selectedElementButton.classList.contains("mmb_leaf") ||
+            !selectedElementButton.classList.contains("mmb_desc")
+        ) {
             return;
         }
 
         const matchesContainer = this.shadowRoot.getElementById("matches");
 
         matchesContainer.innerHTML = "";
+
+        this.#matchDirectionsElement.style.display = "none";
 
         if (!this.#matchesData) {
             this.#generateMatches().then(() => {
@@ -348,7 +403,26 @@ class MmGenerateMatches extends HTMLElement {
     };
 
     #renderTooltipButton = (currentNode) => {
-        const tooltip = bdoc.ele("div", bdoc.class("info-button"), "i");
+        const tooltipButton = bdoc.ele(
+            "div",
+            bdoc.class("info-button"),
+            "i",
+
+            bdoc.attr("style", "display: inline-block;  "),
+            bdoc.attr("slot", "tooltip-button")
+        );
+
+        const tooltip = bdoc.ele(
+            "mm-tooltip",
+
+            bdoc.attr("style", "display: inline-block; vertical-align: top;"),
+            tooltipButton,
+            bdoc.ele(
+                "span",
+                bdoc.attr("slot", "tooltip-content"),
+                "View element descriptor"
+            )
+        );
 
         Promise.all([
             customElements.whenDefined("mm-element-card"),
@@ -364,7 +438,7 @@ class MmGenerateMatches extends HTMLElement {
                 modalContent.style.width = "500px";
             }
 
-            tooltip.addEventListener("click", () => {
+            tooltipButton.addEventListener("click", () => {
                 modalContent.innerHTML = "";
                 MmElementCard.renderElement(
                     currentNode,
@@ -390,7 +464,63 @@ class MmGenerateMatches extends HTMLElement {
         const generateDisplaySet = (setName, descriptors, setId) => {
             const collectionDisplay = bdoc.ele("mm-collection");
 
+            const collectionContainer = bdoc.ele(
+                "div",
+                bdoc.class("collection-container")
+            );
+
             customElements.whenDefined("mm-collection").then(() => {
+                const expandContractButtons = bdoc.ele(
+                    "div",
+                    bdoc.id("expand-contract-buttons"),
+                    bdoc.ele(
+                        "button",
+                        bdoc.class("expand-contract-button"),
+                        bdoc.eventListener(
+                            "click",
+                            collectionDisplay.expandAll
+                        ),
+                        "Expand"
+                    ),
+                    bdoc.ele(
+                        "button",
+                        bdoc.class("expand-contract-button"),
+                        bdoc.eventListener("click", () => {
+                            if (!collectionDisplay.contractAll()) {
+                                collectionHeaderButton.click();
+                            }
+                        }),
+                        "Close"
+                    )
+                );
+
+                const collectionHeaderButton = bdoc.ele(
+                    "button",
+                    bdoc.class("mmb_tri mmb_partial"),
+                    bdoc.eventListener("click", ({ target }) => {
+                        collectionContainer.classList.toggle("show");
+                        expandContractButtons.classList.toggle("show");
+                        target.classList.toggle("mmb_expanded");
+                    })
+                );
+
+                const collectionHeaderContainer = bdoc.ele(
+                    "div",
+                    bdoc.class("collection-header-container"),
+                    collectionHeaderButton,
+                    bdoc.ele("p", bdoc.class("collection-header"), setName),
+                    expandContractButtons
+                );
+                bdoc.append(
+                    collectionContainer,
+                    collectionHeaderContainer,
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("collection-display-container"),
+                        collectionDisplay
+                    )
+                );
+
                 collectionDisplay.generateCustomDescriptorElement =
                     this.#renderTooltipButton;
                 collectionDisplay.includeStylesheet(
@@ -407,35 +537,6 @@ class MmGenerateMatches extends HTMLElement {
                     this.#selectElement();
                 };
             });
-
-            const collectionContainer = bdoc.ele(
-                "div",
-                bdoc.class("collection-container")
-            );
-
-            const collectionHeaderButton = bdoc.ele(
-                "button",
-                bdoc.class("mmb_partial"),
-                bdoc.eventListener("click", ({ target }) => {
-                    collectionContainer.classList.toggle("show");
-
-                    target.classList.toggle("mmb_expanded");
-                })
-            );
-            bdoc.append(
-                collectionContainer,
-                bdoc.ele(
-                    "div",
-                    bdoc.class("collection-header-container"),
-                    collectionHeaderButton,
-                    bdoc.ele("p", bdoc.class("collection-header"), setName)
-                ),
-                bdoc.ele(
-                    "div",
-                    bdoc.class("collection-display-container"),
-                    collectionDisplay
-                )
-            );
 
             return collectionContainer;
         };

@@ -1,0 +1,42 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+
+    
+
+    .top-level-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .expand-contract-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25em;
+    }
+
+    #expand-contract-buttons .expand-contract-button {
+        padding: 4px;
+        font-size: 12px;
+        font-family: inherit;
+        text-align: center;
+        text-decoration: none;
+        color: #000;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        box-sizing: border-box;
+        border-radius: 4px;
+        outline: none;
+        margin: 1px;
+        background-image: none;
+        width: auto;
+        height: auto;
+    }
+}

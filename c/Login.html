@@ -37,7 +37,7 @@ async function login(un, pw) {
         const query = new URLSearchParams(window.location.search);
         let ret = query.get("returnTo");
         if (!ret) ret = "/";
-        window.location.href = ret;
+        window.location.replace(ret);
     }
     else {
         let json = await response.json();

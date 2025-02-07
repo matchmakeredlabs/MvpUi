@@ -12,14 +12,31 @@
 
     li {
         width: fit-content;
+        // display: flex;
+        // flex-direction: row;
         margin: 0;
+    }
+
+    .button-container {
+        display: flex;
+        flex-direction: row;
+        // gap: 0.5em;
+        align-items: flex-start;
+    }
+
+    .desc-container {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5em;
+        align-items: center;
     }
 
     .selected {
         background-color: rgb(175, 201, 228);
     }
 
-    button {
+    button.mmb_tri {
+        margin-top: 2px;
         background-color: inherit;
         width: 1.5em;
         height: 1em;

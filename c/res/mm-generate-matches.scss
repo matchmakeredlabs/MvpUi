@@ -15,6 +15,10 @@
         display: block;
     }
 
+    mm-collection {
+        padding-left: 1em;
+    }
+
 
     .matches-container {
         flex: 1;
@@ -94,7 +98,7 @@
         flex-direction: row;
         align-items: center;
         background-color: white;
-
+        min-height: 27px;
 
         position: sticky;
         top: 0;
@@ -105,7 +109,37 @@
             font-weight: bold;
         }
 
-        button {
+        #expand-contract-buttons {
+            margin-left: 5px;
+            display: none;
+            flex-direction: row;
+            gap: 0.25em;
+        }
+
+        #expand-contract-buttons.show {
+            display: flex;
+        }
+
+        #expand-contract-buttons .expand-contract-button {
+            padding: 4px;
+            font-size: 12px;
+            font-family: inherit;
+            text-align: center;
+            text-decoration: none;
+            color: #000;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            box-sizing: border-box;
+            border-radius: 4px;
+            outline: none;
+            margin: 1px;
+            background-image: none;
+            width: auto;
+            height: auto;
+        }
+
+        button.mmb_tri {
                 background-color: inherit;
                 width: 1.5em;
                 height: 1em;
@@ -175,29 +209,30 @@
 
 }
 
-    .info-button {
-        vertical-align: top;
-        margin-left: 0.5em;
-        font-family: Arial, sans-serif;
-        width: 10px;
-        /* Small width for the button */
-        height: 10px;
-        /* Small height for the button */
-        font-style: normal;
-        background-color: #6c757d;
-        color: white;
-        text-align: center;
-        line-height: 12px;
-        /* Aligns the 'i' vertically within the button */
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-        font-size: 8px;
-        /* Small font size for the 'i' */
-        display: inline-block;
-        /* Moves the button up to give a superscript effect */
-        
-    }
+.info-button {
+    vertical-align: top;
+    margin-left: 0.5em;
+    font-family: Arial, sans-serif;
+    width: 10px;
+    /* Small width for the button */
+    height: 10px;
+    /* Small height for the button */
+    font-style: normal;
+    background-color: #6c757d;
+    color: white;
+    text-align: center;
+    line-height: 12px;
+    /* Aligns the 'i' vertically within the button */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    font-size: 8px;
+    /* Small font size for the 'i' */
+
+
+}
+
+    
 
 
 

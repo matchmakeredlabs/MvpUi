@@ -24,6 +24,11 @@ export default class MmGroups extends HTMLElement {
                 bdoc.attr("href", "/c/res/styles.css")
             ),
             bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-groups.css")
+            ),
+            bdoc.ele(
                 "h2",
                 "My Groups",
                 bdoc.attr("style", "margin-left: 1.5em")
@@ -33,9 +38,22 @@ export default class MmGroups extends HTMLElement {
                 bdoc.attr("style", "height: 80%"),
                 bdoc.attr("filter-properties", "org"),
                 bdoc.attr("sort-properties", "name,organization"),
-                bdoc.attr("first-col-width", "40%")
+                bdoc.attr("first-col-width", "40%"),
+                bdoc.ele(
+                    "div",
+                    bdoc.class("button-group"),
+                    bdoc.attr("slot", "header"),
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("id", "create-group-button"),
+                        bdoc.class("header-button add-entity-button2"),
+                        "✐  Create New Group"
+                    )
+                )
             ),
-            bdoc.script("mm-filter-table.js")
+            bdoc.ele("mm-create-group-modal"),
+            bdoc.script("mm-filter-table.js"),
+            bdoc.script("mm-create-group-modal.js")
         );
         this.#renderGroups();
     }
@@ -43,7 +61,10 @@ export default class MmGroups extends HTMLElement {
     #renderGroups = async () => {
         const groups = await MmGroups.fetchGroups();
 
-        customElements.whenDefined("mm-filter-table").then(() => {
+        Promise.all([
+            customElements.whenDefined("mm-filter-table"),
+            customElements.whenDefined("mm-create-group-modal"),
+        ]).then(() => {
             const filterTable =
                 this.shadowRoot.querySelector("mm-filter-table");
             filterTable.generateCols = () => ({
@@ -71,6 +92,19 @@ export default class MmGroups extends HTMLElement {
                     a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1,
             };
             filterTable.loadData(groups);
+
+            const createGroupButton = this.shadowRoot.getElementById(
+                "create-group-button"
+            );
+            const createGroupModal = this.shadowRoot.querySelector(
+                "mm-create-group-modal"
+            );
+            bdoc.append(
+                createGroupButton,
+                bdoc.eventListener("click", () => {
+                    createGroupModal.show();
+                })
+            );
         });
     };
 }

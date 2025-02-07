@@ -10,7 +10,10 @@ title: Match Elements
         <h1>
             Matching Elements
             <span style="font-size: 15px; display: inline-block; vertical-align: middle;">
-                <i id = "download-matches" class="fa-sharp fa-solid fa-download" ></i>
+                <mm-tooltip>
+                <i id = "download-matches" class="fa-sharp fa-solid fa-download" slot="tooltip-button" ></i>
+                <span slot="tooltip-content">Download Matches</span>
+                </mm-tooltip>
             </span>
             <button id="match-console-button">Match Console</button>
         </h1>
@@ -103,4 +106,5 @@ title: Match Elements
 </div>
 
 <script type="module" src="/c/script/mmx_match.js"></script>
+<script type="module" src="/c/script/mm-tooltip.js"></script>
 <script src="https://kit.fontawesome.com/9e617e5901.js"></script>
