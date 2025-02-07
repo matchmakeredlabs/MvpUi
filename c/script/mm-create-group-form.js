@@ -58,6 +58,10 @@ export default class MmCreateGroupForm extends HTMLElement {
                 body: JSON.stringify(groupObj),
             }
         );
+
+        if (groupRole === "none") {
+            return createGroupResponse;
+        }
         const originalResponse = createGroupResponse.clone();
         try {
             const group = await createGroupResponse.json();
@@ -123,6 +127,8 @@ export default class MmCreateGroupForm extends HTMLElement {
     };
 
     connectedCallback() {
+        const roleChoices = ["none", ...MmAddMemberForm.roles];
+
         const formGroupsContainer = bdoc.ele(
             "div",
             bdoc.class("form-groups-container"),
@@ -159,14 +165,14 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "role"),
-                    "Role (Owning Organization)"
+                    "Role in Owning Organization"
                 ),
                 bdoc.ele(
                     "select",
                     bdoc.attr("id", "role"),
                     bdoc.attr("name", "role"),
                     bdoc.attr("required", "true"),
-                    ...MmAddMemberForm.roles.map((role) =>
+                    ...roleChoices.map((role) =>
                         bdoc.ele("option", bdoc.attr("value", role), role)
                     )
                 )

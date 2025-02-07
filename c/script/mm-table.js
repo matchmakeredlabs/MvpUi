@@ -38,6 +38,8 @@ class MmTable extends HTMLElement {
         }
     }
 
+    onRendered = () => {};
+
     customSorts = {};
 
     customColStyles = {};
@@ -162,6 +164,12 @@ class MmTable extends HTMLElement {
                                     if (this.customSorts[colKey]) {
                                         return this.customSorts[colKey](a, b);
                                     }
+                                    if (!a[colKey]) {
+                                        return 1;
+                                    }
+                                    if (!b[colKey]) {
+                                        return -1;
+                                    }
                                     return a[colKey] > b[colKey] ? 1 : -1;
                                 } else {
                                     if (this.customSorts[colKey]) {
@@ -212,6 +220,7 @@ class MmTable extends HTMLElement {
                 )
             )
         );
+        this.onRendered(this);
     }
 }
 customElements.define("mm-table", MmTable);

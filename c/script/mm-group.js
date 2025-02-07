@@ -7,6 +7,7 @@ export default class MmGroup extends HTMLElement {
 
     groups = [];
     users = [];
+    roles = [];
 
     #group;
 
@@ -104,6 +105,16 @@ export default class MmGroup extends HTMLElement {
                 bdoc.class("dropdowns-container"),
                 bdoc.ele(
                     "mm-dropdown",
+                    bdoc.attr("id", "roles-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Roles",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    )
+                ),
+                bdoc.ele(
+                    "mm-dropdown",
                     bdoc.attr("id", "users-dropdown"),
                     bdoc.ele(
                         "h3",
@@ -170,6 +181,7 @@ export default class MmGroup extends HTMLElement {
         });
 
         this.#group = group;
+        this.roles = group._roles;
 
         if (group._canUpdate) {
             this.#permissions.add("update");
@@ -344,6 +356,8 @@ export default class MmGroup extends HTMLElement {
             customElements.whenDefined("mm-add-member-modal"),
             customElements.whenDefined("mm-create-group-modal"),
         ]).then(() => {
+            const rolesDropdown =
+                this.shadowRoot.getElementById("roles-dropdown");
             const usersDropdown =
                 this.shadowRoot.getElementById("users-dropdown");
             const groupsDropdown =
@@ -580,6 +594,46 @@ export default class MmGroup extends HTMLElement {
 
                 createButtonGroup("user");
                 createButtonGroup("group");
+            }
+
+            if (this.roles.length > 0) {
+                const filterTable = bdoc.ele(
+                    "mm-filter-table",
+                    bdoc.attr("id", `roles-filter-table`),
+                    bdoc.attr("sort-properties", "organization,role"),
+                    bdoc.attr("slot", "dropdown-body"),
+                    bdoc.attr("first-col-width", "inherit")
+                );
+                bdoc.append(rolesDropdown, filterTable);
+                filterTable.generateCols = () => ({
+                    organization: (role) =>
+                        MmGroup.renderLinkIfCachedPermsOnOrg(
+                            role.orgId,
+                            cachedAcl
+                        ),
+                    role: (role) => role.role,
+                });
+                filterTable.customSorts = {
+                    organization: (a, b) => (a.orgId > b.orgId ? 1 : -1),
+                    role: (a, b) => {
+                        const roleOrder = ["owner", "editor", "reader"];
+                        return (
+                            roleOrder.indexOf(a.role) -
+                            roleOrder.indexOf(b.role)
+                        );
+                    },
+                };
+                filterTable.loadData(this.roles);
+            } else {
+                bdoc.append(
+                    rolesDropdown,
+                    bdoc.ele(
+                        "p",
+                        "This group has no roles on any organization.",
+                        bdoc.attr("slot", "dropdown-body"),
+                        bdoc.attr("style", "margin: 1em;")
+                    )
+                );
             }
 
             if (this.users.length > 0) {

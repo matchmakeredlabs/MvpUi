@@ -1,0 +1,134 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+
+    .headers-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-left: 1em;
+        gap: 0.25em;
+        height: 15%;
+        margin-bottom: 1em;
+        h3 {
+            margin: 0;
+        }
+        p {
+            margin: 0;
+        
+        }
+
+        .info-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 1em;
+            padding-right: 1em;
+        }
+
+        #description {
+            display: inline-block;
+            max-width: 700px;
+            max-height: 50px;
+            text-overflow: ellipsis;
+            overflow: auto;
+        }
+
+
+        #description-container {
+            display: flex;
+            flex-direction: row;
+            gap: 1em;
+            align-items: flex-end;
+        }
+
+        .edit-buttons {
+            gap: 0.5em;
+        }
+
+    }
+
+    .button-group {
+        display: flex;
+        flex-direction: row;
+        margin-right: 2em;
+        gap: 1em;
+    }
+
+    #delete-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1em;
+        margin-right: 1em;
+    }
+
+    .dropdowns-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+        height: 85%;
+    }
+
+    .header-button {
+
+        color: white;
+        border: none;
+
+        height: 35px;
+
+        padding: 8px 16px;
+
+        cursor: pointer;
+        border-radius: 4px;
+
+        text-wrap: nowrap;
+        width: min-content;
+
+    }
+
+    .header-button.add-entity-button {
+        background-color: #5D9732;
+    }
+
+    .header-button.add-entity-button:hover {
+        background-color: #497528;
+    }
+
+    .header-button.add-entity-button2 {
+        background-color: #D18316;
+    }
+
+    .header-button.add-entity-button2:hover {
+        background-color: #905a0f;
+    }
+
+    .header-button.cancel-button {
+        background-color: #D32F2F;
+    }
+
+    .header-button.cancel-button:hover {
+        background-color: #B71C1C;
+    }
+
+    .header-button.delete-button {
+        background-color: #9f2222;
+    }
+
+    .header-button.delete-button:hover {
+        background-color: #751111;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1em;
+    }
+
+}

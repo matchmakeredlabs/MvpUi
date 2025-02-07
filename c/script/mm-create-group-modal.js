@@ -168,55 +168,61 @@ class MmCreateGroupModal extends HTMLElement {
                     ? this.#parentId.split(":")[1]
                     : this.#parentId);
 
-            const addToParentCheckbox = bdoc.ele(
-                "div",
-                bdoc.class("checkbox-group"),
-                bdoc.ele(
-                    "input",
-                    bdoc.attr("type", "checkbox"),
-                    bdoc.attr("id", "add-to-parent-checkbox")
-                ),
-                `Add as member of current ${
-                    parameters[this.#parentType].fullText
-                } ${displayId}`,
-                this.#parentType === "org"
-                    ? bdoc.eventListener("change", ({ target }) => {
-                          if (target.checked) {
-                              bdoc.append(
-                                  this.shadowRoot.getElementById(
-                                      "add-to-parent"
-                                  ),
-                                  bdoc.ele(
-                                      "div",
-                                      bdoc.class("select-group"),
-                                      bdoc.id("role-select-group"),
-                                      "Role (Current Organization)",
-                                      bdoc.ele(
-                                          "select",
-                                          bdoc.attr("id", "role-select"),
-                                          bdoc.attr("name", "role"),
-                                          ...MmAddMemberForm.roles.map((role) =>
-                                              bdoc.ele(
-                                                  "option",
-                                                  bdoc.attr("value", role),
-                                                  role
-                                              )
-                                          )
-                                      )
-                                  )
-                              );
-                          } else {
-                              this.shadowRoot
-                                  .getElementById("add-to-parent")
-                                  .removeChild(
-                                      this.shadowRoot.getElementById(
-                                          "role-select-group"
-                                      )
-                                  );
-                          }
-                      })
-                    : null
-            );
+            const addToParentCheckbox = this.#parentType
+                ? bdoc.ele(
+                      "div",
+                      bdoc.class("checkbox-group"),
+                      bdoc.ele(
+                          "input",
+                          bdoc.attr("type", "checkbox"),
+                          bdoc.attr("id", "add-to-parent-checkbox")
+                      ),
+                      `Add as member of current ${
+                          parameters[this.#parentType].fullText
+                      } ${displayId}`,
+                      this.#parentType === "org"
+                          ? bdoc.eventListener("change", ({ target }) => {
+                                if (target.checked) {
+                                    bdoc.append(
+                                        this.shadowRoot.getElementById(
+                                            "add-to-parent"
+                                        ),
+                                        bdoc.ele(
+                                            "div",
+                                            bdoc.class("select-group"),
+                                            bdoc.id("role-select-group"),
+                                            "Role (Current Organization)",
+                                            bdoc.ele(
+                                                "select",
+                                                bdoc.attr("id", "role-select"),
+                                                bdoc.attr("name", "role"),
+                                                ...MmAddMemberForm.roles.map(
+                                                    (role) =>
+                                                        bdoc.ele(
+                                                            "option",
+                                                            bdoc.attr(
+                                                                "value",
+                                                                role
+                                                            ),
+                                                            role
+                                                        )
+                                                )
+                                            )
+                                        )
+                                    );
+                                } else {
+                                    this.shadowRoot
+                                        .getElementById("add-to-parent")
+                                        .removeChild(
+                                            this.shadowRoot.getElementById(
+                                                "role-select-group"
+                                            )
+                                        );
+                                }
+                            })
+                          : null
+                  )
+                : null;
 
             const addToParent = bdoc.ele(
                 "div",

@@ -44,7 +44,7 @@ export default class MmAddMemberForm extends HTMLElement {
 
     onSettled = () => {};
 
-    static roles = ["editor", "reader"];
+    static roles = ["reader", "editor", "owner"];
 
     #submitAddMember = (parentType, parentId, memberType) => async (event) => {
         event.preventDefault();

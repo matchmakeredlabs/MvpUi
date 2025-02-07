@@ -1,0 +1,134 @@
+import bdoc from "./bdoc.js";
+import config from "/config.js";
+import bsession from "./bsession.js";
+
+export default class ManageCollections extends HTMLElement {
+    static session = new bsession(config.backEndUrl, config.sessionTag);
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
+
+    static fetchCollections = async () => {
+        const response = await ManageCollections.session.fetch(
+            "/api/collections"
+        );
+        return (await response.json()).collections;
+    };
+
+    connectedCallback() {
+        bdoc.append(
+            this.shadowRoot,
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/styles.css")
+            ),
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-manage-collections.css")
+            ),
+            bdoc.ele(
+                "div",
+                bdoc.attr("style", "padding-left:2em;"),
+
+                bdoc.ele("h2", "Manage Collections")
+            ),
+            bdoc.ele(
+                "mm-filter-table",
+                bdoc.attr("filter-properties", "subject,publisher"),
+                bdoc.attr("sort-properties", "name,subject,publisher"),
+                bdoc.attr("display-properties", "subject,publisher")
+            ),
+            bdoc.ele("mm-create-collection-modal"),
+            bdoc.ele("mm-upload-collection-modal"),
+            bdoc.script("mm-filter-table.js"),
+            bdoc.script("mm-create-collection-modal.js"),
+            bdoc.script("mm-upload-collection-modal.js")
+        );
+        this.#renderCollections();
+    }
+
+    #renderCollections = async () => {
+        const collections = await ManageCollections.fetchCollections();
+
+        const editableCollections = collections.filter(
+            (collection) => collection["_canUpdate"]
+        );
+
+        Promise.all([
+            customElements.whenDefined("mm-filter-table"),
+            customElements.whenDefined("mm-create-collection-modal"),
+            customElements.whenDefined("mm-upload-collection-modal"),
+        ]).then(() => {
+            const filterTable =
+                this.shadowRoot.querySelector("mm-filter-table");
+
+            const createCollectionModal = this.shadowRoot.querySelector(
+                "mm-create-collection-modal"
+            );
+            const uploadCollectionModal = this.shadowRoot.querySelector(
+                "mm-upload-collection-modal"
+            );
+
+            bdoc.append(
+                filterTable,
+                bdoc.ele(
+                    "div",
+                    bdoc.attr("slot", "header"),
+                    bdoc.class("button-group"),
+                    bdoc.ele(
+                        "button",
+                        bdoc.class("header-button add-entity-button2"),
+                        "✐ Create New Collection",
+                        bdoc.eventListener("click", () => {
+                            createCollectionModal.show();
+                        })
+                    ),
+                    bdoc.ele(
+                        "button",
+                        bdoc.class("header-button add-entity-button"),
+                        "+ Upload Collection",
+                        bdoc.eventListener("click", () => {
+                            uploadCollectionModal.show();
+                        })
+                    )
+                )
+            );
+
+            const filterTableCols = {
+                name: (collection) =>
+                    bdoc.ele(
+                        "a",
+                        bdoc.attr(
+                            "href",
+                            "/c/Browse?id=b974874e-1d27-4195-9cc8-b670b52970c3"
+                        ),
+                        collection.name
+                    ),
+                subject: (collection) => collection.subject,
+                publisher: (collection) => collection.publisher || "Null",
+                // ["Creation Date"]: (collection) => collection.datePublished,
+                Actions: (collection) =>
+                    bdoc.ele(
+                        "a",
+                        bdoc.attr("href", `/c/EditCollection/${collection.id}`),
+                        "Edit"
+                    ),
+            };
+
+            filterTable.generateCols = () => filterTableCols;
+            filterTable.customSorts = {
+                name: (a, b) => (a.name < b.name ? -1 : 1),
+            };
+            filterTable.customColStyles = {
+                ["Actions"]: "width: 1%;",
+            };
+
+            filterTable.loadData(editableCollections);
+        });
+    };
+}
+customElements.define("mm-manage-collections", ManageCollections);

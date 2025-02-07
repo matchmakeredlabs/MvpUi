@@ -1,0 +1,38 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    position: relative;
+    
+    .tooltip-button {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .tooltip-content {
+        visibility: hidden;
+        width: 10rem;
+        background-color: #333;
+        font-style: normal;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        line-height: 15px;
+        position: fixed;
+        z-index: 1;
+        // bottom: 150%;
+        // left: 50%;
+        transform: translateX(-50%) translateY(-150%);
+        transition: visibility 0.2s, opacity 0.2s ease-in-out;
+        opacity: 0;
+        font-size: 15px;
+    }
+
+    .tooltip-button:hover .tooltip-content {
+        visibility: visible;
+        opacity: 1;
+    }
+
+}

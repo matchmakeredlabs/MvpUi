@@ -8,7 +8,18 @@ class MmCollection extends HTMLElement {
 
     descriptors = {};
 
-    generateCustomDescriptorElement = () => {};
+    // deprecated, use customDescriptorEleOptions instead
+    set generateCustomDescriptorElement(callback) {
+        this.customDescriptorEleOptions.generateCustomDescriptorElement =
+            callback;
+    }
+
+    customDescriptorEleOptions = {
+        visibleUnselected: false,
+        renderInline: true,
+        generateCustomDescriptorElement: () => {},
+    };
+    originalDescriptorEleDisplayStyle;
 
     includeStylesheet = (link) => {
         bdoc.append(
@@ -44,49 +55,145 @@ class MmCollection extends HTMLElement {
     clickSelect =
         (origin) =>
         ({ target }) => {
-            const selectedSpan = target.parentElement.querySelector("span");
-            const spans = this.shadowRoot.querySelectorAll("li span");
+            const selectedSpan =
+                this.#getParentLi(target).querySelector("span");
+            const spans = this.shadowRoot.querySelectorAll("span");
             spans.forEach((span) => {
-                // Check if the clicked span is the same as the currently highlighted one
                 if (span === selectedSpan) {
-                    // Toggle the bold style
-                    span.style.fontWeight = "bold"; // Set to bold
+                    span.style.fontWeight = "bold";
                 } else {
-                    // Reset the font weight for other spans
                     span.style.fontWeight = "normal";
                 }
             });
-            origin.select(target, this.descriptors[target.parentElement.feid]);
+            const selectedCustomEle =
+                this.#getParentLi(target).querySelector("[custom-ele]");
+            const customElements =
+                this.shadowRoot.querySelectorAll("[custom-ele]");
+
+            customElements.forEach((customEle) => {
+                if (customEle === selectedCustomEle) {
+                    customEle.style.display =
+                        this.originalDescriptorEleDisplayStyle || "block";
+                } else {
+                    customEle.style.display = "none";
+                }
+            });
+
+            origin.select(
+                target,
+                this.descriptors[this.#getParentLi(target).feid]
+            );
         };
 
     select = () => {};
 
+    #getParentLi = (ele) => {
+        if (ele.tagName === "LI") {
+            return ele;
+        } else {
+            return this.#getParentLi(ele.parentElement);
+        }
+    };
+
+    get expandAll() {
+        return () => {
+            const listEles = this.shadowRoot.querySelectorAll("li");
+            listEles.forEach((ele) => {
+                if (ele.expanded === false) {
+                    MmCollection.expand(ele.feid, ele, this);
+                }
+            });
+        };
+    }
+
+    get contractAll() {
+        return () => {
+            let contracted = false;
+            const listEles = this.shadowRoot.querySelectorAll("li");
+            listEles.forEach((ele) => {
+                if (ele.expanded === true) {
+                    const childLists = ele.querySelectorAll("li");
+                    for (const childList of childLists) {
+                        if (childList.expanded === true) {
+                            return;
+                        }
+                    }
+                    MmCollection.contract(ele);
+                    contracted = true;
+                }
+            });
+            return contracted;
+        };
+    }
+
+    get expandContractButtons() {
+        return bdoc.ele(
+            "div",
+            bdoc.id("expand-contract-buttons"),
+            bdoc.ele(
+                "button",
+                bdoc.class("expand-contract-button"),
+                bdoc.eventListener("click", this.expandAll),
+                "Expand"
+            ),
+            bdoc.ele(
+                "button",
+                bdoc.class("expand-contract-button"),
+                bdoc.eventListener("click", this.contractAll),
+                "Close"
+            )
+        );
+    }
+
     clickExpand =
         (origin) =>
         ({ target }) => {
-            let li = target.parentElement;
+            const li = this.#getParentLi(target);
             if (li.expanded) {
                 MmCollection.contract(li);
             } else {
                 MmCollection.expand(li.feid, li, origin);
-                target.classList.add("mmb_expanded");
             }
-            origin.select(target, this.descriptors[target.parentElement.feid]);
+            this.clickSelect(origin)({ target: li.querySelector("span") });
+            // origin.select(target, this.descriptors[target.parentElement.feid]);
         };
 
     static expand(id, parentEle, origin) {
         let node = origin.descriptors[id];
 
+        const expandButton = parentEle.querySelector("button");
+        if (expandButton) {
+            expandButton.classList.add("mmb_expanded");
+        }
+
         if (!node || node.intHasPart.length == 0) return;
         let ul = bdoc.ele("ul");
+        if (id == 0) {
+            ul.style.paddingLeft = "0px";
+        }
         for (let cid of node.intHasPart) {
             let cn = origin.descriptors[cid];
             if (cn) {
                 let li = document.createElement("li");
+                const buttonContainer = bdoc.ele(
+                    "div",
+                    bdoc.class("button-container")
+                );
+                const descContainer = bdoc.ele(
+                    "div",
+                    bdoc.class("desc-container")
+                );
+                // descContainer.expanded = false;
+                // descContainer.feid = cid; // Framework Element ID
+
                 li.expanded = false;
                 li.feid = cid; // Framework Element ID
 
-                const button = bdoc.ele("button", bdoc.attr("type", "button"));
+                const button = bdoc.ele(
+                    "button",
+                    bdoc.attr("type", "button"),
+                    bdoc.class("mmb_tri")
+                );
 
                 if (cn.intHasPart && cn.intHasPart.length > 0) {
                     bdoc.append(
@@ -100,7 +207,7 @@ class MmCollection extends HTMLElement {
                         button.classList.add("mmb_partial");
                     }
                 } else {
-                    button.className = "mmb_leaf";
+                    button.classList.add("mmb_leaf");
                     bdoc.append(
                         button,
                         bdoc.eventListener("click", origin.clickSelect(origin))
@@ -109,7 +216,8 @@ class MmCollection extends HTMLElement {
                         button.classList.add("mmb_desc");
                     }
                 }
-                li.appendChild(button);
+                // li.appendChild(button);
+                bdoc.append(buttonContainer, button);
 
                 const abstr =
                     cn.description.length < 50
@@ -127,12 +235,24 @@ class MmCollection extends HTMLElement {
                     bdoc.eventListener("click", origin.clickSelect(origin)),
                     spanText
                 );
-                bdoc.append(
-                    li,
-                    span,
-                    origin.generateCustomDescriptorElement(cn)
-                );
-
+                const customDescriptorEle =
+                    origin.customDescriptorEleOptions.generateCustomDescriptorElement(
+                        cn
+                    );
+                if (customDescriptorEle) {
+                    bdoc.append(customDescriptorEle, bdoc.attr("custom-ele"));
+                    if (!origin.customDescriptorEleOptions.visibleUnselected) {
+                        origin.originalDescriptorEleDisplayStyle =
+                            customDescriptorEle.style.display;
+                        customDescriptorEle.style.display = "none";
+                    }
+                    if (origin.customDescriptorEleOptions.renderInline) {
+                        descContainer.style.display = "inline";
+                    }
+                }
+                bdoc.append(descContainer, span, customDescriptorEle);
+                bdoc.append(buttonContainer, descContainer);
+                bdoc.append(li, buttonContainer);
                 bdoc.append(ul, li);
             }
         }
@@ -141,10 +261,9 @@ class MmCollection extends HTMLElement {
     }
 
     static contract(parentEle) {
+        parentEle.querySelector("button").classList.remove("mmb_expanded");
         for (let ele of parentEle.children) {
-            if (ele.classList.contains("mmb_expanded")) {
-                ele.classList.remove("mmb_expanded");
-            } else if (ele.tagName == "UL") {
+            if (ele.tagName == "UL") {
                 parentEle.removeChild(ele);
                 break;
             }

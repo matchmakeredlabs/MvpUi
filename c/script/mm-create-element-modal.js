@@ -2,8 +2,27 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 
-class MmCreateOrgModal extends HTMLElement {
+class MmCreateElementModal extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
+
+    static observedAttributes = ["parent-element"];
+
+    #parentElementJSON;
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === "parent-element") {
+            this.#parentElementJSON = newValue;
+            const createElementForm = this.shadowRoot.querySelector(
+                "mm-create-element-form"
+            );
+            if (createElementForm) {
+                bdoc.append(
+                    createElementForm,
+                    bdoc.attr("parent-element", newValue)
+                );
+            }
+        }
+    }
 
     onSuccess = () => {};
 
@@ -51,20 +70,21 @@ class MmCreateOrgModal extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-create-org-modal.css")
+                bdoc.attr("href", "/c/res/mm-create-collection-modal.css")
             ),
 
             bdoc.ele("mm-modal"),
 
             bdoc.script("mm-modal.js"),
-            bdoc.script("mm-create-org-form.js")
+            bdoc.script("mm-create-element-form.js")
         );
 
         Promise.all([
             customElements.whenDefined("mm-modal"),
-            customElements.whenDefined("mm-create-org-form"),
+            customElements.whenDefined("mm-create-element-form"),
         ]).then(() => {
-            const createOrgModal = this.shadowRoot.querySelector("mm-modal");
+            const createCollectionModal =
+                this.shadowRoot.querySelector("mm-modal");
 
             const onSettled = (onSuccess) => async (variables, response) => {
                 if (response) {
@@ -77,8 +97,8 @@ class MmCreateOrgModal extends HTMLElement {
                 }
             };
 
-            const createOrgForm = bdoc.ele(
-                "mm-create-org-form",
+            const createElementForm = bdoc.ele(
+                "mm-create-element-form",
                 bdoc.ele(
                     "div",
 
@@ -93,44 +113,25 @@ class MmCreateOrgModal extends HTMLElement {
                             bdoc.class("header-button cancel-button"),
                             "Cancel",
                             bdoc.eventListener("click", () => {
-                                createOrgModal.hide();
-                            })
-                        ),
-                        bdoc.ele(
-                            "button",
-                            bdoc.class("header-button add-entity-button2"),
-                            "Create Org and Go to Org",
-                            bdoc.eventListener("click", () => {
-                                createOrgForm.onSettled = onSettled(
-                                    async (variables, response, addedGroup) => {
-                                        this.onSuccess(
-                                            variables,
-                                            response,
-                                            addedGroup
-                                        );
-
-                                        window.location.href = `/c/Organization/${response.id}`;
-                                    }
-                                );
-                                createOrgForm.submit();
+                                createCollectionModal.hide();
                             })
                         ),
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button"),
-                            "Create Org and Return",
+                            "Create Element",
                             bdoc.eventListener("click", () => {
-                                createOrgForm.onSettled = onSettled(
+                                createElementForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
                                         this.onSuccess(
                                             variables,
                                             response,
                                             addedGroup
                                         );
-                                        createOrgModal.hide();
+                                        createCollectionModal.hide();
                                     }
                                 );
-                                createOrgForm.submit();
+                                createElementForm.submit();
                             })
                         )
                     ),
@@ -139,16 +140,16 @@ class MmCreateOrgModal extends HTMLElement {
             );
 
             bdoc.append(
-                createOrgModal,
+                createCollectionModal,
 
                 bdoc.ele(
                     "h2",
-                    "Create Organization",
+                    "Create Element",
                     bdoc.attr("style", "margin-left: 18px;")
                 ),
-                createOrgForm
+                createElementForm
             );
         });
     }
 }
-customElements.define("mm-create-org-modal", MmCreateOrgModal);
+customElements.define("mm-create-element-modal", MmCreateElementModal);

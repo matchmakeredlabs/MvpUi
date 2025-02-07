@@ -35,6 +35,7 @@ export default class MmCreateSets extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
+                bdoc.attr("style", "height: 90%"),
                 bdoc.attr("filter-properties", "subject,publisher"),
                 bdoc.attr("sort-properties", "subject,publisher"),
                 bdoc.attr("display-properties", "subject,publisher")

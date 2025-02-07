@@ -1544,12 +1544,6 @@ export default class Mmx {
             }
         }
 
-        // const mainElement = document.querySelector('main');
-        // const bodyElement = document.querySelector('body');
-        // if (mainElement) {
-        //     bodyElement.innerHTML += mainElement.innerHTML;
-        // }
-
         let downloadModal = root.getElementById("download-modal");
         let downloadButton = root.getElementById("download-matches");
         if (downloadButton) {

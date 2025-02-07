@@ -130,6 +130,7 @@ export default class MmMatchProfileModal extends HTMLElement {
                                 bdoc.ele(
                                     "th",
                                     bdoc.class("header_console"),
+                                    bdoc.attr("style", "white-space: normal;"),
                                     header
                                 )
                             )
@@ -194,6 +195,7 @@ export default class MmMatchProfileModal extends HTMLElement {
                                 bdoc.ele(
                                     "th",
                                     bdoc.class("header_console"),
+                                    bdoc.attr("style", "white-space: normal;"),
                                     header
                                 )
                             )

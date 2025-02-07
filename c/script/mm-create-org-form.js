@@ -1,8 +1,6 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
-import MmOrganizations from "./mm-organizations.js";
-import MmAddMemberForm from "./mm-add-member-form.js";
 
 export default class MmCreateOrgForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);

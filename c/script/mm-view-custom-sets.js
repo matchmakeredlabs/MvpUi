@@ -25,12 +25,13 @@ export default class MmViewCustomSets extends HTMLElement {
 
                 bdoc.ele("h2", "Custom Sets")
             ),
-            bdoc.ele(
-                "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,creator"),
-                bdoc.attr("sort-properties", "subject,creator"),
-                bdoc.attr("display-properties", "subject,creator")
-            ),
+            bdoc.ele("div", bdoc.id("custom-sets-filter-table-container")),
+            // bdoc.ele(
+            //     "mm-filter-table",
+            //     bdoc.attr("filter-properties", "subject,creator"),
+            //     bdoc.attr("sort-properties", "subject,creator"),
+            //     bdoc.attr("display-properties", "subject,creator")
+            // ),
             bdoc.ele(
                 "script",
                 bdoc.attr("type", "module"),
@@ -167,31 +168,66 @@ export default class MmViewCustomSets extends HTMLElement {
     #renderCustomSets = async () => {
         const customSetsData = await MmViewCustomSets.fetchCustomSets();
 
-        const [summarizedCustomSets, displayCustomSets] =
-            MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
-                customSetsData
-            );
+        let summarizedCustomSets, displayCustomSets;
+        try {
+            summarizedCustomSets,
+                (displayCustomSets =
+                    MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
+                        customSetsData
+                    ));
+        } catch {
+            summarizedCustomSets = [];
+            displayCustomSets = {};
+        }
 
         customElements.whenDefined("mm-filter-table").then(() => {
-            const filterTable =
-                this.shadowRoot.querySelector("mm-filter-table");
-            filterTable.generateFilterOptions =
-                MmViewCustomSets.generateFilterOptionsCallback(
-                    summarizedCustomSets
-                );
-            filterTable.dataFilteredBySearchKeywords =
-                MmViewCustomSets.generateDataFilteredBySearchKeywordsCallback(
-                    summarizedCustomSets
-                );
-            filterTable.dataFilteredByFilterOptions =
-                MmViewCustomSets.generateDataFilteredByFilterOptionsCallback(
-                    displayCustomSets
+            const customSetsFilterTableContainer =
+                this.shadowRoot.querySelector(
+                    "#custom-sets-filter-table-container"
                 );
 
-            filterTable.nameElementCallback =
-                MmViewCustomSets.nameElementCallback;
+            if (!summarizedCustomSets || summarizedCustomSets.length === 0) {
+                bdoc.append(
+                    customSetsFilterTableContainer,
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("style", "margin: 2em;"),
+                        bdoc.ele("p", "No custom sets found."),
+                        bdoc.ele(
+                            "a",
+                            bdoc.attr("href", "/c/CreateSets"),
+                            "Create a custom set"
+                        )
+                    )
+                );
+            } else {
+                const filterTable = bdoc.ele(
+                    "mm-filter-table",
+                    bdoc.attr("filter-properties", "subject,creator"),
+                    bdoc.attr("sort-properties", "subject,creator"),
+                    bdoc.attr("display-properties", "subject,creator")
+                );
 
-            filterTable.loadData(Object.values(displayCustomSets));
+                bdoc.append(customSetsFilterTableContainer, filterTable);
+
+                filterTable.generateFilterOptions =
+                    MmViewCustomSets.generateFilterOptionsCallback(
+                        summarizedCustomSets
+                    );
+                filterTable.dataFilteredBySearchKeywords =
+                    MmViewCustomSets.generateDataFilteredBySearchKeywordsCallback(
+                        summarizedCustomSets
+                    );
+                filterTable.dataFilteredByFilterOptions =
+                    MmViewCustomSets.generateDataFilteredByFilterOptionsCallback(
+                        displayCustomSets
+                    );
+
+                filterTable.nameElementCallback =
+                    MmViewCustomSets.nameElementCallback;
+
+                filterTable.loadData(Object.values(displayCustomSets));
+            }
         });
     };
 }
