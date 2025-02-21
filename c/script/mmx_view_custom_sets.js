@@ -12,4 +12,3 @@ for (let key in customSets) {
     pTag2.textContent = JSON.stringify(customSets[key]);    
     mainElement.appendChild(pTag2);
 }
-
