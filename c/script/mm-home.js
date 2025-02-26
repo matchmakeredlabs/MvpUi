@@ -38,7 +38,7 @@ class MmHome extends HTMLElement {
 
         const createButton = bdoc.ele(
             "a",
-            bdoc.attr("href", "/c/"),
+            bdoc.attr("href", "/c/ManageCollections"),
             bdoc.attr("style", "text-decoration: none; border-radius: 12px"),
             bdoc.ele(
                 "div",
