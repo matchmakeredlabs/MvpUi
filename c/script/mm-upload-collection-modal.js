@@ -100,7 +100,7 @@ class MmUploadCollectionModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Upload Collection and View",
+                            "Import Collection and View",
                             bdoc.eventListener("click", () => {
                                 uploadCollectionForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -110,7 +110,7 @@ class MmUploadCollectionModal extends HTMLElement {
                                             addedGroup
                                         );
 
-                                        window.location.href = `/c/Browse?id=${response.id}`;
+                                        window.location.href = `/c/EditCollection/${response.descriptors[0].id}`;
                                     }
                                 );
                                 uploadCollectionForm.submit();
@@ -119,7 +119,7 @@ class MmUploadCollectionModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button"),
-                            "Upload Collection and Return",
+                            "Import Collection and Return",
                             bdoc.eventListener("click", () => {
                                 uploadCollectionForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -144,7 +144,7 @@ class MmUploadCollectionModal extends HTMLElement {
 
                 bdoc.ele(
                     "h2",
-                    "Upload Collection",
+                    "Import Collection",
                     bdoc.attr("style", "margin-left: 18px;")
                 ),
                 uploadCollectionForm

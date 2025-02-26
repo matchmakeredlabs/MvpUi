@@ -174,10 +174,10 @@ export default class MmGroup extends HTMLElement {
         const groupId = new URL(window.location.href).pathname.split("/").pop();
 
         if (!groupId) {
-            window.location.href = "/c/Groups";
+            window.location.href = "/c/Groups.html";
         }
         const group = await MmGroup.fetchGroup(groupId).catch(() => {
-            window.location.href = "/c/Groups";
+            window.location.href = "/c/Groups.html";
         });
 
         this.#group = group;
@@ -327,7 +327,7 @@ export default class MmGroup extends HTMLElement {
                                     method: "DELETE",
                                 })
                                 .then(() => {
-                                    window.location.href = "/c/Groups";
+                                    window.location.href = "/c/Groups.html";
                                 });
                         }
                     })

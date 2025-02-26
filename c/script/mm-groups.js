@@ -35,7 +35,7 @@ export default class MmGroups extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("style", "height: 80%"),
+                bdoc.attr("style", "height: 100%"),
                 bdoc.attr("filter-properties", "org"),
                 bdoc.attr("sort-properties", "name,organization"),
                 bdoc.attr("first-col-width", "40%"),
@@ -51,7 +51,7 @@ export default class MmGroups extends HTMLElement {
                     )
                 )
             ),
-            bdoc.ele("mm-create-group-modal"),
+            bdoc.ele("mm-create-group-modal", bdoc.attr("add-self")),
             bdoc.script("mm-filter-table.js"),
             bdoc.script("mm-create-group-modal.js")
         );
@@ -99,6 +99,13 @@ export default class MmGroups extends HTMLElement {
             const createGroupModal = this.shadowRoot.querySelector(
                 "mm-create-group-modal"
             );
+            createGroupModal.onSuccess = (variables, response) => {
+                const newGroup = {
+                    ...variables,
+                    id: response.id,
+                };
+                filterTable.loadData([newGroup, ...groups]);
+            };
             bdoc.append(
                 createGroupButton,
                 bdoc.eventListener("click", () => {

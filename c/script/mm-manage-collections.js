@@ -69,9 +69,18 @@ export default class ManageCollections extends HTMLElement {
             const createCollectionModal = this.shadowRoot.querySelector(
                 "mm-create-collection-modal"
             );
+            const onCreationSuccess = (variables, response) => {
+                const collection = response.descriptors[0];
+                filterTable.loadData([collection, ...editableCollections]);
+            };
+
+            createCollectionModal.onSuccess = onCreationSuccess;
+
             const uploadCollectionModal = this.shadowRoot.querySelector(
                 "mm-upload-collection-modal"
             );
+
+            uploadCollectionModal.onSuccess = onCreationSuccess;
 
             bdoc.append(
                 filterTable,
@@ -90,7 +99,7 @@ export default class ManageCollections extends HTMLElement {
                     bdoc.ele(
                         "button",
                         bdoc.class("header-button add-entity-button"),
-                        "+ Upload Collection",
+                        "+ Import Collection",
                         bdoc.eventListener("click", () => {
                             uploadCollectionModal.show();
                         })
@@ -102,10 +111,7 @@ export default class ManageCollections extends HTMLElement {
                 name: (collection) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr(
-                            "href",
-                            "/c/Browse?id=b974874e-1d27-4195-9cc8-b670b52970c3"
-                        ),
+                        bdoc.attr("href", "/c/Browse?id=" + collection.id),
                         collection.name
                     ),
                 subject: (collection) => collection.subject,

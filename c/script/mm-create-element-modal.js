@@ -39,6 +39,10 @@ class MmCreateElementModal extends HTMLElement {
                 alert(body.log[0].message);
             } else if (body.error) {
                 alert(body.error);
+            } else if (body.message) {
+                alert(body.message);
+            } else if (body.ExceptionMessage) {
+                alert(body.ExceptionMessage);
             } else {
                 alert("An error occurred");
             }
@@ -122,12 +126,8 @@ class MmCreateElementModal extends HTMLElement {
                             "Create Element",
                             bdoc.eventListener("click", () => {
                                 createElementForm.onSettled = onSettled(
-                                    async (variables, response, addedGroup) => {
-                                        this.onSuccess(
-                                            variables,
-                                            response,
-                                            addedGroup
-                                        );
+                                    async (variables, response) => {
+                                        this.onSuccess(variables, response);
                                         createCollectionModal.hide();
                                     }
                                 );

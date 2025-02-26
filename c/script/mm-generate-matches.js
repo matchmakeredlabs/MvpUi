@@ -25,6 +25,8 @@ class MmGenerateMatches extends HTMLElement {
 
     #collectionElements = {};
 
+    #fetchSetsPromise;
+
     #matchDirectionsElement = bdoc.ele(
         "p",
         "Click on a described element to view matches.",
@@ -89,12 +91,46 @@ class MmGenerateMatches extends HTMLElement {
                                     bdoc.ele(
                                         "slot",
                                         bdoc.attr("name", "tooltip-button"),
-                                        bdoc.attr("slot", "tooltip-button")
+                                        bdoc.attr("slot", "tooltip-button"),
+                                        bdoc.eventListener(
+                                            "click",
+                                            async () => {
+                                                if (!this.#matchesData) {
+                                                    if (
+                                                        !this.#fetchSetsPromise
+                                                    ) {
+                                                        return;
+                                                    }
+                                                    await this
+                                                        .#fetchSetsPromise;
+
+                                                    await this.#generateMatches();
+                                                }
+                                                const a =
+                                                    document.createElement("a");
+                                                a.href = URL.createObjectURL(
+                                                    new Blob(
+                                                        [
+                                                            JSON.stringify(
+                                                                this
+                                                                    .#matchesData
+                                                            ),
+                                                        ],
+                                                        {
+                                                            type: "application/json",
+                                                        }
+                                                    )
+                                                );
+                                                a.download = `match-report${new Date().toISOString()}.json`;
+                                                a.click();
+                                                URL.revokeObjectURL(a.href);
+                                            }
+                                        )
                                     ),
                                     bdoc.ele(
                                         "span",
                                         bdoc.attr("slot", "tooltip-content"),
-                                        "Download Match Report"
+                                        "Export Match Report"
                                     )
                                 )
                             )
@@ -169,7 +205,7 @@ class MmGenerateMatches extends HTMLElement {
             bdoc.script("mm-tooltip.js")
         );
 
-        this.#fetchSets();
+        this.#fetchSetsPromise = this.#fetchSets();
 
         customElements.whenDefined("mm-match-profile-modal").then(() => {
             const matchProfileButton =

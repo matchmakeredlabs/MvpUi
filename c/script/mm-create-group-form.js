@@ -7,13 +7,18 @@ import MmAddMemberForm from "./mm-add-member-form.js";
 export default class MmCreateGroupForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
-    static observedAttributes = ["org-id"];
+    static observedAttributes = ["org-id", "add-self"];
 
     #orgId;
+
+    #addSelf;
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "org-id") {
             this.#orgId = newValue;
+        }
+        if (name === "add-self") {
+            this.#addSelf = true;
         }
     }
 
@@ -29,11 +34,17 @@ export default class MmCreateGroupForm extends HTMLElement {
 
         const formData = new FormData(event.target);
 
+        const members = [];
+        if (this.#addSelf) {
+            const currUserId = MmCreateGroupForm.session.getCachedUserID();
+            members.push(currUserId);
+        }
+
         const variables = {
             name: formData.get("name"),
             org: formData.get("organization"),
             role: formData.get("role"),
-            members: [],
+            members: members,
         };
         const description = formData.get("description");
         if (description && description.trim() !== "") {

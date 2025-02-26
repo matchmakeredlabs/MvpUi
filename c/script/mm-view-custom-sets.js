@@ -168,13 +168,14 @@ export default class MmViewCustomSets extends HTMLElement {
     #renderCustomSets = async () => {
         const customSetsData = await MmViewCustomSets.fetchCustomSets();
 
+        console.log(customSetsData);
+
         let summarizedCustomSets, displayCustomSets;
         try {
-            summarizedCustomSets,
-                (displayCustomSets =
-                    MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
-                        customSetsData
-                    ));
+            [summarizedCustomSets, displayCustomSets] =
+                MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
+                    customSetsData
+                );
         } catch {
             summarizedCustomSets = [];
             displayCustomSets = {};
@@ -204,7 +205,7 @@ export default class MmViewCustomSets extends HTMLElement {
                 const filterTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.attr("filter-properties", "subject,creator"),
-                    bdoc.attr("sort-properties", "subject,creator"),
+                    bdoc.attr("sort-properties", "subject,creator,name"),
                     bdoc.attr("display-properties", "subject,creator")
                 );
 

@@ -7,18 +7,44 @@
     display: block;
     height: 96%;
 
-    
+    .top-level-buttons {
+        display: inline-flex;
+        max-height: 25px;
+        margin-right: 0.5em;
+    }
+
+    .top-level-header {
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.5em;
+
+        button {
+            background-image: none;
+            width: auto;
+            height: auto;
+        }
+
+        h2 {
+                cursor: pointer;
+            }
+    }
 
     .top-level-container {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        padding-right: 1em;
+        
     }
 
     .expand-contract-buttons {
         display: flex;
         flex-direction: row;
         gap: 0.25em;
+    }
+
+    #expand-contract-buttons {
+        min-width: 100px;
     }
 
     #expand-contract-buttons .expand-contract-button {
@@ -39,4 +65,44 @@
         width: auto;
         height: auto;
     }
+
+    .expand-public-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25em;
+    }
+    .public-checkbox-container {
+        margin: 1.2em 0 0.5em 1em;
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 1em;
+        height: 25px;
+    }
+
+    input[type="checkbox"]#public-checkbox  {
+        height: 14px;
+        width: 14px;
+        position: relative;
+        opacity: 1;
+    }
+
+    .export-button {
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px;
+            float: right;
+    }
+    .export-button.matches {
+        background-color: #0068b3;
+    }
+    .export-button.collection {
+        background-color: #5D9732;
+    }
+        .export-button.collection:hover {
+            background-color: #467125;
+        }
 }

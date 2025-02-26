@@ -6,11 +6,17 @@ import MmAddMemberForm from "./mm-add-member-form.js";
 class MmCreateGroupModal extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
-    static observedAttributes = ["org-id", "parent-id", "parent-type"];
+    static observedAttributes = [
+        "org-id",
+        "parent-id",
+        "parent-type",
+        "add-self",
+    ];
 
     #orgId;
     #parentId;
     #parentType;
+    #addSelf;
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "org-id") {
@@ -19,6 +25,8 @@ class MmCreateGroupModal extends HTMLElement {
             this.#parentId = newValue;
         } else if (name === "parent-type") {
             this.#parentType = newValue;
+        } else if (name === "add-self") {
+            this.#addSelf = true;
         }
     }
 
@@ -234,6 +242,7 @@ class MmCreateGroupModal extends HTMLElement {
             const createGroupForm = bdoc.ele(
                 "mm-create-group-form",
                 bdoc.attr("org-id", this.#orgId),
+                this.#addSelf ? bdoc.attr("add-self") : null,
                 bdoc.ele(
                     "div",
 

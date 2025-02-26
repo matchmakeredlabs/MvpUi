@@ -1,5 +1,6 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
+import MmCreateElementForm from "./mm-create-element-form.js";
 import MmOrganizations from "./mm-organizations.js";
 import config from "/config.js";
 
@@ -68,19 +69,26 @@ export default class MmUploadCollectionForm extends HTMLElement {
         const formData = new FormData(event.target);
 
         const organizationId = formData.get("org");
+        const file = formData.get("file");
+        const fileType = file.name.split(".").pop();
+        const fileTypeToMIMEType = {
+            json: "application/json",
+            csv: "text/csv",
+        };
 
-        const response = await MmUploadCollectionForm.uploadCollection(
-            variables
+        const variables = {
+            organizationId,
+            file,
+            fileType,
+        };
+
+        const response = await MmCreateElementForm.createElement(
+            file,
+            organizationId,
+            fileTypeToMIMEType[fileType]
         );
 
         this.onSettled(variables, response);
-    };
-
-    static uploadCollection = async (collectionFile) => {
-        return await MmUploadCollectionForm.session.fetch("/api/collections", {
-            method: "POST",
-            body: collectionFile,
-        });
     };
 
     getInnerForm = () => {

@@ -33,10 +33,6 @@ export default class MmCreateElementForm extends HTMLElement {
 
     static details = [
         {
-            label: "URL",
-            id: "url",
-        },
-        {
             label: "Subject",
             id: "subject",
         },
@@ -60,6 +56,10 @@ export default class MmCreateElementForm extends HTMLElement {
             label: "Repository Date",
             id: "sdDatePublished",
         },
+        {
+            label: "Provenance",
+            id: "provenance",
+        },
     ];
 
     onSettled = () => {};
@@ -71,25 +71,52 @@ export default class MmCreateElementForm extends HTMLElement {
 
         const variables = {
             name: formData.get("name"),
-            members: [],
+            description: formData.get("description"),
+            url: formData.get("url"),
+            eleType: formData.get("type"),
         };
-        const description = formData.get("description");
-        if (description && description.trim() !== "") {
-            variables.description = formData.get("description");
+
+        for (const detail of MmCreateElementForm.details) {
+            variables[detail.id] = formData.get(detail.id);
         }
-        const response = await MmCreateElementForm.createOrg(variables);
+
+        if (this.#parentElement) {
+            variables.mainEntityId = this.#parentElement.mainEntityId;
+            variables.isPartOf = this.#parentElement.url;
+        } else {
+            variables._orgId = formData.get("org");
+            variables.mainEntity = variables.url;
+        }
+
+        const response = await MmCreateElementForm.createElement(variables);
 
         this.onSettled(variables, response);
     };
 
-    static createOrg = async (orgObj) => {
-        return await MmCreateElementForm.session.fetch("/api/orgs", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(orgObj),
-        });
+    static createElement = async (
+        element,
+        orgId,
+        contentType = "application/json"
+    ) => {
+        let body;
+        if (typeof element === "string") {
+            body = element;
+        } else if (element instanceof Blob) {
+            body = await element.text();
+        } else {
+            body = JSON.stringify(element);
+        }
+
+        return await MmCreateElementForm.session.fetch(
+            `/api/descriptors?verbose${orgId ? "&orgid=" + orgId : ""}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": contentType,
+                },
+                body,
+            }
+        );
     };
 
     getInnerForm = () => {
@@ -108,6 +135,25 @@ export default class MmCreateElementForm extends HTMLElement {
         return Object.keys(cachedAcl).filter((key) =>
             cachedAcl[key].includes("WriteDescriptor")
         );
+    };
+
+    #getTooltipButton = (tooltipText) => {
+        const tooltipButton = bdoc.ele(
+            "div",
+            bdoc.class("info-button"),
+            "i",
+
+            bdoc.attr("style", "display: inline-block;"),
+            bdoc.attr("slot", "tooltip-button")
+        );
+
+        const tooltip = bdoc.ele(
+            "mm-tooltip",
+            bdoc.attr("style", "display: inline-block; vertical-align: top;"),
+            tooltipButton,
+            bdoc.ele("span", bdoc.attr("slot", "tooltip-content"), tooltipText)
+        );
+        return tooltip;
     };
 
     #renderFormGroups = () => {
@@ -133,7 +179,7 @@ export default class MmCreateElementForm extends HTMLElement {
                 bdoc.class("form-group"),
                 bdoc.ele("label", bdoc.attr("for", "type"), "Type"),
 
-                bdoc.attr("style", "flex: 1"),
+                bdoc.attr("style", "flex: 1; margin-bottom: 0"),
                 bdoc.ele(
                     "select",
                     bdoc.attr("id", "type"),
@@ -173,6 +219,29 @@ export default class MmCreateElementForm extends HTMLElement {
                           bdoc.attr("required", "true")
                       )
                   ),
+            bdoc.ele(
+                "div",
+                bdoc.class("form-group"),
+                bdoc.attr("style", "flex: none; width: 100%;"),
+                bdoc.ele(
+                    "label",
+                    bdoc.attr("for", "url"),
+                    "URL / Location",
+                    this.#getTooltipButton(
+                        "Must be unique within a collection."
+                    )
+                ),
+                bdoc.ele(
+                    "input",
+                    bdoc.attr("type", "text"),
+                    bdoc.attr("id", "url"),
+                    bdoc.attr("name", "url"),
+                    bdoc.attr("required", "true"),
+                    this.#parentElement
+                        ? bdoc.attr("value", this.#parentElement["url"] || "")
+                        : null
+                )
+            ),
             bdoc.ele(
                 "div",
                 bdoc.class("form-group"),
@@ -255,7 +324,8 @@ export default class MmCreateElementForm extends HTMLElement {
                 bdoc.id("create-element-form"),
                 this.#formGroupsContainer,
                 bdoc.ele("slot", bdoc.attr("name", "form-footer"))
-            )
+            ),
+            bdoc.script("mm-tooltip.js")
         );
 
         this.#renderFormGroups();

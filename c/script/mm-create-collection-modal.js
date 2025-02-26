@@ -110,7 +110,7 @@ class MmCreateCollectionModal extends HTMLElement {
                                             addedGroup
                                         );
 
-                                        window.location.href = `/c/Organization/${response.id}`;
+                                        window.location.href = `/c/EditCollection/${response.descriptors[0].id}`;
                                     }
                                 );
                                 createCollectionForm.submit();

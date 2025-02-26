@@ -1,14 +1,27 @@
 import bdoc from "./bdoc.js";
+import config from "/config.js";
+import bsession from "./bsession.js";
 
 export default class MmElementCard extends HTMLElement {
     static observedAttributes = ["value", "editable", "show-describe-links"];
+
+    static session = new bsession(config.backEndUrl, config.sessionTag);
 
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
     }
 
-    onSave = async () => {};
+    onSave = async (data, propagate) => {
+        try {
+            const response = await MmElementCard.updateElement(data, propagate);
+            return response;
+        } catch (error) {
+            return Promise.reject(error);
+        }
+    };
+
+    onSuccess = () => {};
 
     #originalEleObj = {};
 
@@ -45,6 +58,23 @@ export default class MmElementCard extends HTMLElement {
         let slash = key.lastIndexOf("/");
         return slash >= 0 ? key.substring(slash + 1) : key;
     }
+
+    static updateElement = async (data, propagate) => {
+        const response = await MmElementCard.session.fetch(
+            `/api/descriptors${propagate ? "?propagate" : ""}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            }
+        );
+        if (response.status !== 200) {
+            return Promise.reject(response);
+        }
+        return response;
+    };
 
     static EleTypeTranslate = {
         any: "Any",
@@ -330,15 +360,16 @@ export default class MmElementCard extends HTMLElement {
                 {
                     editable: true,
                     saveFunction: (formData) => {
-                        const data = {};
+                        const data = { ...this.#originalEleObj };
                         for (const [key, value] of formData.entries()) {
                             data[key] = value;
                         }
                         this.onSave(data, this.#propagate).then(
-                            () => {
+                            (response) => {
                                 const newEleObj = { ...val, ...data };
                                 this.#originalEleObj = newEleObj;
                                 this.#renderCardElement(this.#originalEleObj);
+                                this.onSuccess(data, response, this.#propagate);
                             },
                             (error) => {
                                 MmElementCard.handleError(error);

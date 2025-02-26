@@ -37,7 +37,7 @@ class MmAdminister extends HTMLElement {
 
         const groupsButton = bdoc.ele(
             "a",
-            bdoc.attr("href", "/c/Groups"),
+            bdoc.attr("href", "/c/Groups.html"),
             bdoc.attr("style", "text-decoration: none; border-radius: 12px"),
             bdoc.ele(
                 "div",

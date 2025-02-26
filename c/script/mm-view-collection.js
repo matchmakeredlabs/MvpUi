@@ -27,8 +27,6 @@ export default class ViewCollection extends HTMLElement {
 
     #collection;
 
-    static deleteElement = async (element) => {};
-
     static fetchCollection = async (collectionId) => {
         const response = await ViewCollection.session.fetch(
             `/api/collections/${collectionId}`
@@ -150,6 +148,65 @@ export default class ViewCollection extends HTMLElement {
         }
     };
 
+    #exportCollection = (csv) => {
+        const keysToKeep = [
+            "name",
+            "url",
+            "eleType",
+            "subject",
+            "description",
+            "identifier",
+            "educationalLevel",
+            "creator",
+            "provenance",
+            "isPartOf",
+            "sdDatePublished",
+            "datePublished",
+            "key",
+            "mainEntity",
+        ];
+
+        const collection = this.#collection.map((element) => {
+            return Object.fromEntries(
+                Object.entries(element).filter(([key]) =>
+                    keysToKeep.includes(key)
+                )
+            );
+        });
+
+        if (csv) {
+            const dataUrl =
+                "data:text/csv;charset=utf-8," +
+                encodeURIComponent(convertJsonToCsv(collection, keysToKeep));
+            const element = document.createElement("a");
+            element.setAttribute("href", dataUrl);
+            element.setAttribute(
+                "download",
+                `${this.#collection[0].name}-${new Date().toISOString()}` +
+                    ".csv"
+            );
+            element.style.display = "none";
+            this.shadowRoot.appendChild(element);
+            element.click();
+            this.shadowRoot.removeChild(element);
+        } else {
+            const dataUrl =
+                "data:text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(collection));
+            const element = document.createElement("a");
+            element.setAttribute("href", dataUrl);
+            element.setAttribute(
+                "download",
+                `${this.#collection[0].name}-${new Date().toISOString()}` +
+                    ".json"
+            );
+            element.style.display = "none";
+            this.shadowRoot.appendChild(element);
+            element.click();
+            this.shadowRoot.removeChild(element);
+        }
+    };
+
     connectedCallback() {
         bdoc.append(
             this.shadowRoot,
@@ -178,15 +235,35 @@ export default class ViewCollection extends HTMLElement {
                     "div",
                     bdoc.id("descriptor-container"),
                     bdoc.ele(
-                        "button",
-                        bdoc.id("match-collections-button"),
-                        bdoc.attr("style", "margin-right: 25px"),
-                        "Download Collection Matches",
-                        bdoc.eventListener(
-                            "click",
-                            this.downloadCollectionMatches
+                        "div",
+                        bdoc.class("export-buttons"),
+                        bdoc.ele(
+                            "button",
+                            bdoc.class("export-button collection"),
+
+                            bdoc.attr("style", "margin-right: 25px"),
+                            "Export Collection",
+                            bdoc.eventListener("click", () => {
+                                customElements
+                                    .whenDefined("mm-modal")
+                                    .then(() => {
+                                        this.shadowRoot
+                                            .querySelector("mm-modal")
+                                            .show();
+                                    });
+                            })
+                        ),
+                        bdoc.ele(
+                            "button",
+                            bdoc.id("match-collections-button"),
+                            "Export Collection Matches",
+                            bdoc.eventListener(
+                                "click",
+                                this.downloadCollectionMatches
+                            )
                         )
                     ),
+
                     bdoc.ele(
                         "mm-element-card",
                         bdoc.id("descriptor-card"),
@@ -196,8 +273,33 @@ export default class ViewCollection extends HTMLElement {
                 )
             ),
 
+            bdoc.ele(
+                "mm-modal",
+                bdoc.ele(
+                    "div",
+                    bdoc.class("button-container-download"),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("modal-button small-button5"),
+                        "Export JSON",
+                        bdoc.eventListener("click", () => {
+                            this.#exportCollection(false);
+                        })
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("modal-button small-button5"),
+                        "Export CSV",
+                        bdoc.eventListener("click", () => {
+                            this.#exportCollection(true);
+                        })
+                    )
+                )
+            ),
+
             bdoc.script("mm-collection.js"),
-            bdoc.script("mm-element-card.js")
+            bdoc.script("mm-element-card.js"),
+            bdoc.script("mm-modal.js")
         );
         this.#renderCollection();
     }

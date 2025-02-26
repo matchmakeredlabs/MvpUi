@@ -77,6 +77,23 @@ export default class bsession {
         return perms;
     };
 
+    // sample: acl=20250226T230945Z%3Btestuserorg%3Aff&o=http%3A%2F%2Flocalhost%3A4000&un=testuser&x=20250226T231023Z&m=32grk9_LTZVUa0hMY1YP02e6Nsprr217SL0UVgTWd
+
+    getCachedUserID = () => {
+        const cachedPermsURI = localStorage.getItem("bsession_" + this.tag);
+        if (!cachedPermsURI) return null;
+
+        let cachedUser = decodeURIComponent(cachedPermsURI);
+
+        const startIndex = cachedUser.indexOf("&un=");
+
+        if (startIndex < 0) return null;
+        cachedUser = cachedUser.substring(startIndex + 4);
+        const endIndex = cachedUser.indexOf("&");
+        if (endIndex < 0) return cachedUser;
+        return cachedUser.substring(0, endIndex);
+    };
+
     static privileges = {
         None: 0,
         ReadDescriptor: 0x0001,
