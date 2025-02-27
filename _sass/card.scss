@@ -27,7 +27,7 @@
         font-size: 0.85em;
         font-weight: bold;
         vertical-align: top;
-        overflow-wrap: break-word;
+        overflow-wrap: anywhere;
     }
     
     dd {
@@ -35,6 +35,6 @@
         margin: 0;
         min-width: 0; /* Default min-with for flex is the length of the content. This enables overflow-wrap */
         vertical-align: top;
-        overflow-wrap: break-word;
+        overflow-wrap: anywhere;
     }
 }
