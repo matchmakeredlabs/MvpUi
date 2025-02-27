@@ -71,7 +71,7 @@ export default class MmGroups extends HTMLElement {
                 name: (group) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/Group/${group.id}`),
+                        bdoc.attr("href", `/c/Group?id=${group.id}`),
                         group.name
                     ),
                 organization: (group) => group.org,

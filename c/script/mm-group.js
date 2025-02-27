@@ -49,7 +49,7 @@ export default class MmGroup extends HTMLElement {
         return orgId in cachedAcl || "admin" in cachedAcl
             ? bdoc.ele(
                   "a",
-                  bdoc.attr("href", `/c/Organization/${orgId}`),
+                  bdoc.attr("href", `/c/Organization?id=${orgId}`),
                   orgId
               )
             : orgId;
@@ -57,7 +57,7 @@ export default class MmGroup extends HTMLElement {
 
     // static renderLinkIfCachedPermsOnGroup = (groupId, cachedAcl) => {
     //     return (groupId in cachedAcl && cachedAcl[groupId].includes("")) || "admin" in cachedAcl
-    //         ? bdoc.ele("a", bdoc.attr("href", `/c/Group/${groupId}`), groupId)
+    //         ? bdoc.ele("a", bdoc.attr("href", `/c/Group?id=${groupId}`), groupId)
     //         : groupId;
     // };
 
@@ -169,15 +169,13 @@ export default class MmGroup extends HTMLElement {
     };
 
     #renderGroup = async () => {
-        // const orgId = new URLSearchParams(window.location.search).get("org");
-
-        const groupId = new URL(window.location.href).pathname.split("/").pop();
+        const groupId = new URLSearchParams(window.location.search).get("id");
 
         if (!groupId) {
-            window.location.href = "/c/Groups.html";
+            window.location.href = "/c/Groups";
         }
         const group = await MmGroup.fetchGroup(groupId).catch(() => {
-            window.location.href = "/c/Groups.html";
+            window.location.href = "/c/Groups";
         });
 
         this.#group = group;

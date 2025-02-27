@@ -109,7 +109,7 @@ class MmCreateOrgModal extends HTMLElement {
                                             addedGroup
                                         );
 
-                                        window.location.href = `/c/Organization/${response.id}`;
+                                        window.location.href = `/c/Organization?id=${response.id}`;
                                     }
                                 );
                                 createOrgForm.submit();

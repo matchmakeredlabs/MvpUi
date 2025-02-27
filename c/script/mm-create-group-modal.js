@@ -275,7 +275,7 @@ class MmCreateGroupModal extends HTMLElement {
                                             addedGroup
                                         );
 
-                                        window.location.href = `/c/Group/${response.id}`;
+                                        window.location.href = `/c/Group?id=${response.id}`;
                                     }
                                 );
                                 createGroupForm.submit();

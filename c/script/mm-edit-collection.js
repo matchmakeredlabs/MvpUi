@@ -95,9 +95,9 @@ export default class EditCollection extends HTMLElement {
     }
 
     #renderCollection = async () => {
-        const collectionId = new URL(window.location.href).pathname
-            .split("/")
-            .pop();
+        const collectionId = new URLSearchParams(window.location.search).get(
+            "id"
+        );
 
         if (!collectionId) {
             window.location.href = "/c/ManageCollections";

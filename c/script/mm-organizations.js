@@ -70,7 +70,7 @@ export default class MmOrganizations extends HTMLElement {
                 name: (org) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/Organization/${org.id}`),
+                        bdoc.attr("href", `/c/Organization?id=${org.id}`),
                         org.name
                     ),
                 description: (org) => org.description,

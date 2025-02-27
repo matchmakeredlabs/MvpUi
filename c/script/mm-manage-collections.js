@@ -120,7 +120,10 @@ export default class ManageCollections extends HTMLElement {
                 Actions: (collection) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/EditCollection/${collection.id}`),
+                        bdoc.attr(
+                            "href",
+                            `/c/EditCollection?id=${collection.id}`
+                        ),
                         "Edit"
                     ),
             };

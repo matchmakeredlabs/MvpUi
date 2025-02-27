@@ -172,9 +172,7 @@ export default class MmOrganization extends HTMLElement {
     };
 
     #renderOrganization = async () => {
-        // const orgId = new URLSearchParams(window.location.search).get("org");
-
-        const orgId = new URL(window.location.href).pathname.split("/").pop();
+        const orgId = new URLSearchParams(window.location.search).get("id");
 
         if (!orgId) {
             window.location.href = "/c/Organizations";
@@ -208,7 +206,7 @@ export default class MmOrganization extends HTMLElement {
                 linkOrgId !== orgId
                 ? bdoc.ele(
                       "a",
-                      bdoc.attr("href", `/c/Organization/${linkOrgId}`),
+                      bdoc.attr("href", `/c/Organization?id=${linkOrgId}`),
                       linkOrgId
                   )
                 : linkOrgId;
@@ -359,7 +357,7 @@ export default class MmOrganization extends HTMLElement {
                         name: (group) =>
                             bdoc.ele(
                                 "a",
-                                bdoc.attr("href", `/c/Group/${group.id}`),
+                                bdoc.attr("href", `/c/Group?id=${group.id}`),
                                 group.groupId
                             ),
                         role: (group) => group.role || "",
