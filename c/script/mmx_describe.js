@@ -1256,6 +1256,7 @@ class Mmx {
     }
 
     static async SaveDescriptor() {
+        console.log("saving");
         let record = Mmx.GenerateLrmiFromForm();
         record.key = Mmx.GenerateKeyFromForm();
 
@@ -1265,11 +1266,12 @@ class Mmx {
         let url;
         if (record.id) {
             verb = "PUT";
-            url = "/api/descriptors/" + record.id;
-        } else {
-            verb = "POST";
             url = "/api/descriptors";
         }
+        // else {
+        //     verb = "POST";
+        //     url = "/api/descriptors";
+        // }
 
         const response = await session.fetch(url, {
             method: verb,
@@ -1281,9 +1283,14 @@ class Mmx {
         if (response.ok) {
             alert("Saved!");
         } else {
-            alert(
-                `Save error: ${response.status} ${response.statusText}: ${text}`
-            );
+            try {
+                alert(
+                    `Save error: ${response.status} ${response.statusText}: ${text}`
+                );
+            } catch (error) {
+                alert("Save error");
+                console.log(error);
+            }
         }
     }
 
