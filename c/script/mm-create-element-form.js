@@ -132,9 +132,11 @@ export default class MmCreateElementForm extends HTMLElement {
         if ("admin" in cachedAcl) {
             return await MmOrganizations.fetchOrganizations();
         }
-        return Object.keys(cachedAcl).filter((key) =>
+        const orgs = Object.keys(cachedAcl).filter((key) =>
             cachedAcl[key].includes("WriteDescriptor")
         );
+
+        return orgs.map((orgId) => ({ id: orgId, name: orgId }));
     };
 
     #getTooltipButton = (tooltipText) => {

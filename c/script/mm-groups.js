@@ -11,6 +11,7 @@ export default class MmGroups extends HTMLElement {
     }
 
     static fetchGroups = async () => {
+        console.log(MmGroups.session.getCachedAcl());
         const response = await MmGroups.session.fetch("/api/groups");
         return (await response.json()).items;
     };
@@ -51,7 +52,7 @@ export default class MmGroups extends HTMLElement {
                     )
                 )
             ),
-            bdoc.ele("mm-create-group-modal", bdoc.attr("add-self")),
+            bdoc.ele("mm-create-group-modal"),
             bdoc.script("mm-filter-table.js"),
             bdoc.script("mm-create-group-modal.js")
         );

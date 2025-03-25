@@ -104,9 +104,12 @@ export default class MmUploadCollectionForm extends HTMLElement {
         if ("admin" in cachedAcl) {
             return await MmOrganizations.fetchOrganizations();
         }
-        return Object.keys(cachedAcl).filter((key) =>
-            cachedAcl[key].includes("WriteDescriptor")
-        );
+        return Object.keys(cachedAcl)
+            .filter((key) => cachedAcl[key].includes("WriteDescriptor"))
+            .map((key) => ({
+                id: key,
+                name: key,
+            }));
     };
 
     #renderFormGroups = () => {
