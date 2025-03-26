@@ -1,17 +1,20 @@
-# Builds and hosts a Jekyll site locally
-# Launch: docker-compose up
-# Then browse to http://localhost:4000
-# Close: docker-compose down
-# To keep this out of your website, add "docker-compose.yml" to the "exclude" list in your _config.yml
+# Builds and hosts a Jekyll site locally using the GitHub flavor of Jekyll
+# Launch: docker compose up
+# Then browse to http://localhost:4000/
+# If this command does not work immediately upon install, run "bundle install"
+# When finished hosting, type Ctrl-C in the console window and then type "docker compose down"
+# To keep this file out of the live website, add "docker-compose.yml" to the "exclude" list in "_config.yml"
+# The built site appears in the _site folder which should be excluded in both ".gitignore" and "_config.yml"
 version: '3'
 services:
   jekyll:
-    image: starefossen/github-pages
+    image: jekyll/jekyll
     environment:
       - "JEKYLL_GITHUB_TOKEN:"
     ports:
       - "4000:4000"
     volumes:
-      - ./:/usr/src/app:rw
-      - ./_site:/_site
+      - ./:/srv/jekyll:rw
+    command: jekyll serve
     tty: true
+    platform: linux/amd64
