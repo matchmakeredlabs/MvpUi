@@ -181,12 +181,12 @@ export default class MmElementCard extends HTMLElement {
 
         const annotation = bdoc.ele("div", bdoc.class("annotation"));
 
-        if (val.matchIndex != undefined) {
+        if (val._matchIndex != undefined) {
             annotation.appendChild(
                 bdoc.ele(
                     "div",
                     bdoc.class("mmc_matchindex"),
-                    "MatchIndex: " + val.matchIndex
+                    "MatchIndex: " + val._matchIndex
                 )
             );
         }

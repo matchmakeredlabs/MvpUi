@@ -426,7 +426,7 @@ class MmGenerateMatches extends HTMLElement {
         }
 
         const matchesSortedByMatchIndex = matches.sort(
-            (a, b) => b.matchIndex - a.matchIndex
+            (a, b) => b._matchIndex - a._matchIndex
         );
 
         for (const match of matchesSortedByMatchIndex) {

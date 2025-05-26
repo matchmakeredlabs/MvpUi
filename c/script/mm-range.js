@@ -1,4 +1,6 @@
-﻿class MmRange extends HTMLElement {
+﻿import bdoc from "./bdoc.js";
+
+class MmRange extends HTMLElement {
     static formAssociated = true;
 
     #internals;
@@ -7,69 +9,78 @@
 
     constructor() {
         super();
-        var shadow = this.attachShadow({ mode: 'open' });
+        const shadow = this.attachShadow({ mode: "open" });
+
         this.#internals = this.attachInternals();
+
+        const container = bdoc.ele(
+            "div",
+            bdoc.attr("style", "display: flex; align-items: center; gap: 5px;")
+        );
+        shadow.appendChild(container);
 
         const _self = this;
 
-        this.#rangeInput = document.createElement('input');
-        this.#rangeInput.type = 'range';
-        this.#rangeInput.min = 0;
-        this.#rangeInput.max = 1;
-        this.#rangeInput.step = 0.01;
-        this.#rangeInput.value = 0.5;
-        this.#rangeInput.style.verticalAlign = "middle";
-        this.#rangeInput.onchange = function () {
-            console.log(`Range: ${this.value}`);
-            _self.#numberInput.value = this.value;
-            _self.#internals.setFormValue(this.value);
+        this.#rangeInput = bdoc.ele(
+            "input",
+            bdoc.attr("type", "range"),
+            bdoc.attr("min", 0),
+            bdoc.attr("max", 1),
+            bdoc.attr("step", 0.01),
+            bdoc.attr("value", 0.5),
+            bdoc.attr("style", "width: 100%; vertical-align: middle;"),
+            bdoc.eventListener("change", ({ target }) => {
+                // console.log(`Range: ${target.value}`);
+                _self.#numberInput.value = target.value;
+                _self.#internals.setFormValue(target.value);
+            })
+        );
+        container.appendChild(this.#rangeInput);
 
-        }
-        shadow.appendChild(this.#rangeInput);
-
-        this.#numberInput = document.createElement('input');
-        this.#numberInput.type = 'number';
-        this.#numberInput.min = 0
-        this.#numberInput.max = 1;
-        this.#numberInput.step = 0.01;
-        this.#numberInput.value = 0.5;
-        this.#numberInput.style.width = '3em';
-        this.#numberInput.style.textAlign = 'right';
-        this.#numberInput.onchange = function () {
-            console.log(`Number: ${this.value}`);
-            _self.#rangeInput.value = this.value;
-            _self.#internals.setFormValue(this.value);
-        }
-        shadow.appendChild(this.#numberInput);
+        this.#numberInput = bdoc.ele(
+            "input",
+            bdoc.attr("type", "number"),
+            bdoc.attr("min", 0),
+            bdoc.attr("max", 1),
+            bdoc.attr("step", 0.01),
+            bdoc.attr("value", 0.5),
+            bdoc.attr("style", "width: 4em; vertical-align: middle;"),
+            bdoc.eventListener("change", ({ target }) => {
+                // console.log(`Number: ${target.value}`);
+                _self.#rangeInput.value = target.value;
+                _self.#internals.setFormValue(target.value);
+            })
+        );
+        container.appendChild(this.#numberInput);
     }
 
     updateValue(newValue) {
-        this.setAttribute('value', newValue);
+        this.setAttribute("value", newValue);
         this.#rangeInput.value = newValue;
         this.#numberInput.value = newValue;
         this.#internals.setFormValue(newValue);
-        
+
         // You might also want to dispatch an event if needed, for example:
-        this.dispatchEvent(new Event('change'));
+        this.dispatchEvent(new Event("change"));
     }
 
     connectedCallback() {
-        let v = this.getAttribute('min');
+        let v = this.getAttribute("min");
         if (v) {
             this.#rangeInput.min = v;
             this.#numberInput.min = v;
         }
-        v = this.getAttribute('max');
+        v = this.getAttribute("max");
         if (v) {
             this.#rangeInput.max = v;
             this.#numberInput.max = v;
         }
-        v = this.getAttribute('step');
+        v = this.getAttribute("step");
         if (v) {
             this.#rangeInput.step = v;
             this.#numberInput.step = v;
         }
-        v = this.getAttribute('value');
+        v = this.getAttribute("value");
         if (v) {
             this.#rangeInput.value = v;
             this.#numberInput.value = v;
@@ -77,7 +88,9 @@
         }
     }
 
-    get value() { return this.#numberInput.value; }
+    get value() {
+        return this.#numberInput.value;
+    }
     set value(v) {
         this.#numberInput.value = v;
         this.#rangeInput.value = v;

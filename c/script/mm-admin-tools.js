@@ -132,7 +132,7 @@ class MmAdminTools extends HTMLElement {
                 )
             );
 
-            createUserForm.onSubmit = async (variables, response) => {
+            createUserForm.onSettled = async (variables, response) => {
                 if (response) {
                     if (response.status !== 200) {
                         console.log(response);

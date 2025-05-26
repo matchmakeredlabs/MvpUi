@@ -163,7 +163,9 @@ export default class MmAddMemberForm extends HTMLElement {
     getInnerForm = () => this.shadowRoot.querySelector("form");
 
     submit = () => {
-        this.getInnerForm().dispatchEvent(new Event("submit"));
+        this.getInnerForm().dispatchEvent(
+            new Event("submit", { cancelable: true })
+        );
     };
 
     connectedCallback() {

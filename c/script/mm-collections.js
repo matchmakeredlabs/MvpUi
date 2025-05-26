@@ -37,8 +37,10 @@ export default class MmCollections extends HTMLElement {
             bdoc.ele(
                 "mm-filter-table",
                 bdoc.attr("filter-properties", "subject,publisher"),
-                bdoc.attr("sort-properties", "name,subject,publisher"),
-                bdoc.attr("display-properties", "subject,publisher")
+                bdoc.attr(
+                    "sort-properties",
+                    "Name,Subject,Publisher,% Described"
+                )
             ),
             bdoc.ele(
                 "script",
@@ -51,11 +53,72 @@ export default class MmCollections extends HTMLElement {
 
     #renderCollections = async () => {
         const collections = await MmCollections.fetchCollections();
+        for (const collection of collections) {
+            const leafWithKeyCount = collection._leafWithKeyCount;
+            const leafCount = collection._leafCount;
+            if (
+                leafWithKeyCount === null ||
+                leafCount === null ||
+                leafCount === 0
+            ) {
+                // default to 0% described
+                collection.percentDescribed = 0;
+            }
+            collection.percentDescribed = Math.round(
+                (leafWithKeyCount / leafCount) * 100
+            );
+        }
 
         customElements.whenDefined("mm-filter-table").then(() => {
-            this.shadowRoot
-                .querySelector("mm-filter-table")
-                .loadData(collections);
+            const filterTable =
+                this.shadowRoot.querySelector("mm-filter-table");
+
+            const attrOrNull = (attr) => (collection) => {
+                let currentValue = collection[attr];
+                if (
+                    currentValue === null ||
+                    currentValue === "" ||
+                    currentValue === undefined
+                ) {
+                    currentValue = "Null";
+                }
+                return currentValue;
+            };
+
+            filterTable.generateCols = () => ({
+                ["Name"]: (collection) =>
+                    bdoc.ele(
+                        "a",
+                        bdoc.attr("href", "/c/Browse?id=" + collection.id),
+                        collection.name
+                    ),
+                ["Subject"]: attrOrNull("subject"),
+                ["Publisher"]: attrOrNull("publisher"),
+                ["% Described"]: (collection) => {
+                    const percent = collection.percentDescribed;
+                    return `${percent}%`;
+                },
+            });
+
+            const sortPotentiallyNull = (attr) => (a, b) => {
+                const aValue = a[attr] || "Null";
+                const bValue = b[attr] || "Null";
+                if (aValue === bValue) {
+                    return 0;
+                }
+                return aValue.localeCompare(bValue);
+            };
+
+            filterTable.customSorts = {
+                ["Name"]: sortPotentiallyNull("name"),
+                ["Subject"]: sortPotentiallyNull("subject"),
+                ["Publisher"]: sortPotentiallyNull("publisher"),
+                ["% Described"]: (a, b) => {
+                    return a.percentDescribed - b.percentDescribed;
+                },
+            };
+
+            filterTable.loadData(collections);
         });
     };
 }

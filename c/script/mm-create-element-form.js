@@ -124,7 +124,9 @@ export default class MmCreateElementForm extends HTMLElement {
     };
 
     submit = () => {
-        this.getInnerForm().dispatchEvent(new Event("submit"));
+        this.getInnerForm().dispatchEvent(
+            new Event("submit", { cancelable: true })
+        );
     };
 
     #fetchOrgs = async () => {

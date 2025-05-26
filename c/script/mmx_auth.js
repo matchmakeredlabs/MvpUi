@@ -1,32 +1,42 @@
-﻿import config from '/config.js';
+﻿import config from "/config.js";
 
 // Authentication and Authorization
 export default class mmxAuth {
-    static sessionKey = 'bsession_' + config.sessionTag;
+    static sessionKey = "bsession_" + config.sessionTag;
     static loginUrl = "/c/Login";
 
     static dateParse(str) {
-        str = ''.concat(str.substring(0, 4), "-", str.substring(4, 6), "-", str.substring(6, 11), ":",
-            str.substring(11, 13), ":", str.substring(13));
+        str = "".concat(
+            str.substring(0, 4),
+            "-",
+            str.substring(4, 6),
+            "-",
+            str.substring(6, 11),
+            ":",
+            str.substring(11, 13),
+            ":",
+            str.substring(13)
+        );
         return Date.parse(str);
     }
 
     static isAuthenticated() {
         // Look for the presence of the authentication token in localStorage
         // and check for expiration
-        const token = localStorage.getItem(mmxAuth.sessionKey)
+        const token = localStorage.getItem(mmxAuth.sessionKey);
         if (!token) return false;
 
         // Having found the token, parse it and check its expiration
         const tokenParts = new URLSearchParams(decodeURIComponent(token));
         const expiration = tokenParts.get("x");
-        if (expiration && mmxAuth.dateParse(expiration) > Date.now()) return true;
+        if (expiration && mmxAuth.dateParse(expiration) > Date.now())
+            return true;
 
         return false;
     }
 
     static getUserid() {
-        const token = localStorage.getItem(mmxAuth.sessionKey)
+        const token = localStorage.getItem(mmxAuth.sessionKey);
         if (!token) return false;
 
         // Having found the cookie, parse it and return the userid
@@ -35,7 +45,11 @@ export default class mmxAuth {
     }
 
     static redirectToLogin() {
-        window.location.replace(mmxAuth.loginUrl + "?returnTo=" + encodeURIComponent(window.location.href));
+        window.location.replace(
+            mmxAuth.loginUrl +
+                "?returnTo=" +
+                encodeURIComponent(window.location.href)
+        );
     }
 
     // This is a bit of a Kludge. The better way to do this would be to redirect
@@ -48,14 +62,14 @@ export default class mmxAuth {
 
         let header = document.getElementById("header-container");
         let logoutButton = document.createElement("span");
-        logoutButton.id = 'logout-button';
-        logoutButton.className = 'small-button small-button5';
-        logoutButton.textContent = 'Logout';
-        logoutButton.addEventListener('click', function () {
+        logoutButton.id = "logout-button";
+        logoutButton.className = "small-button small-button5";
+        logoutButton.textContent = "Logout";
+        logoutButton.addEventListener("click", function () {
             localStorage.removeItem(mmxAuth.sessionKey);
             mmxAuth.redirectToLogin();
-          });
-    
+        });
+
         header.appendChild(logoutButton);
     }
 }
