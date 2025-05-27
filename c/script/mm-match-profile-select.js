@@ -19,7 +19,11 @@ export default class MmMatchProfileSelect extends HTMLElement {
             `/api/settings/${userId}`
         );
         if (response.status !== 200) {
-            alert("Unable to load settings.");
+            // alert("Unable to load settings.");
+            if (response.status === 404) {
+                // If settings are not found, return an empty object
+                return {};
+            }
         }
         return await response.json();
     }
