@@ -45,7 +45,9 @@ export default class MmCreateOrgForm extends HTMLElement {
     };
 
     submit = () => {
-        this.getInnerForm().dispatchEvent(new Event("submit"));
+        this.getInnerForm().dispatchEvent(
+            new Event("submit", { cancelable: true })
+        );
     };
 
     connectedCallback() {

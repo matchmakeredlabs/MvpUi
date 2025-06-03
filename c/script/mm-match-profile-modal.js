@@ -48,13 +48,24 @@ export default class MmMatchProfileModal extends HTMLElement {
         let matchWeightsObj = JSON.parse(
             localStorage.getItem("matchWeightsObj")
         );
-        if (!matchWeightsObj) {
+        if (
+            !matchWeightsObj ||
+            matchWeightsObj === null ||
+            Object.keys(matchWeightsObj).length === 0
+        ) {
             matchWeightsObj = MmMatchProfileModal.defaultMatchWeights;
         }
         return matchWeightsObj;
     }
 
     static setMatchWeights(matchWeightsObj) {
+        if (
+            !matchWeightsObj ||
+            matchWeightsObj === null ||
+            Object.keys(matchWeightsObj).length === 0
+        ) {
+            return;
+        }
         localStorage.setItem(
             "matchWeightsObj",
             JSON.stringify(matchWeightsObj)

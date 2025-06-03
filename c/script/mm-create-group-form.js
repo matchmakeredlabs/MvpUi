@@ -134,7 +134,9 @@ export default class MmCreateGroupForm extends HTMLElement {
     };
 
     submit = () => {
-        this.getInnerForm().dispatchEvent(new Event("submit"));
+        this.getInnerForm().dispatchEvent(
+            new Event("submit", { cancelable: true })
+        );
     };
 
     connectedCallback() {

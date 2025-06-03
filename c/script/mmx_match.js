@@ -509,6 +509,7 @@ export default class Mmx {
         let container = document.createElement("div");
         container.style.display = "flex"; // Set display to flex
         container.style.alignItems = "center"; // Align items vertically in the center
+        container.style.justifyContent = "space-between"; // Space between items
 
         // Create typeSelect (first select element)
         let typeSelect = document.createElement("select");
@@ -532,9 +533,7 @@ export default class Mmx {
             }
         };
 
-        let profiles = document.createElement("select");
-        profiles.id = "match-profiles";
-        profiles.style.marginLeft = "auto";
+        const profiles = bdoc.ele("mm-match-profile-select");
 
         mmx_dict.descriptorTypeFilter = typeSelect;
         container.appendChild(typeSelect);
@@ -955,15 +954,15 @@ export default class Mmx {
         descriptor.mmxId = val.id;
         descriptor.mmxKey = Mmx.StripKeyPrefix(val.key);
 
-        if (val.matchIndex != undefined || matchButton) {
+        if (val._matchIndex != undefined || matchButton) {
             let annotation = bdoc.ele("div", bdoc.class("annotation"));
 
-            if (val.matchIndex != undefined) {
+            if (val._matchIndex != undefined) {
                 annotation.appendChild(
                     bdoc.ele(
                         "div",
                         bdoc.class("mmc_matchindex"),
-                        "MatchIndex: " + val.matchIndex
+                        "MatchIndex: " + val._matchIndex
                     )
                 );
             }
@@ -1668,53 +1667,9 @@ export default class Mmx {
 
         localStorage.setItem("matchFilter", null);
 
-        if (localStorage.getItem("matchProfiles") === null) {
-            localStorage.setItem(
-                "matchProfiles",
-                JSON.stringify({ "MM Default": defaultMatchWeightsObj })
-            );
-        }
+        const profiles = root.querySelector("mm-match-profile-select");
 
-        let profiles = root.getElementById("match-profiles");
-        let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
-        let matchProfileNames = Object.keys(matchProfiles);
-        let matchProfileSettings = Object.values(matchProfiles);
-
-        matchProfileNames = ["--"].concat(matchProfileNames);
-
-        matchProfileNames.forEach((name) => {
-            let currentOption = document.createElement("option");
-            currentOption.textContent = name;
-            currentOption.value = name;
-            profiles.appendChild(currentOption);
-        });
-
-        matchProfileNames = matchProfileNames.slice(1);
-        let matchWeightsObj = JSON.parse(
-            localStorage.getItem("matchWeightsObj")
-        );
-
-        for (let i = 0; i < matchProfileSettings.length; i++) {
-            console.log(matchWeightsObj, matchProfileSettings[i]);
-            if (
-                JSON.stringify(matchProfileSettings[i]) ==
-                JSON.stringify(matchWeightsObj)
-            ) {
-                console.log(matchProfileNames[i]);
-                profiles.value = matchProfileNames[i];
-            }
-        }
-
-        profiles.onchange = function () {
-            if (profiles.value === "--") {
-                return;
-            }
-            let updatedWeights = matchProfiles[profiles.value];
-            localStorage.setItem(
-                "matchWeightsObj",
-                JSON.stringify(updatedWeights)
-            );
-
+        profiles.onSelectAction = () => {
             Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
         };
     }

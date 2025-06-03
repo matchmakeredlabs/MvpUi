@@ -39,7 +39,10 @@ export default class ManageCollections extends HTMLElement {
             bdoc.ele(
                 "mm-filter-table",
                 bdoc.attr("filter-properties", "subject,publisher"),
-                bdoc.attr("sort-properties", "name,subject,publisher"),
+                bdoc.attr(
+                    "sort-properties",
+                    "name,subject,publisher,% Described"
+                ),
                 bdoc.attr("display-properties", "subject,publisher")
             ),
             bdoc.ele("mm-create-collection-modal"),
@@ -117,6 +120,10 @@ export default class ManageCollections extends HTMLElement {
                 subject: (collection) => collection.subject,
                 publisher: (collection) => collection.publisher || "Null",
                 // ["Creation Date"]: (collection) => collection.datePublished,
+                ["% Described"]: (collection) => {
+                    const percent = collection.percentDescribed;
+                    return `${percent}%`;
+                },
                 Actions: (collection) =>
                     bdoc.ele(
                         "a",
@@ -131,10 +138,29 @@ export default class ManageCollections extends HTMLElement {
             filterTable.generateCols = () => filterTableCols;
             filterTable.customSorts = {
                 name: (a, b) => (a.name < b.name ? -1 : 1),
+                ["% Described"]: (a, b) => {
+                    return a.percentDescribed - b.percentDescribed;
+                },
             };
             filterTable.customColStyles = {
                 ["Actions"]: "width: 1%;",
             };
+
+            for (const collection of editableCollections) {
+                const leafWithKeyCount = collection._leafWithKeyCount;
+                const leafCount = collection._leafCount;
+                if (
+                    leafWithKeyCount === null ||
+                    leafCount === null ||
+                    leafCount === 0
+                ) {
+                    // default to 0% described
+                    collection.percentDescribed = 0;
+                }
+                collection.percentDescribed = Math.round(
+                    (leafWithKeyCount / leafCount) * 100
+                );
+            }
 
             filterTable.loadData(editableCollections);
         });

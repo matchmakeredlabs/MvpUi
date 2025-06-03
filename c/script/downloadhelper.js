@@ -95,7 +95,7 @@ export function convertJsonToCsv(
         "datePublished",
         "sdDatePublished",
         "sdPublisher",
-        "matchIndex",
+        "_matchIndex",
         "matchedTo",
     ]
 ) {
@@ -138,7 +138,7 @@ export function convertJsonToCsvNoHeader(data) {
         "datePublished",
         "sdDatePublished",
         "sdPublisher",
-        "matchIndex",
+        "_matchIndex",
         "matchedTo",
     ];
 

@@ -1,3 +1,5 @@
+import auth from "./mmx_auth.js";
+
 export default class bsession {
     constructor(baseUrl, tag) {
         this.baseUrl = baseUrl;
@@ -25,30 +27,48 @@ export default class bsession {
         }
 
         // Call the api
-        const response = await fetch(url, req);
 
-        // Retrieve any updated token
-        const info = response.headers.get("Authentication-Info");
-        if (info) {
-            for (let part of info.split(",")) {
-                part = part.trim();
-                let eq = part.search("=");
-                if (eq < 0) continue;
-                if (
-                    part.substring(0, eq).trim().toLowerCase() !=
-                    "bearer-update"
-                )
-                    continue;
-                console.log("Bearer-Update=" + part.substring(eq + 1).trim());
-                localStorage.setItem(
-                    "bsession_" + this.tag,
-                    part.substring(eq + 1).trim()
-                );
-                break; // If there's more than one, keep the first
+        try {
+            const response = await fetch(url, req);
+
+            // Retrieve any updated token
+            const info = response.headers.get("Authentication-Info");
+            if (info) {
+                for (let part of info.split(",")) {
+                    part = part.trim();
+                    let eq = part.search("=");
+                    if (eq < 0) continue;
+                    if (
+                        part.substring(0, eq).trim().toLowerCase() !=
+                        "bearer-update"
+                    )
+                        continue;
+                    console.log(
+                        "Bearer-Update=" + part.substring(eq + 1).trim()
+                    );
+                    localStorage.setItem(
+                        "bsession_" + this.tag,
+                        part.substring(eq + 1).trim()
+                    );
+                    break; // If there's more than one, keep the first
+                }
             }
-        }
 
-        return response;
+            if (response.status === 401) {
+                localStorage.removeItem(auth.sessionKey);
+                alert("Session expired. Please log in again.");
+                auth.redirectToLogin();
+            }
+
+            return response;
+        } catch (err) {
+            // assume the error is due to unauthorized access
+            localStorage.removeItem(auth.sessionKey);
+            alert("Session expired. Please log in again.");
+            auth.redirectToLogin();
+
+            throw err;
+        }
     }
 
     getCachedAclBitFlags = () => {
@@ -80,18 +100,9 @@ export default class bsession {
     // sample: acl=20250226T230945Z%3Btestuserorg%3Aff&o=http%3A%2F%2Flocalhost%3A4000&un=testuser&x=20250226T231023Z&m=32grk9_LTZVUa0hMY1YP02e6Nsprr217SL0UVgTWd
 
     getCachedUserID = () => {
-        const cachedPermsURI = localStorage.getItem("bsession_" + this.tag);
-        if (!cachedPermsURI) return null;
-
-        let cachedUser = decodeURIComponent(cachedPermsURI);
-
-        const startIndex = cachedUser.indexOf("&un=");
-
-        if (startIndex < 0) return null;
-        cachedUser = cachedUser.substring(startIndex + 4);
-        const endIndex = cachedUser.indexOf("&");
-        if (endIndex < 0) return cachedUser;
-        return cachedUser.substring(0, endIndex);
+        const userId = auth.getUserid();
+        if (!userId) return null;
+        return userId;
     };
 
     static privileges = {

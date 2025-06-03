@@ -10,10 +10,11 @@ export default class MmCreateUserForm extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    onSubmit = () => {};
+    onSettled = (response) => {};
 
     #submitCreateUser = async (event) => {
         event.preventDefault();
+        console.log("submitCreateUser");
 
         const formData = new FormData(event.target);
 
@@ -24,7 +25,7 @@ export default class MmCreateUserForm extends HTMLElement {
         };
         const response = await MmCreateUserForm.createUser(variables);
 
-        this.onSubmit(variables, response);
+        this.onSettled(variables, response);
     };
 
     static createUser = async (userObj) => {
@@ -40,7 +41,9 @@ export default class MmCreateUserForm extends HTMLElement {
     getInnerForm = () => this.shadowRoot.querySelector("form");
 
     submit = () => {
-        this.getInnerForm().dispatchEvent(new Event("submit"));
+        this.getInnerForm().dispatchEvent(
+            new Event("submit", { cancelable: true })
+        );
     };
 
     connectedCallback() {
