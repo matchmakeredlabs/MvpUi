@@ -463,7 +463,13 @@ export default class Mmx {
             "input",
             bdoc.attr("type", "search"),
             bdoc.class("mmc_descSearch"),
-            bdoc.eventListener("search", Mmx.SearchDescriptorsByKeywords)
+            bdoc.eventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    Mmx.SearchDescriptorsByKeywords();
+                }
+            }),
+            bdoc.attr("placeholder", "Search descriptors by keywords...")
+
             // bdoc.attr("onsearch", Mmx.SearchDescriptorsByKeywords)
         );
 

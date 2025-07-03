@@ -268,6 +268,53 @@ const templates = [
             },
         },
     },
+
+    {
+        name: "Comments",
+        verb: "GET",
+        url: "/api/comments",
+        body: {
+            comment: "This is a sample comment",
+            commentAbout: "paletStatements",
+            descriptor: {
+                _canUpdate: true,
+                _isLeaf: true,
+                _leafCount: 1,
+                _leafWithKeyCount: 1,
+                _orgId: "testorg",
+                _public: false,
+                creator: "",
+                datePublished: "",
+                description: "co",
+                educationalLevel: "",
+                eleType: "lr",
+                id: "7beda6ef-4568-421d-bba3-3db5ea94eaad",
+                identifier: "",
+                isPartOf: "hiii test wahh",
+                isPartOfId: "52093ec2-3308-4fd6-be5b-bc4ad32a1cf0",
+                key: "https://palet.codes/key/5553C-10481C",
+                leafCount: 1,
+                leafWithKeyCount: 1,
+                mainEntity: "hiii test",
+                mainEntityId: "5a0ecf28-9ba2-42aa-8dea-273572987614",
+                name: "crazy",
+                provenance: "",
+                sdDatePublished: "",
+                subject: "",
+                url: "hiii test wahh oops",
+            },
+            statements: [
+                {
+                    id: "5553",
+                    int: "Intentional",
+                    rel: "Central",
+                    statement:
+                        "Defining the trigonometric ratios sine (sin), cosine (cos) and tangent (tan) in terms of the sides of a right triangle.",
+                    stmtType: "STFk",
+                },
+            ],
+        },
+    },
 ];
 
 function onTemplateClick(e) {

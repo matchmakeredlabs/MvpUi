@@ -174,7 +174,12 @@ export default class MmAddMemberForm extends HTMLElement {
                 bdoc.ele(
                     "div",
                     bdoc.class("form-group"),
-                    bdoc.ele("label", bdoc.attr("for", "user-id"), "User ID"),
+                    bdoc.ele(
+                        "label",
+                        bdoc.attr("for", "user-id"),
+                        "User ID",
+                        bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                    ),
                     bdoc.ele(
                         "input",
                         bdoc.attr("type", "text"),
@@ -191,7 +196,8 @@ export default class MmAddMemberForm extends HTMLElement {
                     bdoc.ele(
                         "label",
                         bdoc.attr("for", "org-id"),
-                        "Group Organization"
+                        "Group Organization",
+                        bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                     ),
                     bdoc.ele(
                         "input",
@@ -207,7 +213,8 @@ export default class MmAddMemberForm extends HTMLElement {
                     bdoc.ele(
                         "label",
                         bdoc.attr("for", "group-id"),
-                        "Group Name"
+                        "Group Name",
+                        bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                     ),
                     bdoc.ele(
                         "input",

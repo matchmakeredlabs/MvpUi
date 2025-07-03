@@ -96,10 +96,29 @@ class MmCreateOrgModal extends HTMLElement {
                                 createOrgModal.hide();
                             })
                         ),
+
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Create Org and Go to Org",
+                            "Create Org",
+                            bdoc.eventListener("click", () => {
+                                createOrgForm.onSettled = onSettled(
+                                    async (variables, response, addedGroup) => {
+                                        this.onSuccess(
+                                            variables,
+                                            response,
+                                            addedGroup
+                                        );
+                                        createOrgModal.hide();
+                                    }
+                                );
+                                createOrgForm.submit();
+                            })
+                        ),
+                        bdoc.ele(
+                            "button",
+                            bdoc.class("header-button add-entity-button"),
+                            "Create and View Org",
                             bdoc.eventListener("click", () => {
                                 createOrgForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -110,24 +129,6 @@ class MmCreateOrgModal extends HTMLElement {
                                         );
 
                                         window.location.href = `/c/Organization?id=${response.id}`;
-                                    }
-                                );
-                                createOrgForm.submit();
-                            })
-                        ),
-                        bdoc.ele(
-                            "button",
-                            bdoc.class("header-button add-entity-button"),
-                            "Create Org and Return",
-                            bdoc.eventListener("click", () => {
-                                createOrgForm.onSettled = onSettled(
-                                    async (variables, response, addedGroup) => {
-                                        this.onSuccess(
-                                            variables,
-                                            response,
-                                            addedGroup
-                                        );
-                                        createOrgModal.hide();
                                     }
                                 );
                                 createOrgForm.submit();

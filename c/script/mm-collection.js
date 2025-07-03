@@ -364,7 +364,7 @@ class MmCollection extends HTMLElement {
                 "button",
                 bdoc.class("expand-contract-button"),
                 bdoc.eventListener("click", this.contractAll),
-                "Close"
+                "Collapse"
             )
         );
     }

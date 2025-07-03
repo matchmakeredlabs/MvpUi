@@ -148,7 +148,12 @@ export default class MmCreateGroupForm extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("form-group"),
-                bdoc.ele("label", bdoc.attr("for", "name"), "Group Name"),
+                bdoc.ele(
+                    "label",
+                    bdoc.attr("for", "name"),
+                    "Group Name",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                ),
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
@@ -163,7 +168,8 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "organization"),
-                    "Owning Organization"
+                    "Parent Organization",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "select",
@@ -178,7 +184,8 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "role"),
-                    "Role in Owning Organization"
+                    "Role in Parent Organization",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "select",

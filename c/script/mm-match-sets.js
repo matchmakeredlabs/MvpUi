@@ -75,7 +75,7 @@ class MmMatchSets extends HTMLElement {
                 bdoc.ele(
                     "button",
                     bdoc.class("header-button reset"),
-                    "Reset",
+                    "Clear",
                     bdoc.eventListener("click", () => {
                         localStorage.removeItem(
                             "currentGenerateMatchesWorkflow"

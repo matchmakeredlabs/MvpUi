@@ -526,7 +526,7 @@ class MmGenerateMatches extends HTMLElement {
                                 collectionHeaderButton.click();
                             }
                         }),
-                        "Close"
+                        "Collapse"
                     )
                 );
 

@@ -169,7 +169,12 @@ export default class MmCreateElementForm extends HTMLElement {
                 "div",
                 bdoc.class("form-group"),
                 bdoc.attr("style", "flex: none; width: 100%; margin-bottom: 0"),
-                bdoc.ele("label", bdoc.attr("for", "name"), "Name"),
+                bdoc.ele(
+                    "label",
+                    bdoc.attr("for", "name"),
+                    "Name ",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), "*")
+                ),
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
@@ -181,7 +186,12 @@ export default class MmCreateElementForm extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("form-group"),
-                bdoc.ele("label", bdoc.attr("for", "type"), "Type"),
+                bdoc.ele(
+                    "label",
+                    bdoc.attr("for", "type"),
+                    "Type ",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), "*")
+                ),
 
                 bdoc.attr("style", "flex: 1; margin-bottom: 0"),
                 bdoc.ele(
@@ -213,7 +223,12 @@ export default class MmCreateElementForm extends HTMLElement {
                       bdoc.ele(
                           "label",
                           bdoc.attr("for", "org"),
-                          "Organization"
+                          "Organization",
+                          bdoc.ele(
+                              "span",
+                              bdoc.class("mmc_form_required"),
+                              " *"
+                          )
                       ),
                       bdoc.attr("style", "flex: 1"),
                       bdoc.ele(
@@ -230,7 +245,9 @@ export default class MmCreateElementForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "url"),
-                    "URL / Location",
+                    "URL / Location ",
+
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), "* "),
                     this.#getTooltipButton(
                         "Must be unique within a collection."
                     )
