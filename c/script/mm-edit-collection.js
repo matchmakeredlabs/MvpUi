@@ -266,7 +266,7 @@ export default class EditCollection extends HTMLElement {
             };
             bdoc.append(
                 topLevelButtons,
-                generateCustomDescriptorElement(topLevelEle)
+                generateCustomDescriptorElement(topLevelEle, true)
             );
 
             headerContainer

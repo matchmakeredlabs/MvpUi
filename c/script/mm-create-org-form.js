@@ -67,6 +67,8 @@ export default class MmCreateOrgForm extends HTMLElement {
                     "input",
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "name"),
+
+                    bdoc.attr("placeholder", "Acme Anvils"),
                     bdoc.attr("name", "name"),
                     bdoc.attr("required", "true")
                 )

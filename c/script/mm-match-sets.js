@@ -134,6 +134,7 @@ class MmMatchSets extends HTMLElement {
                         "button",
                         bdoc.class("header-button generate-matches"),
                         "Generate Matches →",
+                        bdoc.attr("disabled"),
                         bdoc.eventListener(
                             "click",
                             this.#onClickGenerateMatches
@@ -388,6 +389,9 @@ class MmMatchSets extends HTMLElement {
 
             this.#sets[setCategory][setType].push(set);
 
+            if (this.#sets[setCategory][otherSetType].length > 0) {
+            }
+
             if (
                 this.#sets[otherCategory][setType].some(
                     (otherSet) =>
@@ -412,6 +416,7 @@ class MmMatchSets extends HTMLElement {
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "checkbox"),
+                    bdoc.attr("style", "cursor: pointer"),
                     bdoc.id(
                         `${setCategory}-${setType}-${set[identifierType]}-checkbox`
                     ),
@@ -474,7 +479,7 @@ class MmMatchSets extends HTMLElement {
                     bdoc.attr("filter-properties", "subject,publisher"),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Add to Independent,Add to Dependent"
+                        "name,subject,publisher,Add to Independent,Add to Dependent,% Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -484,6 +489,22 @@ class MmMatchSets extends HTMLElement {
                 collectionsTable.addCustomStylesheets(
                     "/c/res/mm-match-sets.css"
                 );
+
+                for (const collection of this.#collections) {
+                    const leafWithKeyCount = collection._leafWithKeyCount;
+                    const leafCount = collection._leafCount;
+                    if (
+                        leafWithKeyCount === null ||
+                        leafCount === null ||
+                        leafCount === 0
+                    ) {
+                        // default to 0% described
+                        collection.percentDescribed = 0;
+                    }
+                    collection.percentDescribed = Math.round(
+                        (leafWithKeyCount / leafCount) * 100
+                    );
+                }
 
                 collectionsTable.generateCols = (displayProperties) => ({
                     name: (collection) =>
@@ -506,6 +527,8 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
+                    ["% Described"]: (collection) =>
+                        `${collection.percentDescribed}%`,
                     ["Add to Independent"]: (collection, root) =>
                         generateCheckbox(
                             collection,
@@ -543,6 +566,9 @@ class MmMatchSets extends HTMLElement {
                             return -1;
                         }
                         return a.publisher > b.publisher ? 1 : -1;
+                    },
+                    ["% Described"]: (a, b) => {
+                        return a.percentDescribed - b.percentDescribed;
                     },
                     ["Add to Independent"]: (a, b) => {
                         return this.#sets.independent.collections.find(
@@ -692,15 +718,15 @@ class MmMatchSets extends HTMLElement {
                         return a.creator > b.creator ? 1 : -1;
                     },
                     ["Add to Independent"]: (a, b) => {
-                        return this.#sets.independent.collections.find(
-                            (collection) => collection.id === a.id
+                        return this.#sets.independent["custom-set"].find(
+                            (customSet) => customSet.name === a.name
                         )
                             ? 1
                             : -1;
                     },
                     ["Add to Dependent"]: (a, b) => {
-                        return this.#sets.dependent.collections.find(
-                            (collection) => collection.id === a.id
+                        return this.#sets.dependent["custom-set"].find(
+                            (customSet) => customSet.name === a.name
                         )
                             ? 1
                             : -1;

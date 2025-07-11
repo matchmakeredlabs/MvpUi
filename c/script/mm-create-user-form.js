@@ -63,6 +63,7 @@ export default class MmCreateUserForm extends HTMLElement {
                     "input",
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "user-id"),
+                    bdoc.attr("placeholder", "benny@authoritativedns.tld"),
                     bdoc.attr("name", "user-id"),
                     bdoc.attr("required", "true")
                 )
@@ -79,6 +80,7 @@ export default class MmCreateUserForm extends HTMLElement {
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
+                    bdoc.attr("placeholder", "Benjamin Franklin"),
                     bdoc.attr("id", "full-name"),
                     bdoc.attr("name", "full-name"),
                     bdoc.attr("required", "true")

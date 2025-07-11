@@ -26,7 +26,7 @@ export default class MmCreateElementForm extends HTMLElement {
 
     static elementTypes = [
         { value: "lr", label: "Learning Resource" },
-        { value: "cs", label: "Competency Statement" },
+        { value: "cs", label: "Competency" },
         { value: "c", label: "Curriculum" },
         { value: "o", label: "Other" },
     ];
@@ -35,30 +35,37 @@ export default class MmCreateElementForm extends HTMLElement {
         {
             label: "Subject",
             id: "subject",
+            placeholder: "Math",
         },
         {
             label: "Identifier",
             id: "identifier",
+            placeholder: "",
         },
         {
             label: "Educational Level",
             id: "educationalLevel",
+            placeholder: "06",
         },
         {
             label: "Creator",
             id: "creator",
+            placeholder: "",
         },
         {
             label: "Date Published",
             id: "datePublished",
+            placeholder: "YYYY-MM-DD",
         },
         {
             label: "Repository Date",
             id: "sdDatePublished",
+            placeholder: "YYYY-MM-DD",
         },
         {
             label: "Provenance",
             id: "provenance",
+            placeholder: "",
         },
     ];
 
@@ -163,6 +170,12 @@ export default class MmCreateElementForm extends HTMLElement {
     #renderFormGroups = () => {
         this.#formGroupsContainer.innerHTML = "";
 
+        const elementTypes = [...MmCreateElementForm.elementTypes];
+        if (!this.#parentElement) {
+            elementTypes.find((eleType) => eleType.value === "cs").label =
+                "Competency Framework";
+        }
+
         bdoc.append(
             this.#formGroupsContainer,
             bdoc.ele(
@@ -180,7 +193,13 @@ export default class MmCreateElementForm extends HTMLElement {
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "name"),
                     bdoc.attr("name", "name"),
-                    bdoc.attr("required", "true")
+                    bdoc.attr("required", "true"),
+                    bdoc.attr(
+                        "placeholder",
+                        this.#parentElement
+                            ? "The Distributive Property"
+                            : "Algebra 1"
+                    )
                 )
             ),
             bdoc.ele(
@@ -257,6 +276,12 @@ export default class MmCreateElementForm extends HTMLElement {
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "url"),
                     bdoc.attr("name", "url"),
+                    bdoc.attr(
+                        "placeholder",
+                        this.#parentElement
+                            ? "urn:algebra1:the-language-of:distributive"
+                            : "urn:algebra1"
+                    ),
                     bdoc.attr("required", "true"),
                     this.#parentElement
                         ? bdoc.attr("value", this.#parentElement["url"] || "")
@@ -294,6 +319,7 @@ export default class MmCreateElementForm extends HTMLElement {
                         "input",
                         bdoc.attr("type", "text"),
                         bdoc.attr("id", detail.id),
+                        bdoc.attr("placeholder", detail.placeholder),
                         bdoc.attr("name", detail.id),
                         this.#parentElement
                             ? bdoc.attr(
