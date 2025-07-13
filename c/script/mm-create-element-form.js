@@ -36,36 +36,49 @@ export default class MmCreateElementForm extends HTMLElement {
             label: "Subject",
             id: "subject",
             placeholder: "Math",
+            require: false
+        },
+        {
+            label: "Publisher",
+            id: "publisher",
+            placeholder: "Washington",
+            require: false
         },
         {
             label: "Identifier",
             id: "identifier",
             placeholder: "",
+            require: false
         },
         {
             label: "Educational Level",
             id: "educationalLevel",
             placeholder: "06",
+            require: false
         },
         {
             label: "Creator",
             id: "creator",
             placeholder: "",
+            require: false
         },
         {
             label: "Date Published",
             id: "datePublished",
             placeholder: "YYYY-MM-DD",
+            require: false
         },
         {
             label: "Repository Date",
             id: "sdDatePublished",
             placeholder: "YYYY-MM-DD",
+            require: false
         },
         {
             label: "Provenance",
             id: "provenance",
             placeholder: "",
+            require: false
         },
     ];
 
@@ -73,6 +86,13 @@ export default class MmCreateElementForm extends HTMLElement {
 
     #submitCreateElement = async (event) => {
         event.preventDefault();
+
+        // checkValidity() returns false if any required fields are missing
+        if (!event.target.checkValidity()) {
+            // reportValidity() will output "Please fill out this field" on the first required field with empty input
+            event.target.reportValidity();
+            return;
+        }
 
         const formData = new FormData(event.target);
 
@@ -98,6 +118,9 @@ export default class MmCreateElementForm extends HTMLElement {
         const response = await MmCreateElementForm.createElement(variables);
 
         this.onSettled(variables, response);
+
+        // TODO: What do we want to do about this?
+        //window.location.reload();
     };
 
     static createElement = async (
@@ -313,7 +336,8 @@ export default class MmCreateElementForm extends HTMLElement {
                     bdoc.ele(
                         "label",
                         bdoc.attr("for", detail.id),
-                        detail.label
+                        detail.label,
+                        detail.require ? bdoc.ele("span", bdoc.class("mmc_form_required"), " *") : null
                     ),
                     bdoc.ele(
                         "input",
@@ -321,6 +345,7 @@ export default class MmCreateElementForm extends HTMLElement {
                         bdoc.attr("id", detail.id),
                         bdoc.attr("placeholder", detail.placeholder),
                         bdoc.attr("name", detail.id),
+                        detail.require ? bdoc.attr("required", "true") : null,
                         this.#parentElement
                             ? bdoc.attr(
                                   "value",
