@@ -31,13 +31,15 @@ function saveCustomSet() {
     if (customSets == undefined) {
         customSets = {}
     }
-    customSets[name] =currentCustomSet;
 
-    localStorage.setItem("customSets", JSON.stringify(customSets));
+    if (name !== null) {
+        customSets[name] =currentCustomSet;
 
-    alert(`Custom set ${name} has been saved!`)
+        localStorage.setItem("customSets", JSON.stringify(customSets));
 
-    window.location.href = "./GenerateReport"
+        alert(`Custom set ${name} has been saved!`)
+        window.location.href = "./GenerateReport"
+    }
 }
 
 export default class MmCollection {

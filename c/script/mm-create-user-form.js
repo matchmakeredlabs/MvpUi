@@ -53,11 +53,17 @@ export default class MmCreateUserForm extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("form-group"),
-                bdoc.ele("label", bdoc.attr("for", "user-id"), "User ID"),
+                bdoc.ele(
+                    "label",
+                    bdoc.attr("for", "user-id"),
+                    "User ID",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                ),
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "user-id"),
+                    bdoc.attr("placeholder", "benny@authoritativedns.tld"),
                     bdoc.attr("name", "user-id"),
                     bdoc.attr("required", "true")
                 )
@@ -68,11 +74,13 @@ export default class MmCreateUserForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "full-name"),
-                    "User Full Name"
+                    "User Full Name",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
+                    bdoc.attr("placeholder", "Benjamin Franklin"),
                     bdoc.attr("id", "full-name"),
                     bdoc.attr("name", "full-name"),
                     bdoc.attr("required", "true")
@@ -84,7 +92,8 @@ export default class MmCreateUserForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "password"),
-                    "User Password"
+                    "User Password",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "input",

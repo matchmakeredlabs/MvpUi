@@ -2,14 +2,18 @@
 title: Describe Item
 ---
 
-    <div class="mm_flex_vert">
+    <div class="mm_flex_vert" id="mmx_find_and_select">
         <h1 style="margin-bottom: 0.8rem;">Find and Select Statements</h1>
         <div class="mmx_statementSearch">Loading...</div>
     </div>
-    <div class="mm_flex_vert">
+    <div class="mm_flex_vert" id="mmx_describe_element">
         <h1 style="margin-left: 1.1rem;">Descriptor</h1>
         <div id="mmx_status"></div>
         <div class="mmx_lrmiCompose">Loading...</div>
     </div>
 
+<mm-create-comment-modal />
+
+
 <script type="module" src="/c/script/mmx_describe.js"></script>
+<script type="module" src="/c/script/mm-create-comment-modal.js"></script>

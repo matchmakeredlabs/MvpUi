@@ -76,6 +76,15 @@ main {
     background-color: #045a8d;
 }
 
+#match-collections-button:disabled {
+
+    opacity: 0.5; 
+    cursor: not-allowed; /* Change cursor to indicate disabled state */
+}
+#match-collections-button:hover:disabled {
+    background-color: #0068b3;
+}
+
 .button-container_console {
     display: flex;
     justify-content: flex-end; /* Align items to the end of the container */

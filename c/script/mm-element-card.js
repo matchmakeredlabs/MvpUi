@@ -307,11 +307,8 @@ export default class MmElementCard extends HTMLElement {
         eleContainer.appendChild(dl);
 
         if (showDescribeLinks) {
-            if ((val.intHasPart && val.intHasPart.length === 0) || val.key) {
-                eleContainer.appendChild(bdoc.ele("h3", "Links"));
-            }
             if (val.intHasPart && val.intHasPart.length === 0) {
-                console.log(val.intHasPart);
+                eleContainer.appendChild(bdoc.ele("h3", "Links"));
                 eleContainer.appendChild(
                     bdoc.ele(
                         "div",
@@ -326,22 +323,22 @@ export default class MmElementCard extends HTMLElement {
                         )
                     )
                 );
-            }
-
-            if (val.key) {
-                eleContainer.appendChild(
-                    bdoc.ele(
-                        "div",
+                if (val.key) {
+                    eleContainer.appendChild(
                         bdoc.ele(
-                            "a",
-                            bdoc.attr(
-                                "href",
-                                "/c/Match?stmtId=" + encodeURIComponent(val.id)
-                            ),
-                            "View descriptor and matches"
+                            "div",
+                            bdoc.ele(
+                                "a",
+                                bdoc.attr(
+                                    "href",
+                                    "/c/Match?stmtId=" +
+                                        encodeURIComponent(val.id)
+                                ),
+                                "View descriptor and matches"
+                            )
                         )
-                    )
-                );
+                    );
+                }
             }
         }
     };

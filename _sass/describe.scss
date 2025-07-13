@@ -1,4 +1,5 @@
 $w_add: 3em;
+$w_addWide: 9em;
 $w_id: 4em;
 $w_central: 3em;
 $w_centralWide: 5em;
@@ -34,6 +35,7 @@ $w_type: 4em;
 
 .mmc_stmtSearchButton {
     width: 3em;
+    cursor: pointer;
 }
 
 .mmc_stmtSearchResult {
@@ -79,6 +81,10 @@ $w_type: 4em;
     width: $w_add;
 }
 
+.mm_stmtAdd.expanded {
+    width: $w_addWide;
+}
+
 .mm_stmtCentral {
     display: inline-block;
     vertical-align: top;
@@ -113,6 +119,14 @@ $w_type: 4em;
     display: inline-block;
     vertical-align: top;
     width: calc(100% - #{$w_add + $w_central + $w_id + $w_type + 0.25em});
+}
+
+.mm_stmtKeyText.expanded {
+    width: calc(100% - #{$w_addWide + $w_central + $w_id + $w_type + 0.25em});
+}
+
+.mm_stmtRemove {
+    cursor: pointer;
 }
 
 .mm_stmtWideText {
@@ -244,3 +258,36 @@ $w_type: 4em;
     visibility: visible;
     opacity: 1;
   }
+
+
+#mmx_describe_element {
+    height: calc(100% - 150px);
+    position: absolute;
+    left: 50%;
+    width: 50%;
+    max-width: 500px;
+    transition: all 0.3s ease-in-out;
+}
+
+#mmx_describe_element.expanded {
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 100%;
+    max-width: 1020px;
+}
+
+#mmx_find_and_select {
+    height: calc(100% - 150px);
+    position: absolute;
+    right: 50%;
+    width: 50%;
+    max-width: 500px;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#mmx_find_and_select.transparent {
+    opacity: 0;
+}
+
+

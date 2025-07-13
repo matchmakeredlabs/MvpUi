@@ -1,4 +1,5 @@
 import bdoc from "./bdoc.js";
+import MmMatchProfileSelect from "./mm-match-profile-select.js";
 
 export default class MmViewCustomSets extends HTMLElement {
     constructor() {
@@ -42,8 +43,11 @@ export default class MmViewCustomSets extends HTMLElement {
     }
 
     // marked async in case we want to store custom sets in backend
-    static fetchCustomSets = async () =>
-        JSON.parse(localStorage.getItem("customSets"));
+    static fetchCustomSets = async () => {
+        const settings = await MmMatchProfileSelect.getSettings();
+
+        return settings.customSets || {};
+    };
 
     static generateSummarizedAndDisplayCustomSets = (customSetsData) => {
         const summarizedCustomSets = [];

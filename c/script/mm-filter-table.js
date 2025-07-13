@@ -233,29 +233,38 @@ class MmFilterTable extends HTMLElement {
         const keywordElement = bdoc.ele(
             "input",
             bdoc.id("keywordElement"),
-            bdoc.attr("type", "text")
+            bdoc.attr("type", "text"),
+            bdoc.attr("placeholder", "Enter keyword..."),
+            bdoc.eventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddKeyword();
+                }
+            })
         );
+        const handleAddKeyword = () => {
+            const keyword = keywordElement.value;
+
+            if (keyword !== "") {
+                keywordElement.value = "";
+
+                this.#addFilterElement(keywordContainer, keyword, () => {
+                    this.#searchKeywords = this.#searchKeywords.filter(
+                        (kw) => kw !== keyword
+                    );
+                    this.render();
+                });
+
+                this.#searchKeywords.push(keyword);
+                this.render();
+            }
+        };
         const addKeyword = bdoc.ele(
             "button",
             bdoc.id("addKeyword"),
-            "+",
-            bdoc.eventListener("click", () => {
-                const keyword = keywordElement.value;
-
-                if (keyword !== "") {
-                    keywordElement.value = "";
-
-                    this.#addFilterElement(keywordContainer, keyword, () => {
-                        this.#searchKeywords = this.#searchKeywords.filter(
-                            (kw) => kw !== keyword
-                        );
-                        this.render();
-                    });
-
-                    this.#searchKeywords.push(keyword);
-                    this.render();
-                }
-            })
+            "+ Filter",
+            bdoc.attr("style", "cursor: pointer;"),
+            bdoc.eventListener("click", handleAddKeyword)
         );
 
         // const sortDropdown = bdoc.ele(
@@ -294,7 +303,7 @@ class MmFilterTable extends HTMLElement {
             const oneFilterDropdown = bdoc.ele(
                 "select",
                 bdoc.id(`${filter}-dropdown`),
-                bdoc.attr("style", "width: 100px"),
+                bdoc.attr("style", "width: 100px; cursor: pointer;"),
                 bdoc.eventListener("change", ({ target }) => {
                     const selectedOption = target.options[target.selectedIndex];
                     if (

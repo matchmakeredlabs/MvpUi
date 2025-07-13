@@ -20,6 +20,7 @@ class MmCollection extends HTMLElement {
     customDescriptorEleOptions = {
         visibleUnselected: false,
         renderInline: true,
+        placeLeft: false,
         generateCustomDescriptorElement: () => {},
     };
     originalDescriptorEleDisplayStyle;
@@ -285,9 +286,12 @@ class MmCollection extends HTMLElement {
             span.style.fontWeight = "normal";
         });
         const customElements = this.shadowRoot.querySelectorAll("[custom-ele]");
-        customElements.forEach((customEle) => {
-            customEle.style.display = "none";
-        });
+
+        if (!this.customDescriptorEleOptions.visibleUnselected) {
+            customElements.forEach((customEle) => {       
+                customEle.style.display = "none";
+            });
+        }
     };
 
     clickSelect =
@@ -364,7 +368,7 @@ class MmCollection extends HTMLElement {
                 "button",
                 bdoc.class("expand-contract-button"),
                 bdoc.eventListener("click", this.contractAll),
-                "Close"
+                "Collapse"
             )
         );
     }
@@ -460,8 +464,17 @@ class MmCollection extends HTMLElement {
             if (origin.customDescriptorEleOptions.renderInline) {
                 descContainer.style.display = "inline";
             }
+
+            if (origin.customDescriptorEleOptions.placeLeft) {
+                bdoc.append(descContainer, customDescriptorEle, span);
+            } else {
+                bdoc.append(descContainer, span, customDescriptorEle);
+            }
+
+        } else {
+            bdoc.append(descContainer, span);
         }
-        bdoc.append(descContainer, span, customDescriptorEle);
+
         bdoc.append(buttonContainer, descContainer);
         bdoc.append(li, buttonContainer);
         return li;

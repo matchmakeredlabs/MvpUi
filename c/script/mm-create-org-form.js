@@ -60,12 +60,15 @@ export default class MmCreateOrgForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "name"),
-                    "Organization Name"
+                    "Organization Name",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "name"),
+
+                    bdoc.attr("placeholder", "Acme Anvils"),
                     bdoc.attr("name", "name"),
                     bdoc.attr("required", "true")
                 )

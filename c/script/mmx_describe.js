@@ -84,6 +84,10 @@ class Mmx {
         o: "Other",
     };
 
+    static selectedStatements = [];
+
+    static descriptor;
+
     static LoadJsonAsync(url, callback, arg) {
         session
             .fetch(url)
@@ -362,7 +366,13 @@ class Mmx {
                     bdoc.attr("type", "search"),
                     bdoc.attr("id", "mmid_search"),
                     bdoc.class("mmc_stmtSearch"),
-                    bdoc.eventListener("search", Mmx.SearchStatements)
+                    bdoc.attr("placeholder", "Enter search keywords..."),
+                    bdoc.eventListener("keydown", (e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            Mmx.SearchStatements(e);
+                        }
+                    })
                 ),
                 bdoc.ele(
                     "input",
@@ -426,6 +436,98 @@ class Mmx {
         element.appendChild(results);
     }
 
+    static OpenCommentModal() {
+        const commentModal = document.querySelector("mm-create-comment-modal");
+        customElements.whenDefined("mm-create-comment-modal").then(() => {
+            commentModal.setCommentFormValues = (commentForm) => {
+                commentForm.descriptor = Mmx.descriptor;
+                commentForm.statements = Mmx.selectedStatements;
+
+                commentForm.renderFormGroups();
+            };
+            commentModal.show();
+        });
+    }
+
+    static ToggleStatementInComment({ target }) {
+        const checkbox = target;
+        checkbox.stmt.rel =
+            checkbox.stmt.rel || (checkbox.checked ? "Central" : "Peripheral");
+        if (checkbox.checked) {
+            Mmx.selectedStatements.push(checkbox.stmt);
+        } else {
+            const index = Mmx.selectedStatements.indexOf(checkbox.stmt);
+            if (index > -1) {
+                Mmx.selectedStatements.splice(index, 1);
+            }
+        }
+    }
+
+    static GenerateRelationshipCommentToggle =
+        (stmt) =>
+        ({ target }) => {
+            stmt.rel = target.checked ? "Central" : "Peripheral";
+        };
+
+    static ToggleCommentsView(e) {
+        const findAndSelect = document.getElementById("mmx_find_and_select");
+        const describeElement = document.getElementById("mmx_describe_element");
+
+        const shouldShowFindAndSelect =
+            findAndSelect.classList.contains("transparent");
+
+        findAndSelect.classList.toggle("transparent");
+        describeElement.classList.toggle("expanded");
+
+        const stmtRemoveButtons = document.querySelectorAll(".mm_stmtRemove");
+
+        const stmtAddSpans = document.querySelectorAll(".mm_stmtAdd");
+        stmtAddSpans.forEach((span) => {
+            span.classList.toggle("expanded");
+        });
+
+        const stmtKeySpans = document.querySelectorAll(".mm_stmtKeyText");
+        stmtKeySpans.forEach((span) => {
+            span.classList.toggle("expanded");
+        });
+
+        stmtRemoveButtons.forEach((input) => {
+            if (shouldShowFindAndSelect) {
+                input.value = "\u2212";
+                input.type = "button";
+                input.removeEventListener(
+                    "click",
+                    Mmx.ToggleStatementInComment
+                );
+                bdoc.append(
+                    input,
+                    bdoc.eventListener("click", Mmx.RemoveStatementFromKey)
+                );
+            } else {
+                input.value = "Comment";
+                input.type = "checkbox";
+                input.removeEventListener("click", Mmx.RemoveStatementFromKey);
+                bdoc.append(
+                    input,
+                    bdoc.eventListener("click", Mmx.ToggleStatementInComment)
+                );
+            }
+        });
+
+        const keyTableFirstCol = document.getElementById("keyTableFirstCol");
+        const commentButton = document.getElementById("mmx_comment_button");
+        const toggleButton = e.target;
+        if (shouldShowFindAndSelect) {
+            keyTableFirstCol.innerHTML = "\u2212"; // Minus sign;
+            toggleButton.innerHTML = "Comment on Palet Statements";
+            commentButton.style.display = "none";
+        } else {
+            keyTableFirstCol.innerHTML = "Comment On";
+            toggleButton.innerHTML = "Edit Palet Key";
+            commentButton.style.display = "inline-block";
+        }
+    }
+
     static RenderLrmiForm(element) {
         function addRow(dl, label, id) {
             dl.appendChild(
@@ -465,6 +567,7 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.MatchDescriptor),
+                    bdoc.attr("style", "cursor: pointer;"),
                     "Match"
                 )
             );
@@ -473,6 +576,7 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.ClearLrmiForm),
+                    bdoc.attr("style", "cursor: pointer;"),
                     "Clear"
                 )
             );
@@ -481,6 +585,7 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.SaveDescriptor),
+                    bdoc.attr("style", "cursor: pointer;"),
                     "Save"
                 )
             );
@@ -503,6 +608,7 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.PrevDescriptor),
+                    bdoc.attr("style", "cursor: pointer;"),
                     "←"
                 )
             );
@@ -511,6 +617,7 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.NextDescriptor),
+                    bdoc.attr("style", "cursor: pointer;"),
                     "→"
                 )
             );
@@ -587,19 +694,51 @@ class Mmx {
         addRow(dl, "Creator", "p_creator");
         addRow(dl, "Published", "p_datePublished");
         addRow(dl, "Repository Date", "p_sdDatePublished");
+        addRow(dl, "Provenance", "p_provenance");
 
         form.appendChild(dl);
 
-        form.appendChild(bdoc.ele("h3", "Key"));
-        let dl2 = document.createElement("dl");
-        addRow(dl2, "Provenance", "p_provenance");
-        form.appendChild(dl2);
+        const keyDiv = bdoc.ele(
+            "div",
+            bdoc.attr(
+                "style",
+                "display: flex; justify-content: space-between; margin-bottom: 0.5em; align-items: center;"
+            ),
+            bdoc.ele("h3", "Key"),
+            bdoc.ele(
+                "div",
+                bdoc.attr(
+                    "style",
+                    "margin-top: 0.7em; display: flex; gap: 0.5em;"
+                ),
+                bdoc.ele(
+                    "button",
+                    bdoc.attr("style", "cursor: pointer; display: none;"),
+                    "Comment",
+                    bdoc.id("mmx_comment_button"),
+                    bdoc.eventListener("click", Mmx.OpenCommentModal)
+                ),
+                bdoc.ele(
+                    "button",
+                    "Comment on Palet Statements",
+                    bdoc.attr("style", "cursor: pointer;"),
+                    bdoc.eventListener("click", Mmx.ToggleCommentsView)
+                )
+            )
+        );
+
+        form.appendChild(keyDiv);
 
         form.appendChild(
             bdoc.ele(
                 "div",
                 bdoc.class("mm_stmtHead"),
-                bdoc.ele("span", bdoc.class("mm_stmtAdd"), "\u2212"), // Minus sign
+                bdoc.ele(
+                    "span",
+                    bdoc.class("mm_stmtAdd"),
+                    "\u2212",
+                    bdoc.id("keyTableFirstCol")
+                ), // Minus sign
                 bdoc.ele("span", bdoc.class("mm_stmtCentral"), "Cen"),
                 bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),
                 bdoc.ele("span", bdoc.class("mm_stmtType"), "Type"),
@@ -633,30 +772,32 @@ class Mmx {
         const data = await response.json();
 
         for (let val of data.statements) {
+            const stmtRemoveInput = bdoc.ele(
+                "input",
+                bdoc.attr("type", "button"),
+                bdoc.attr("value", "\u2212"),
+                bdoc.eventListener("click", Mmx.RemoveStatementFromKey),
+                bdoc.class("mm_stmtRemove")
+            );
+            stmtRemoveInput.stmt = val;
+
             mmx_dict.keyTable.appendChild(
                 bdoc.ele(
                     "div",
                     bdoc.class("mm_stmt"),
-                    bdoc.ele(
-                        "span",
-                        bdoc.class("mm_stmtAdd"),
-                        bdoc.ele(
-                            "input",
-                            bdoc.attr("type", "button"),
-                            bdoc.attr("value", "\u2212"),
-                            bdoc.eventListener(
-                                "click",
-                                Mmx.RemoveStatementFromKey
-                            )
-                        )
-                    ),
+                    bdoc.ele("span", bdoc.class("mm_stmtAdd"), stmtRemoveInput),
                     bdoc.ele(
                         "span",
                         bdoc.class("mm_stmtCentral"),
                         bdoc.ele(
                             "input",
                             bdoc.attr("type", "checkbox"),
-                            bdoc.attr("checked", val.rel == "Central")
+                            val.rel === "Central" ? bdoc.attr("checked") : null,
+                            bdoc.attr("style", "cursor: pointer;"),
+                            bdoc.eventListener(
+                                "click",
+                                Mmx.GenerateRelationshipCommentToggle(val)
+                            )
                         )
                     ),
                     bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
@@ -714,20 +855,19 @@ class Mmx {
 
         let count = 0;
         for (let val of result.statements) {
+            const addStmtButton = bdoc.ele(
+                "input",
+                bdoc.attr("type", "button"),
+                bdoc.attr("value", "+"),
+                bdoc.eventListener("click", Mmx.AddStatementToKey)
+            );
+            addStmtButton.stmt = val;
+
             mmx_dict.stmtSearchResult.appendChild(
                 bdoc.ele(
                     "div",
                     bdoc.class("mm_stmt"),
-                    bdoc.ele(
-                        "span",
-                        bdoc.class("mm_stmtAdd"),
-                        bdoc.ele(
-                            "input",
-                            bdoc.attr("type", "button"),
-                            bdoc.attr("value", "+"),
-                            bdoc.eventListener("click", Mmx.AddStatementToKey)
-                        )
-                    ),
+                    bdoc.ele("span", bdoc.class("mm_stmtAdd"), addStmtButton),
                     bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
                     bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
                     bdoc.ele("span", bdoc.class("mm_stmtText"), val.statement)
@@ -1097,7 +1237,10 @@ class Mmx {
     static async LoadLrmiFormFromDatabase(id) {
         let response = await session.fetch("/api/descriptors/" + id);
         let data = await response.json();
+
         let desc = data.descriptors[0];
+
+        Mmx.descriptor = desc;
         this.LoadLrmiForm(desc);
     }
 
@@ -1105,6 +1248,7 @@ class Mmx {
 
     static AddStatementToKey(event) {
         let row = event.target.parentElement.parentElement.cloneNode(true);
+        const stmt = event.target.stmt;
         let cellAdd = row.firstElementChild;
         let cellId = cellAdd.nextElementSibling;
         let cellStmt = cellId.nextElementSibling.nextElementSibling;
@@ -1115,14 +1259,15 @@ class Mmx {
         } else {
             // Convert first cell to remove
             cellAdd.innerHTML = "";
-            cellAdd.appendChild(
-                bdoc.ele(
-                    "input",
-                    bdoc.attr("type", "button"),
-                    bdoc.attr("value", "\u2212"), // Minus sign
-                    bdoc.eventListener("click", Mmx.RemoveStatementFromKey)
-                )
+            const stmtRemoveInput = bdoc.ele(
+                "input",
+                bdoc.attr("type", "button"),
+                bdoc.attr("value", "\u2212"), // Minus sign
+                bdoc.eventListener("click", Mmx.RemoveStatementFromKey),
+                bdoc.class("mm_stmtRemove")
             );
+            stmtRemoveInput.stmt = stmt;
+            cellAdd.appendChild(stmtRemoveInput);
 
             // Insert central cell
             row.insertBefore(
@@ -1133,7 +1278,12 @@ class Mmx {
                         "input",
                         bdoc.attr("type", "checkbox"),
                         bdoc.attr("textContent", "Central"),
-                        bdoc.attr("checked", true)
+                        bdoc.attr("checked"),
+                        bdoc.attr("style", "cursor: pointer;"),
+                        bdoc.eventListener(
+                            "click",
+                            Mmx.GenerateRelationshipCommentToggle(stmt)
+                        )
                     )
                 ),
                 cellId

@@ -262,10 +262,29 @@ class MmCreateGroupModal extends HTMLElement {
                                 createGroupModal.hide();
                             })
                         ),
+
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Create Group and Go to Group",
+                            "Create Group",
+                            bdoc.eventListener("click", () => {
+                                createGroupForm.onSettled = onSettled(
+                                    async (variables, response, addedGroup) => {
+                                        this.onSuccess(
+                                            variables,
+                                            response,
+                                            addedGroup
+                                        );
+                                        createGroupModal.hide();
+                                    }
+                                );
+                                createGroupForm.submit();
+                            })
+                        ),
+                        bdoc.ele(
+                            "button",
+                            bdoc.class("header-button add-entity-button"),
+                            "Create and Manage Group",
                             bdoc.eventListener("click", () => {
                                 createGroupForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -276,24 +295,6 @@ class MmCreateGroupModal extends HTMLElement {
                                         );
 
                                         window.location.href = `/c/Group?id=${response.id}`;
-                                    }
-                                );
-                                createGroupForm.submit();
-                            })
-                        ),
-                        bdoc.ele(
-                            "button",
-                            bdoc.class("header-button add-entity-button"),
-                            "Create Group and Return",
-                            bdoc.eventListener("click", () => {
-                                createGroupForm.onSettled = onSettled(
-                                    async (variables, response, addedGroup) => {
-                                        this.onSuccess(
-                                            variables,
-                                            response,
-                                            addedGroup
-                                        );
-                                        createGroupModal.hide();
                                     }
                                 );
                                 createGroupForm.submit();

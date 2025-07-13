@@ -28,6 +28,17 @@
     background-color: #045a8d;
 }
 
+#create-set-button:disabled {
+
+    opacity: 0.5;
+    cursor: not-allowed;
+    /* Change cursor to indicate disabled state */
+}
+
+#create-set-button:hover:disabled {
+    background-color: #0068b3;
+}
+
 .create-sets-header {
     display: flex;
     flex-direction: row;

@@ -100,7 +100,25 @@ class MmUploadCollectionModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Import Collection and View",
+                            "Import Collection",
+                            bdoc.eventListener("click", () => {
+                                uploadCollectionForm.onSettled = onSettled(
+                                    async (variables, response, addedGroup) => {
+                                        this.onSuccess(
+                                            variables,
+                                            response,
+                                            addedGroup
+                                        );
+                                        uploadCollectionModal.hide();
+                                    }
+                                );
+                                uploadCollectionForm.submit();
+                            })
+                        ),
+                        bdoc.ele(
+                            "button",
+                            bdoc.class("header-button add-entity-button"),
+                            "Import and Edit Collection",
                             bdoc.eventListener("click", () => {
                                 uploadCollectionForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -111,24 +129,6 @@ class MmUploadCollectionModal extends HTMLElement {
                                         );
 
                                         window.location.href = `/c/EditCollection?id=${response.descriptors[0].id}`;
-                                    }
-                                );
-                                uploadCollectionForm.submit();
-                            })
-                        ),
-                        bdoc.ele(
-                            "button",
-                            bdoc.class("header-button add-entity-button"),
-                            "Import Collection and Return",
-                            bdoc.eventListener("click", () => {
-                                uploadCollectionForm.onSettled = onSettled(
-                                    async (variables, response, addedGroup) => {
-                                        this.onSuccess(
-                                            variables,
-                                            response,
-                                            addedGroup
-                                        );
-                                        uploadCollectionModal.hide();
                                     }
                                 );
                                 uploadCollectionForm.submit();

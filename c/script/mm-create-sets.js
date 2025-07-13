@@ -31,7 +31,7 @@ export default class MmCreateSets extends HTMLElement {
                 bdoc.attr("style", "padding-left:2em;"),
                 bdoc.class("create-sets-header"),
 
-                bdoc.ele("h2", "Collections")
+                bdoc.ele("h2", "Create Custom Set from Collection")
             ),
             bdoc.ele(
                 "mm-filter-table",
@@ -68,24 +68,24 @@ export default class MmCreateSets extends HTMLElement {
 
             filterTable.addCustomStylesheets(["/c/res/mm-create-sets.css"]);
 
-            filterTable.addCustomHeaderElements([
-                bdoc.ele(
-                    "span",
-                    bdoc.id("create-set-button"),
-                    "Create Custom Set →",
-                    bdoc.eventListener("click", () => {
-                        if (this.selectedCollectionIds.length === 0) {
-                            alert(
-                                "Error: You must select a collection to create a custom set."
-                            );
-                            return;
-                        }
-                        const selectedCollectionId =
-                            this.selectedCollectionIds[0];
-                        window.location.href = `./SelectSubset?id=${selectedCollectionId}`;
-                    })
-                ),
-            ]);
+            const createSetButton = bdoc.ele(
+                "button",
+                bdoc.id("create-set-button"),
+                bdoc.attr("disabled", "true"),
+                "Create Custom Set →",
+                bdoc.eventListener("click", () => {
+                    if (this.selectedCollectionIds.length === 0) {
+                        alert(
+                            "Error: You must select a collection to create a custom set."
+                        );
+                        return;
+                    }
+                    const selectedCollectionId = this.selectedCollectionIds[0];
+                    window.location.href = `./SelectSubset?id=${selectedCollectionId}`;
+                })
+            );
+
+            filterTable.addCustomHeaderElements([createSetButton]);
 
             filterTable.generateCols = (displayProperties) => ({
                 name: (collection) =>
@@ -116,6 +116,7 @@ export default class MmCreateSets extends HTMLElement {
                             "input",
                             bdoc.attr("type", "checkbox"),
                             bdoc.class("collection-checkbox"),
+                            bdoc.attr("style", "cursor: pointer;"),
 
                             bdoc.eventListener("change", (e) => {
                                 if (e.target.checked) {
@@ -128,6 +129,8 @@ export default class MmCreateSets extends HTMLElement {
                                             (id) => id !== collection.id
                                         );
                                 }
+                                createSetButton.disabled =
+                                    this.selectedCollectionIds.length === 0;
 
                                 this.#disableCheckboxes(e.target, root);
                             })
