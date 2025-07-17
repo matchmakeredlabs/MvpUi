@@ -118,7 +118,9 @@ class MmFilterTable extends HTMLElement {
                 )
                     ? Object.keys(selectedOptions[filter]).some((selected) =>
                           selectedOptions[filter][selected]
-                              ? item[filter] === selected
+                              ? item[filter] === selected ||
+                                (item[filter] === undefined &&
+                                    selected === "Null")
                               : false
                       )
                     : true
@@ -316,7 +318,9 @@ class MmFilterTable extends HTMLElement {
 
                         this.#addFilterElement(
                             keywordContainer,
-                            selectedOption.value,
+                            `${this.firstLetterUppercase(filter)}: ${
+                                selectedOption.value
+                            }`,
                             () => {
                                 this.#selectedOptions[filter][
                                     selectedOption.value

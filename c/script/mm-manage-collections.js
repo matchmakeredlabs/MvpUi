@@ -74,6 +74,7 @@ export default class ManageCollections extends HTMLElement {
             );
             const onCreationSuccess = (variables, response) => {
                 const collection = response.descriptors[0];
+                collection.percentDescribed = 0; // default to 0% described
                 filterTable.loadData([collection, ...editableCollections]);
             };
 
@@ -117,7 +118,7 @@ export default class ManageCollections extends HTMLElement {
                         bdoc.attr("href", "/c/Browse?id=" + collection.id),
                         collection.name
                     ),
-                subject: (collection) => collection.subject,
+                subject: (collection) => collection.subject || "Null",
                 publisher: (collection) => collection.publisher || "Null",
                 // ["Creation Date"]: (collection) => collection.datePublished,
                 ["% Described"]: (collection) => {
