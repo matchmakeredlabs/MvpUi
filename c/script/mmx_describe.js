@@ -737,7 +737,8 @@ class Mmx {
                     "span",
                     bdoc.class("mm_stmtAdd"),
                     "\u2212",
-                    bdoc.id("keyTableFirstCol")
+                    bdoc.id("keyTableFirstCol"),
+                    bdoc.attr("style", "text-align: left;")
                 ), // Minus sign
                 bdoc.ele("span", bdoc.class("mm_stmtCentral"), "Cen"),
                 bdoc.ele("span", bdoc.class("mm_stmtId"), "Id"),

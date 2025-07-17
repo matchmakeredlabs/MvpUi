@@ -78,11 +78,13 @@ $w_type: 4em;
 .mm_stmtAdd {
     display: inline-block;
     vertical-align: top;
+    
     width: $w_add;
 }
 
 .mm_stmtAdd.expanded {
     width: $w_addWide;
+    text-align: center;
 }
 
 .mm_stmtCentral {
