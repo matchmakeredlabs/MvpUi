@@ -134,7 +134,6 @@ class MmMatchSets extends HTMLElement {
                         "button",
                         bdoc.class("header-button generate-matches"),
                         "Generate Matches →",
-                        bdoc.attr("disabled"),
                         bdoc.eventListener(
                             "click",
                             this.#onClickGenerateMatches
