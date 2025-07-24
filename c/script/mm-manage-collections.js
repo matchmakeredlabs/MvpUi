@@ -38,10 +38,16 @@ export default class ManageCollections extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,publisher"),
+                bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                bdoc.attr(
+                    "filter-display-names",
+                    JSON.stringify({
+                        ["_orgId"]: "Organization",
+                    })
+                ),
                 bdoc.attr(
                     "sort-properties",
-                    "name,subject,publisher,% Described"
+                    "name,subject,publisher,Organization,% Described"
                 ),
                 bdoc.attr("display-properties", "subject,publisher")
             ),
@@ -115,25 +121,21 @@ export default class ManageCollections extends HTMLElement {
                 name: (collection) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", "/c/Browse?id=" + collection.id),
+                        bdoc.attr(
+                            "href",
+                            `/c/EditCollection?id=${collection.id}`
+                        ),
                         collection.name
                     ),
                 subject: (collection) => collection.subject || "Null",
                 publisher: (collection) => collection.publisher || "Null",
                 // ["Creation Date"]: (collection) => collection.datePublished,
+
+                Organization: (collection) => collection._orgId || "Null",
                 ["% Described"]: (collection) => {
                     const percent = collection.percentDescribed;
                     return `${percent}%`;
                 },
-                Actions: (collection) =>
-                    bdoc.ele(
-                        "a",
-                        bdoc.attr(
-                            "href",
-                            `/c/EditCollection?id=${collection.id}`
-                        ),
-                        "Edit"
-                    ),
             };
 
             filterTable.generateCols = () => filterTableCols;
@@ -142,9 +144,7 @@ export default class ManageCollections extends HTMLElement {
                 ["% Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },
-            };
-            filterTable.customColStyles = {
-                ["Actions"]: "width: 1%;",
+                Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
             };
 
             for (const collection of editableCollections) {

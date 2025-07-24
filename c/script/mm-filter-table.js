@@ -10,6 +10,7 @@ class MmFilterTable extends HTMLElement {
         "sort-properties",
         "display-properties",
         "first-col-width",
+        "filter-display-names",
     ];
 
     #data = [];
@@ -18,6 +19,7 @@ class MmFilterTable extends HTMLElement {
     #listToFilter = [];
     #sortProperties;
     #displayProperties = [];
+    #filterDisplayNames = {};
     #firstColWidth = false;
 
     #selectedOptions = {};
@@ -200,6 +202,9 @@ class MmFilterTable extends HTMLElement {
             case "filter-properties":
                 this.#listToFilter = newValue.split(",");
                 break;
+            case "filter-display-names":
+                this.#filterDisplayNames = JSON.parse(newValue);
+                break;
             case "sort-properties":
                 this.#sortProperties = newValue;
                 break;
@@ -302,6 +307,11 @@ class MmFilterTable extends HTMLElement {
                 : null;
 
         const filterContainers = this.#listToFilter.map((filter) => {
+            const filterDisplayName =
+                filter in this.#filterDisplayNames
+                    ? this.#filterDisplayNames[filter]
+                    : this.firstLetterUppercase(filter);
+
             const oneFilterDropdown = bdoc.ele(
                 "select",
                 bdoc.id(`${filter}-dropdown`),
@@ -318,9 +328,7 @@ class MmFilterTable extends HTMLElement {
 
                         this.#addFilterElement(
                             keywordContainer,
-                            `${this.firstLetterUppercase(filter)}: ${
-                                selectedOption.value
-                            }`,
+                            `${filterDisplayName}: ${selectedOption.value}`,
                             () => {
                                 this.#selectedOptions[filter][
                                     selectedOption.value
@@ -343,7 +351,7 @@ class MmFilterTable extends HTMLElement {
 
             bdoc.append(
                 filterDropdownsContainer,
-                " " + this.firstLetterUppercase(filter) + " ",
+                " " + filterDisplayName + " ",
                 oneFilterDropdown
             );
 
