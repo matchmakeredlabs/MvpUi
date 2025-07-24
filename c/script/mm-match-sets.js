@@ -156,7 +156,7 @@ class MmMatchSets extends HTMLElement {
                         bdoc.ele(
                             "h4",
                             bdoc.id("independent-sets-start-text"),
-                            'Click "Add to Independent" to add sets'
+                            'Click "Ind." to add sets'
                         )
                     )
                 ),
@@ -171,7 +171,7 @@ class MmMatchSets extends HTMLElement {
                         bdoc.ele(
                             "h4",
                             bdoc.id("dependent-sets-start-text"),
-                            'Click "Add to Dependent" to add sets'
+                            'Click "Dep." to add sets'
                         )
                     )
                 )
@@ -475,10 +475,16 @@ class MmMatchSets extends HTMLElement {
                 const collectionsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("collections-table"),
-                    bdoc.attr("filter-properties", "subject,publisher"),
+                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr(
+                        "filter-display-names",
+                        JSON.stringify({
+                            ["_orgId"]: "Organization",
+                        })
+                    ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Add to Independent,Add to Dependent,% Described"
+                        "name,subject,publisher,Organization,Ind.,Dep.,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -526,16 +532,22 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    ["% Described"]: (collection) =>
-                        `${collection.percentDescribed}%`,
-                    ["Add to Independent"]: (collection, root) =>
+                    ["Organization"]: (collection) =>
+                        collection._orgId || "Null",
+                    ["Described"]: (collection) =>
+                        bdoc.ele(
+                            "td",
+                            bdoc.attr("style", "text-align: center"),
+                            `${collection.percentDescribed}%`
+                        ),
+                    ["Ind."]: (collection, root) =>
                         generateCheckbox(
                             collection,
                             "independent",
                             "collections",
                             root
                         ),
-                    ["Add to Dependent"]: (collection, root) =>
+                    ["Dep."]: (collection, root) =>
                         generateCheckbox(
                             collection,
                             "dependent",
@@ -543,6 +555,12 @@ class MmMatchSets extends HTMLElement {
                             root
                         ),
                 });
+
+                collectionsTable.customColStyles = {
+                    ["Described"]: "width: 1%",
+                    ["Dep."]: "width: 1%",
+                    ["Ind."]: "width: 1%",
+                };
 
                 collectionsTable.customSorts = {
                     name: (a, b) => {
@@ -566,17 +584,20 @@ class MmMatchSets extends HTMLElement {
                         }
                         return a.publisher > b.publisher ? 1 : -1;
                     },
-                    ["% Described"]: (a, b) => {
+                    ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
                     },
-                    ["Add to Independent"]: (a, b) => {
+                    ["Organization"]: (a, b) => {
+                        return a._orgId < b._orgId ? -1 : 1;
+                    },
+                    ["Ind."]: (a, b) => {
                         return this.#sets.independent.collections.find(
                             (collection) => collection.id === a.id
                         )
                             ? 1
                             : -1;
                     },
-                    ["Add to Dependent"]: (a, b) => {
+                    ["Dep."]: (a, b) => {
                         return this.#sets.dependent.collections.find(
                             (collection) => collection.id === a.id
                         )
@@ -631,7 +652,7 @@ class MmMatchSets extends HTMLElement {
                     bdoc.attr("filter-properties", "subject,creator"),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,creator,Add to Independent,Add to Dependent"
+                        "name,subject,creator,Ind.,Dep."
                     ),
                     bdoc.attr("display-properties", "subject,creator")
                 );
@@ -678,14 +699,14 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    ["Add to Independent"]: (customSet, root) =>
+                    ["Ind."]: (customSet, root) =>
                         generateCheckbox(
                             customSet,
                             "independent",
                             "custom-set",
                             root
                         ),
-                    ["Add to Dependent"]: (customSet, root) =>
+                    ["Dep."]: (customSet, root) =>
                         generateCheckbox(
                             customSet,
                             "dependent",
@@ -716,14 +737,14 @@ class MmMatchSets extends HTMLElement {
                         }
                         return a.creator > b.creator ? 1 : -1;
                     },
-                    ["Add to Independent"]: (a, b) => {
+                    ["Ind."]: (a, b) => {
                         return this.#sets.independent["custom-set"].find(
                             (customSet) => customSet.name === a.name
                         )
                             ? 1
                             : -1;
                     },
-                    ["Add to Dependent"]: (a, b) => {
+                    ["Dep."]: (a, b) => {
                         return this.#sets.dependent["custom-set"].find(
                             (customSet) => customSet.name === a.name
                         )
