@@ -121,7 +121,9 @@ class MmFilterTable extends HTMLElement {
                     ? Object.keys(selectedOptions[filter]).some((selected) =>
                           selectedOptions[filter][selected]
                               ? item[filter] === selected ||
-                                (item[filter] === undefined &&
+                                ((item[filter] === undefined ||
+                                    item[filter] === null ||
+                                    item[filter] === "") &&
                                     selected === "Null")
                               : false
                       )

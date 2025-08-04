@@ -31,11 +31,12 @@ export default class MmMatchProfileSelect extends HTMLElement {
     }
 
     static async updateSettings(oldSettings, newSettings) {
+        const userId = MmMatchProfileSelect.session.getCachedUserID();
         const updatedSettings = {
+            mainEntityId: userId,
             ...oldSettings,
             ...newSettings,
         };
-        const userId = MmMatchProfileSelect.session.getCachedUserID();
         const response = await MmMatchProfileSelect.session.fetch(
             `/api/settings/${userId}`,
             {

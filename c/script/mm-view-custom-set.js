@@ -74,12 +74,13 @@ export default class MmViewCustomSet extends HTMLElement {
             };
 
             MmMatchProfileSelect.updateSettings(settings, newSettings).then(
-                () => {
+                (response) => {
+                    if (!response.ok) {
+                        this.handleError(response);
+                        return;
+                    }
                     alert(`Custom set ${name} has been saved!`);
                     window.location.href = "./GenerateReport";
-                },
-                (response) => {
-                    this.handleError(response);
                 }
             );
         }

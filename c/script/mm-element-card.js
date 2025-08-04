@@ -79,7 +79,7 @@ export default class MmElementCard extends HTMLElement {
     static EleTypeTranslate = {
         any: "Any",
         lr: "Learning Resource",
-        cs: "Competency Statement",
+        cs: "Competency",
         c: "Curriculum",
         o: "Other",
     };

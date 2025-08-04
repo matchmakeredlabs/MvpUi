@@ -7,7 +7,15 @@ export default class MmViewCustomSets extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
+    loadingElement;
+
     connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "h2",
+            "Loading...",
+            bdoc.attr("style", "margin: 2em; text-align: center;")
+        );
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -26,7 +34,11 @@ export default class MmViewCustomSets extends HTMLElement {
 
                 bdoc.ele("h2", "Custom Sets")
             ),
-            bdoc.ele("div", bdoc.id("custom-sets-filter-table-container")),
+            bdoc.ele(
+                "div",
+                bdoc.id("custom-sets-filter-table-container"),
+                this.loadingElement
+            ),
             // bdoc.ele(
             //     "mm-filter-table",
             //     bdoc.attr("filter-properties", "subject,creator"),
@@ -55,7 +67,23 @@ export default class MmViewCustomSets extends HTMLElement {
         Object.keys(customSetsData).forEach((customSetName) => {
             const customSet = customSetsData[customSetName];
 
+            let leafCount = 0;
+            let leafWithKeyCount = 0;
+            for (const descriptor of customSet.descriptors) {
+                if (descriptor._isLeaf) {
+                    leafCount++;
+                    if (descriptor.key && descriptor.key !== "") {
+                        leafWithKeyCount++;
+                    }
+                }
+            }
+
             let summarizedCustomSet = {};
+
+            summarizedCustomSet.percentDescribed =
+                leafCount > 0
+                    ? Math.round((leafWithKeyCount / leafCount) * 100)
+                    : 0;
 
             summarizedCustomSet.name = customSetName;
 
@@ -104,15 +132,8 @@ export default class MmViewCustomSets extends HTMLElement {
         (_displayElements, filters, selectedOptions, root) => {
             summarizedCustomSets.forEach((summarizedCustomSet) => {
                 filters.forEach((filter) => {
-                    summarizedCustomSet[filter].forEach((currentValue) => {
-                        if (
-                            currentValue === null ||
-                            currentValue === "" ||
-                            currentValue === undefined
-                        ) {
-                            currentValue = "Null";
-                        }
-
+                    if (!(filter in summarizedCustomSet)) {
+                        const currentValue = "Null";
                         if (!(currentValue in selectedOptions[filter])) {
                             selectedOptions[filter][currentValue] = false;
                             bdoc.append(
@@ -124,7 +145,29 @@ export default class MmViewCustomSets extends HTMLElement {
                                 )
                             );
                         }
-                    });
+                    } else {
+                        summarizedCustomSet[filter].forEach((currentValue) => {
+                            if (
+                                currentValue === null ||
+                                currentValue === "" ||
+                                currentValue === undefined
+                            ) {
+                                currentValue = "Null";
+                            }
+
+                            if (!(currentValue in selectedOptions[filter])) {
+                                selectedOptions[filter][currentValue] = false;
+                                bdoc.append(
+                                    root.getElementById(`${filter}-dropdown`),
+                                    bdoc.ele(
+                                        "option",
+                                        currentValue,
+                                        bdoc.attr("value", currentValue)
+                                    )
+                                );
+                            }
+                        });
+                    }
                 });
             });
         };
@@ -151,7 +194,14 @@ export default class MmViewCustomSets extends HTMLElement {
                         )
                             ? Object.keys(filters[filter]).some((selected) =>
                                   filters[filter][selected]
-                                      ? item[filter].has(selected)
+                                      ? (item[filter] &&
+                                            item[filter].has(selected)) ||
+                                        (selected === "Null" &&
+                                            (item[filter] === undefined ||
+                                                item[filter] === null ||
+                                                item[filter] === "" ||
+                                                item[filter].size === 0 ||
+                                                item[filter].has("")))
                                       : false
                               )
                             : true
@@ -185,6 +235,8 @@ export default class MmViewCustomSets extends HTMLElement {
             displayCustomSets = {};
         }
 
+        this.loadingElement.style.display = "none";
+
         customElements.whenDefined("mm-filter-table").then(() => {
             const customSetsFilterTableContainer =
                 this.shadowRoot.querySelector(
@@ -208,9 +260,18 @@ export default class MmViewCustomSets extends HTMLElement {
             } else {
                 const filterTable = bdoc.ele(
                     "mm-filter-table",
-                    bdoc.attr("filter-properties", "subject,creator"),
-                    bdoc.attr("sort-properties", "subject,creator,name"),
-                    bdoc.attr("display-properties", "subject,creator")
+                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr(
+                        "filter-display-names",
+                        JSON.stringify({
+                            ["_orgId"]: "Organization",
+                        })
+                    ),
+                    bdoc.attr(
+                        "sort-properties",
+                        "subject,publisher,name,Organization,Described"
+                    ),
+                    bdoc.attr("display-properties", "subject,publisher")
                 );
 
                 bdoc.append(customSetsFilterTableContainer, filterTable);
@@ -230,6 +291,39 @@ export default class MmViewCustomSets extends HTMLElement {
 
                 filterTable.nameElementCallback =
                     MmViewCustomSets.nameElementCallback;
+
+                filterTable.generateCols = (displayProperties) => ({
+                    name: MmViewCustomSets.nameElementCallback,
+                    ...displayProperties.reduce((acc, property) => {
+                        acc[property] = (item) => {
+                            let currentValue = item[property];
+                            if (
+                                currentValue === null ||
+                                currentValue === "" ||
+                                currentValue === undefined
+                            ) {
+                                currentValue = "Null";
+                            }
+                            return currentValue;
+                        };
+                        return acc;
+                    }, {}),
+                    Organization: (collection) => collection._orgId || "Null",
+
+                    ["Described"]: (customSet) =>
+                        bdoc.ele(
+                            "td",
+                            bdoc.attr("style", "text-align: center;"),
+                            `${customSet.percentDescribed}%`
+                        ),
+                });
+
+                filterTable.customSorts = {
+                    ["Described"]: (a, b) => {
+                        return a.percentDescribed - b.percentDescribed;
+                    },
+                    Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                };
 
                 filterTable.loadData(Object.values(displayCustomSets));
             }

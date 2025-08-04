@@ -9,6 +9,8 @@ class MmCollection extends HTMLElement {
     descriptors = {};
     idToIntId = {};
 
+    loadingElement;
+
     maxIntId = 0;
 
     // deprecated, use customDescriptorEleOptions instead
@@ -38,18 +40,21 @@ class MmCollection extends HTMLElement {
     };
 
     connectedCallback() {
-        bdoc.append(
-            this.shadowRoot,
-            bdoc.ele(
-                "link",
-                bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("type", "text/css"),
-                bdoc.attr("href", "/c/res/mm-collection.css")
-            )
-        );
+        (this.loadingElement = bdoc.ele("div", "Loading...")),
+            bdoc.append(
+                this.shadowRoot,
+                this.loadingElement,
+                bdoc.ele(
+                    "link",
+                    bdoc.attr("rel", "stylesheet"),
+                    bdoc.attr("type", "text/css"),
+                    bdoc.attr("href", "/c/res/mm-collection.css")
+                )
+            );
     }
 
     loadDescriptors(collection) {
+        this.loadingElement.style.display = "none";
         for (let desc of collection) {
             this.descriptors[desc.intId] = desc;
             this.idToIntId[desc.id] = desc.intId;
@@ -288,7 +293,7 @@ class MmCollection extends HTMLElement {
         const customElements = this.shadowRoot.querySelectorAll("[custom-ele]");
 
         if (!this.customDescriptorEleOptions.visibleUnselected) {
-            customElements.forEach((customEle) => {       
+            customElements.forEach((customEle) => {
                 customEle.style.display = "none";
             });
         }
@@ -470,7 +475,6 @@ class MmCollection extends HTMLElement {
             } else {
                 bdoc.append(descContainer, span, customDescriptorEle);
             }
-
         } else {
             bdoc.append(descContainer, span);
         }

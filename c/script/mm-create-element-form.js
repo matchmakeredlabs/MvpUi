@@ -36,49 +36,49 @@ export default class MmCreateElementForm extends HTMLElement {
             label: "Subject",
             id: "subject",
             placeholder: "Math",
-            require: false
+            require: false,
         },
         {
             label: "Publisher",
             id: "publisher",
             placeholder: "Washington",
-            require: false
+            require: false,
         },
         {
             label: "Identifier",
             id: "identifier",
             placeholder: "",
-            require: false
+            require: false,
         },
         {
             label: "Educational Level",
             id: "educationalLevel",
             placeholder: "06",
-            require: false
+            require: false,
         },
         {
             label: "Creator",
             id: "creator",
             placeholder: "",
-            require: false
+            require: false,
         },
         {
             label: "Date Published",
             id: "datePublished",
             placeholder: "YYYY-MM-DD",
-            require: false
+            require: false,
         },
         {
             label: "Repository Date",
             id: "sdDatePublished",
             placeholder: "YYYY-MM-DD",
-            require: false
+            require: false,
         },
         {
             label: "Provenance",
             id: "provenance",
             placeholder: "",
-            require: false
+            require: false,
         },
     ];
 
@@ -102,6 +102,13 @@ export default class MmCreateElementForm extends HTMLElement {
             url: formData.get("url"),
             eleType: formData.get("type"),
         };
+
+        if (variables.url === "" || !variables.url) {
+            // replace spaces with dashes in name and URI encode otherwise
+            variables.url = `mm:${encodeURIComponent(
+                variables.name.replace(/\s+/g, "-").toLowerCase()
+            )}`;
+        }
 
         for (const detail of MmCreateElementForm.details) {
             variables[detail.id] = formData.get(detail.id);
@@ -197,6 +204,9 @@ export default class MmCreateElementForm extends HTMLElement {
         if (!this.#parentElement) {
             elementTypes.find((eleType) => eleType.value === "cs").label =
                 "Competency Framework";
+        } else {
+            elementTypes.find((eleType) => eleType.value === "cs").label =
+                "Competency";
         }
 
         bdoc.append(
@@ -288,8 +298,13 @@ export default class MmCreateElementForm extends HTMLElement {
                     "label",
                     bdoc.attr("for", "url"),
                     "URL / Location ",
-
-                    bdoc.ele("span", bdoc.class("mmc_form_required"), "* "),
+                    this.#parentElement
+                        ? bdoc.ele(
+                              "span",
+                              bdoc.class("mmc_form_required"),
+                              "* "
+                          )
+                        : null,
                     this.#getTooltipButton(
                         "Must be unique within a collection."
                     )
@@ -302,12 +317,17 @@ export default class MmCreateElementForm extends HTMLElement {
                     bdoc.attr(
                         "placeholder",
                         this.#parentElement
-                            ? "urn:algebra1:the-language-of:distributive"
-                            : "urn:algebra1"
+                            ? "mm:algebra1/the-language-of/distributive"
+                            : "mm:algebra1"
                     ),
-                    bdoc.attr("required", "true"),
+                    this.#parentElement ? bdoc.attr("required", "true") : null,
                     this.#parentElement
-                        ? bdoc.attr("value", this.#parentElement["url"] || "")
+                        ? bdoc.attr(
+                              "value",
+                              this.#parentElement.urlDefault ||
+                                  this.#parentElement.url ||
+                                  ""
+                          )
                         : null
                 )
             ),
@@ -337,7 +357,13 @@ export default class MmCreateElementForm extends HTMLElement {
                         "label",
                         bdoc.attr("for", detail.id),
                         detail.label,
-                        detail.require ? bdoc.ele("span", bdoc.class("mmc_form_required"), " *") : null
+                        detail.require
+                            ? bdoc.ele(
+                                  "span",
+                                  bdoc.class("mmc_form_required"),
+                                  " *"
+                              )
+                            : null
                     ),
                     bdoc.ele(
                         "input",
