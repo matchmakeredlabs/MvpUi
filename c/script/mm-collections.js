@@ -36,10 +36,16 @@ export default class MmCollections extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,publisher"),
+                bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                bdoc.attr(
+                    "filter-display-names",
+                    JSON.stringify({
+                        ["_orgId"]: "Organization",
+                    })
+                ),
                 bdoc.attr(
                     "sort-properties",
-                    "Name,Subject,Publisher,% Described"
+                    "Name,Subject,Publisher,Organization,Described"
                 )
             ),
             bdoc.ele(
@@ -61,7 +67,7 @@ export default class MmCollections extends HTMLElement {
                 leafCount === null ||
                 leafCount === 0
             ) {
-                // default to 0% described
+                // default to 0described
                 collection.percentDescribed = 0;
             }
             collection.percentDescribed = Math.round(
@@ -94,9 +100,14 @@ export default class MmCollections extends HTMLElement {
                     ),
                 ["Subject"]: attrOrNull("subject"),
                 ["Publisher"]: attrOrNull("publisher"),
-                ["% Described"]: (collection) => {
+                Organization: (collection) => collection._orgId || "Null",
+                ["Described"]: (collection) => {
                     const percent = collection.percentDescribed;
-                    return `${percent}%`;
+                    return bdoc.ele(
+                        "td",
+                        bdoc.attr("style", "text-align: center;"),
+                        `${percent}%`
+                    );
                 },
             });
 
@@ -113,7 +124,8 @@ export default class MmCollections extends HTMLElement {
                 ["Name"]: sortPotentiallyNull("name"),
                 ["Subject"]: sortPotentiallyNull("subject"),
                 ["Publisher"]: sortPotentiallyNull("publisher"),
-                ["% Described"]: (a, b) => {
+                Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                ["Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },
             };

@@ -36,8 +36,17 @@ export default class MmCreateSets extends HTMLElement {
             bdoc.ele(
                 "mm-filter-table",
                 bdoc.attr("style", "height: 90%"),
-                bdoc.attr("filter-properties", "subject,publisher"),
-                bdoc.attr("sort-properties", "subject,publisher"),
+                bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                bdoc.attr(
+                    "filter-display-names",
+                    JSON.stringify({
+                        ["_orgId"]: "Organization",
+                    })
+                ),
+                bdoc.attr(
+                    "sort-properties",
+                    "Name,Subject,Publisher,Organization,% Described"
+                ),
                 bdoc.attr("display-properties", "subject,publisher")
             ),
             bdoc.ele(
@@ -61,6 +70,21 @@ export default class MmCreateSets extends HTMLElement {
 
     #renderCollections = async () => {
         const collections = await MmCollections.fetchCollections();
+        for (const collection of collections) {
+            const leafWithKeyCount = collection._leafWithKeyCount;
+            const leafCount = collection._leafCount;
+            if (
+                leafWithKeyCount === null ||
+                leafCount === null ||
+                leafCount === 0
+            ) {
+                // default to 0% described
+                collection.percentDescribed = 0;
+            }
+            collection.percentDescribed = Math.round(
+                (leafWithKeyCount / leafCount) * 100
+            );
+        }
 
         customElements.whenDefined("mm-filter-table").then(() => {
             const filterTable =
@@ -108,6 +132,11 @@ export default class MmCreateSets extends HTMLElement {
                     };
                     return acc;
                 }, {}),
+                Organization: (collection) => collection._orgId || "Null",
+                ["% Described"]: (collection) => {
+                    const percent = collection.percentDescribed;
+                    return `${percent}%`;
+                },
                 select: (collection, root) =>
                     bdoc.ele(
                         "td",
@@ -120,14 +149,17 @@ export default class MmCreateSets extends HTMLElement {
 
                             bdoc.eventListener("change", (e) => {
                                 if (e.target.checked) {
-                                    this.selectedCollectionIds.push(
-                                        collection.id
-                                    );
+                                    this.selectedCollectionIds = [
+                                        collection.id,
+                                    ];
+                                    // this.selectedCollectionIds.push(
+                                    //     collection.id
+                                    // );
                                 } else {
-                                    this.selectedCollectionIds =
-                                        this.selectedCollectionIds.filter(
-                                            (id) => id !== collection.id
-                                        );
+                                    this.selectedCollectionIds = [];
+                                    // this.selectedCollectionIds.filter(
+                                    //     (id) => id !== collection.id
+                                    // );
                                 }
                                 createSetButton.disabled =
                                     this.selectedCollectionIds.length === 0;
@@ -137,6 +169,25 @@ export default class MmCreateSets extends HTMLElement {
                         )
                     ),
             });
+
+            const sortPotentiallyNull = (attr) => (a, b) => {
+                const aValue = a[attr] || "Null";
+                const bValue = b[attr] || "Null";
+                if (aValue === bValue) {
+                    return 0;
+                }
+                return aValue.localeCompare(bValue);
+            };
+
+            filterTable.customSorts = {
+                ["Name"]: sortPotentiallyNull("name"),
+                ["Subject"]: sortPotentiallyNull("subject"),
+                ["Publisher"]: sortPotentiallyNull("publisher"),
+                Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                ["% Described"]: (a, b) => {
+                    return a.percentDescribed - b.percentDescribed;
+                },
+            };
 
             filterTable.loadData(collections);
         });

@@ -45,6 +45,8 @@ export default class mmxAuth {
     }
 
     static redirectToLogin() {
+        // check if window location is already the login page
+        if (window.location.pathname === mmxAuth.loginUrl) return;
         window.location.replace(
             mmxAuth.loginUrl +
                 "?returnTo=" +

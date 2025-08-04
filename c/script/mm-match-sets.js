@@ -25,7 +25,15 @@ class MmMatchSets extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
+    loadingElement;
+
     connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "h2",
+            "Loading...",
+            bdoc.attr("style", "margin: 2em; text-align: center;")
+        );
+
         const customSetsContainer = bdoc.ele(
             "div",
             bdoc.class("dropdown-table-container"),
@@ -177,9 +185,12 @@ class MmMatchSets extends HTMLElement {
                 )
             ),
 
+            this.loadingElement,
+
             bdoc.ele(
                 "div",
                 bdoc.class("dropdown-container"),
+                bdoc.attr("style", "display: none;"),
                 bdoc.id("custom-sets-container"),
                 bdoc.ele(
                     "div",
@@ -210,6 +221,7 @@ class MmMatchSets extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("dropdown-container"),
+                bdoc.attr("style", "display: none;"),
                 bdoc.id("collections-container"),
                 bdoc.ele(
                     "div",
@@ -339,6 +351,14 @@ class MmMatchSets extends HTMLElement {
                 );
         }
 
+        this.loadingElement.style.display = "none";
+
+        this.shadowRoot
+            .querySelectorAll(".dropdown-container")
+            .forEach((container) => {
+                container.style.display = "";
+            });
+
         const addSetElement = (set, setCategory, setType, tableRoot) => {
             const container = this.shadowRoot.getElementById(
                 `${setCategory}-sets`
@@ -456,8 +476,11 @@ class MmMatchSets extends HTMLElement {
                         const checkbox = tableRoot.getElementById(
                             `${setCategory}-${setType}-${setIdentifier}-checkbox`
                         );
+                        // checkbox may not be present due to filters
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
 
-                        checkbox.checked = true;
                         if (!checkboxOnly) {
                             addSet(set, setCategory, setType, tableRoot);
                         }
@@ -649,12 +672,18 @@ class MmMatchSets extends HTMLElement {
                 const customSetsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("custom-sets-table"),
-                    bdoc.attr("filter-properties", "subject,creator"),
+                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr(
+                        "filter-display-names",
+                        JSON.stringify({
+                            ["_orgId"]: "Organization",
+                        })
+                    ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,creator,Ind.,Dep."
+                        "name,subject,publisher,Organization,Described,Ind.,Dep."
                     ),
-                    bdoc.attr("display-properties", "subject,creator")
+                    bdoc.attr("display-properties", "subject,publisher")
                 );
                 bdoc.append(customSetsFilterTableContainer, customSetsTable);
 
@@ -699,6 +728,13 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
+                    Organization: (customSet) => customSet._orgId || "Null",
+                    ["Described"]: (customSet) =>
+                        bdoc.ele(
+                            "td",
+                            bdoc.attr("style", "text-align: center"),
+                            `${customSet.percentDescribed}%`
+                        ),
                     ["Ind."]: (customSet, root) =>
                         generateCheckbox(
                             customSet,
@@ -728,14 +764,20 @@ class MmMatchSets extends HTMLElement {
                         }
                         return a.subject > b.subject ? 1 : -1;
                     },
-                    creator: (a, b) => {
-                        if (!a.creator) {
+                    publisher: (a, b) => {
+                        if (!a.publisher) {
                             return 1;
                         }
-                        if (!b.creator) {
+                        if (!b.publisher) {
                             return -1;
                         }
-                        return a.creator > b.creator ? 1 : -1;
+                        return a.publisher > b.publisher ? 1 : -1;
+                    },
+                    Organization: (a, b) => {
+                        return a._orgId < b._orgId ? -1 : 1;
+                    },
+                    ["Described"]: (a, b) => {
+                        return a.percentDescribed - b.percentDescribed;
                     },
                     ["Ind."]: (a, b) => {
                         return this.#sets.independent["custom-set"].find(

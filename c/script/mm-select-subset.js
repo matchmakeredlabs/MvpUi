@@ -22,6 +22,8 @@ export default class MmSelectSubset extends HTMLElement {
 
     #collection;
 
+    loadingElement;
+
     static fetchCollection = async (collectionId) => {
         const response = await MmSelectSubset.session.fetch(
             `/api/collections/${collectionId}`
@@ -135,6 +137,8 @@ export default class MmSelectSubset extends HTMLElement {
     };
 
     connectedCallback() {
+        this.loadingElement = bdoc.ele("h2", "Loading...");
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -156,7 +160,8 @@ export default class MmSelectSubset extends HTMLElement {
                     bdoc.ele(
                         "article",
                         bdoc.id("mmx_browse_tree"),
-                        bdoc.ele("h3", "Collection")
+                        bdoc.ele("h3", "Collection"),
+                        this.loadingElement
                     )
                 ),
                 bdoc.ele(
@@ -210,6 +215,8 @@ export default class MmSelectSubset extends HTMLElement {
             }
             window.location.href = "/c/Collections";
         });
+
+        this.loadingElement.style.display = "none";
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 

@@ -44,6 +44,8 @@ class MmTable extends HTMLElement {
 
     customColStyles = {};
 
+    loadingText;
+
     set data(data) {
         this.#data = data;
 
@@ -59,6 +61,12 @@ class MmTable extends HTMLElement {
     }
 
     connectedCallback() {
+        this.loadingText = bdoc.ele(
+            "h3",
+            "Loading...",
+            bdoc.attr("style", "text-align: center; font-size: 20px;")
+        );
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -74,6 +82,7 @@ class MmTable extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("table-container"),
+                this.loadingText,
                 bdoc.ele(
                     "div",
                     bdoc.ele(
@@ -82,29 +91,37 @@ class MmTable extends HTMLElement {
                             "thead",
                             bdoc.ele(
                                 "tr",
-                                bdoc.id("table-titles"),
-                                ...Object.keys(this.#cols).map((colKey, i) => {
-                                    const heading = bdoc.ele(
-                                        "th",
-                                        colKey.charAt(0).toUpperCase() +
-                                            colKey.slice(1)
-                                    );
-                                    if (i == 0 && this.#firstColWidth) {
-                                        heading.style.width =
-                                            this.#firstColWidth;
-                                    }
-                                    if (colKey in this.customColStyles) {
-                                        bdoc.append(
-                                            heading,
-                                            bdoc.attr(
-                                                "style",
-                                                this.customColStyles[colKey]
-                                            )
-                                        );
-                                    }
+                                bdoc.id("table-titles")
+                                // bdoc.ele(
+                                //     "h3",
+                                //     "Loading...",
+                                //     bdoc.attr(
+                                //         "style",
+                                //         "text-align: center; font-size: 20px;"
+                                //     )
+                                // )
+                                // ...Object.keys(this.#cols).map((colKey, i) => {
+                                //     const heading = bdoc.ele(
+                                //         "th",
+                                //         colKey.charAt(0).toUpperCase() +
+                                //             colKey.slice(1)
+                                //     );
+                                //     if (i == 0 && this.#firstColWidth) {
+                                //         heading.style.width =
+                                //             this.#firstColWidth;
+                                //     }
+                                //     if (colKey in this.customColStyles) {
+                                //         bdoc.append(
+                                //             heading,
+                                //             bdoc.attr(
+                                //                 "style",
+                                //                 this.customColStyles[colKey]
+                                //             )
+                                //         );
+                                //     }
 
-                                    return heading;
-                                })
+                                //     return heading;
+                                // })
                             )
                         ),
                         bdoc.ele("tbody", bdoc.id("table-body"))
@@ -119,6 +136,10 @@ class MmTable extends HTMLElement {
     }
 
     render() {
+        if (this.loadingText) {
+            this.loadingText.style.display = "none";
+        }
+
         const tableHead = this.shadowRoot.getElementById("table-titles");
         if (!tableHead) return;
         tableHead.innerHTML = "";

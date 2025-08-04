@@ -47,7 +47,11 @@ export default class EditCollection extends HTMLElement {
         return response;
     };
 
+    loadingElement;
+
     connectedCallback() {
+        this.loadingElement = bdoc.ele("h2", "Loading...");
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -77,7 +81,8 @@ export default class EditCollection extends HTMLElement {
                                 "div",
                                 bdoc.class("public-checkbox-container")
                             )
-                        )
+                        ),
+                        this.loadingElement
                     )
                 ),
                 bdoc.ele(
@@ -113,6 +118,8 @@ export default class EditCollection extends HTMLElement {
             }
             window.location.href = "/c/ManageCollections";
         });
+
+        this.loadingElement.style.display = "none";
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
@@ -202,13 +209,44 @@ export default class EditCollection extends HTMLElement {
                         const createModal = this.shadowRoot.querySelector(
                             "mm-create-element-modal"
                         );
+
+                        const otherChildren = element.intHasPart.map(
+                            (intId) => collectionEle.descriptors[intId]
+                        );
+                        let highestChildUrlEnding = 1;
+                        for (const child of otherChildren) {
+                            if (child.url) {
+                                const urlEnding = parseInt(
+                                    child.url.split("/").pop()
+                                );
+
+                                if (
+                                    !isNaN(urlEnding) &&
+                                    urlEnding >= highestChildUrlEnding
+                                ) {
+                                    highestChildUrlEnding = urlEnding + 1;
+                                }
+                            }
+                        }
+
                         createModal.onSuccess = (variables, response) => {
                             const descriptor = response.descriptors[0];
                             collectionEle.addNewDescriptor(descriptor, element);
                         };
+
+                        const newUrl = `${element.url}${
+                            element.url.endsWith("/") ? "" : "/"
+                        }${highestChildUrlEnding}`;
+
                         bdoc.append(
                             createModal,
-                            bdoc.attr("parent-element", JSON.stringify(element))
+                            bdoc.attr(
+                                "parent-element",
+                                JSON.stringify({
+                                    ...element,
+                                    urlDefault: newUrl,
+                                })
+                            )
                         );
                         createModal.show();
                     })

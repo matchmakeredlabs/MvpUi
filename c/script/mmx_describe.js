@@ -197,6 +197,9 @@ class Mmx {
 
         let mmid_search = document.getElementById("mmid_search");
         let searchOneLiner = document.getElementById("searchOneLiner");
+
+        const searchResults = document.querySelector(".mmc_stmtSearchResult");
+
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         if (event.target.textContent === "Text") {
             mmid_search.placeholder = "Add key words to search";
@@ -212,15 +215,16 @@ class Mmx {
             searchOneLiner.innerHTML = "";
             searchOneLiner.appendChild(text);
             searchOneLiner.innerHTML += tooltip;
+
+            searchResults.textContent =
+                "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
         } else {
-            let keywords = document.getElementById("mmid_search").value;
             mmid_search.placeholder = "Add another term to augment the search";
 
-            let requestBody = "";
+            searchResults.textContent = "Loading...";
+            searchResults.style.textAlign = "center";
+
             if (window.searchProperty == "AI") {
-                requestBody += JSON.stringify({
-                    matchText: window.description + keywords,
-                });
                 let text = document.createElement("span");
                 text.style = "margin-right: 0.5em;";
                 text.textContent =
@@ -229,9 +233,6 @@ class Mmx {
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
             } else if (window.searchProperty == "AI + Context") {
-                requestBody += JSON.stringify({
-                    matchText: window.descriptorContext + keywords,
-                });
                 let text = document.createElement("span");
                 text.style = "margin-right: 0.5em;";
                 text.textContent =
@@ -240,22 +241,7 @@ class Mmx {
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
             }
-            console.log(requestBody);
-            let url = "/api/match/palet";
-            let options = {
-                method: "POST",
-                body: JSON.stringify({ matchText: requestBody }),
-                headers: {
-                    "Content-type": "application/json; charset=UTF-8",
-                },
-            };
-            session
-                .fetch(url, options)
-                .then((response) => response.json())
-                .then((json) => {
-                    console.log(json);
-                    Mmx.SearchStatements_Callback(json);
-                });
+            Mmx.SearchStatements();
         }
 
         // Add 'active' class to the clicked button
@@ -320,24 +306,24 @@ class Mmx {
                             )
                         )
                     )
-                ),
-                bdoc.ele(
-                    "div",
-                    bdoc.attr(
-                        "style",
-                        "display: flex; align-items: flex-end; padding-bottom: 0.25em; gap: 0.5em;"
-                    ),
-                    bdoc.ele("span", "AI Algorithm:  "),
-                    bdoc.ele(
-                        "select",
-                        bdoc.attr("style", "width: 70px;"),
-                        bdoc.ele(
-                            "option",
-                            bdoc.attr("value", "Cosine Similarity"),
-                            "Cosine Similarity"
-                        )
-                    )
                 )
+                // bdoc.ele(
+                //     "div",
+                //     bdoc.attr(
+                //         "style",
+                //         "display: flex; align-items: flex-end; padding-bottom: 0.25em; gap: 0.5em;"
+                //     ),
+                //     bdoc.ele("span", "AI Algorithm:  "),
+                //     bdoc.ele(
+                //         "select",
+                //         bdoc.attr("style", "width: 70px;"),
+                //         bdoc.ele(
+                //             "option",
+                //             bdoc.attr("value", "Cosine Similarity"),
+                //             "Cosine Similarity"
+                //         )
+                //     )
+                // )
             )
         );
 
@@ -400,11 +386,96 @@ class Mmx {
 
         parent.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
+        const throttle = (fn, delay) => {
+            let last = Date.now();
+            return (...args) => {
+                if (Date.now() - last >= delay) {
+                    fn(...args);
+                    last = Date.now();
+                }
+            };
+        };
+
+        const scrollHandler = throttle(({ target }) => {
+            if (
+                target.scrollTop + target.clientHeight >=
+                target.scrollHeight - 1200
+            ) {
+                if (mmx_dict.loadingSearch) return;
+
+                const searchProperty = window.searchProperty;
+                const { offset, result } =
+                    mmx_dict.stmtSearchResultsDict[searchProperty];
+                if (!result) {
+                    return;
+                }
+
+                const loadingMore = document.getElementById(
+                    "loading-more-results"
+                );
+                loadingMore.style.display = "block";
+
+                mmx_dict.loadingSearch = true;
+
+                const requestBody = JSON.stringify({
+                    generatedEmbedding: result.generatedEmbedding,
+                    offset,
+                });
+                const url = `/api/match/palet`;
+                session
+                    .fetch(url, {
+                        method: "POST",
+                        body: requestBody,
+                    })
+                    .then((response) =>
+                        response.json().then((json) => {
+                            const { statements } = json;
+                            for (const stmt of statements) {
+                                if (window.searchProperty === searchProperty) {
+                                    bdoc.append(
+                                        mmx_dict.stmtSearchResult,
+                                        Mmx.GetStatementSearchResultElement(
+                                            stmt
+                                        )
+                                    );
+                                }
+
+                                mmx_dict.stmtSearchResultsDict[
+                                    searchProperty
+                                ].result.statements.push(stmt);
+                            }
+                            mmx_dict.loadingSearch = false;
+                            loadingMore.style.display = "none";
+                            mmx_dict.stmtSearchResultsDict[
+                                searchProperty
+                            ].offset += 1;
+                        })
+                    );
+            }
+        }, 50);
+
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
-            bdoc.class("mmc_stmtSearchResult")
+            bdoc.class("mmc_stmtSearchResult"),
+            "To search for Palet statements, try entering keywords above or clicking one of the AI search options.",
+            bdoc.eventListener("scroll", scrollHandler)
         );
+        mmx_dict.stmtSearchResultsDict = {
+            Text: { offset: 0 },
+            AI: { offset: 0 },
+            ["AI + Context"]: { offset: 0 },
+        };
+        mmx_dict.loadingSearch = false;
         parent.appendChild(mmx_dict.stmtSearchResult);
+        bdoc.append(
+            parent,
+            bdoc.ele(
+                "span",
+                "Loading more results...",
+                bdoc.id("loading-more-results"),
+                bdoc.attr("style", "display: none; text-align: center;")
+            )
+        );
     }
 
     static RenderKeyComposeForm(element) {
@@ -815,29 +886,48 @@ class Mmx {
 
     // === Search Actions =======
 
+    static GetSearchText() {
+        const keywords = document.getElementById("mmid_search").value;
+        if (window.searchProperty === "AI") {
+            return window.description
+                ? window.description + keywords
+                : undefined;
+        } else if (window.searchProperty === "AI + Context") {
+            return window.descriptorContext
+                ? window.descriptorContext + keywords
+                : undefined;
+        }
+        return keywords;
+    }
+
     static SearchStatements() {
         let keywords = document.getElementById("mmid_search").value;
         if (window.searchProperty == "Text") {
             let url = "/statements?keywords=" + encodeURIComponent(keywords);
             Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
         } else {
-            let requestBody = "";
-            if (window.searchProperty == "AI") {
-                requestBody += JSON.stringify({
-                    matchText: window.description + keywords,
-                });
-            } else if (window.searchProperty == "AI + Context") {
-                requestBody += JSON.stringify({
-                    matchText: window.descriptorContext + keywords,
-                });
+            const text = Mmx.GetSearchText();
+            if (!text) {
+                return;
+            }
+            const requestBody = JSON.stringify({
+                matchText: text,
+            });
+            const { prevSearch, result } =
+                mmx_dict.stmtSearchResultsDict[window.searchProperty];
+
+            if (prevSearch && prevSearch === requestBody) {
+                Mmx.SearchStatements_Callback(result);
+                return;
             }
             console.log(requestBody);
+
             let url = "/api/match/palet";
             let options = {
                 method: "POST",
-                body: JSON.stringify({ matchText: requestBody }),
+                body: requestBody,
                 headers: {
-                    "Content-type": "application/json; charset=UTF-8",
+                    "Content-Type": "application/json; charset=UTF-8",
                 },
             };
             session
@@ -845,34 +935,44 @@ class Mmx {
                 .then((response) => response.json())
                 .then((json) => {
                     console.log(json);
+                    mmx_dict.stmtSearchResultsDict[window.searchProperty] = {
+                        offset: 0,
+                        prevSearch: requestBody,
+                        result: json,
+                    };
                     Mmx.SearchStatements_Callback(json);
                 });
         }
     }
 
+    static GetStatementSearchResultElement(statement) {
+        const addStmtButton = bdoc.ele(
+            "input",
+            bdoc.attr("type", "button"),
+            bdoc.attr("value", "+"),
+            bdoc.eventListener("click", Mmx.AddStatementToKey)
+        );
+        addStmtButton.stmt = statement;
+
+        return bdoc.ele(
+            "div",
+            bdoc.class("mm_stmt"),
+            bdoc.ele("span", bdoc.class("mm_stmtAdd"), addStmtButton),
+            bdoc.ele("span", bdoc.class("mm_stmtId"), statement.id),
+            bdoc.ele("span", bdoc.class("mm_stmtType"), statement.stmtType),
+            bdoc.ele("span", bdoc.class("mm_stmtText"), statement.statement)
+        );
+    }
+
     static SearchStatements_Callback(result) {
         // Clear existing contents
         mmx_dict.stmtSearchResult.innerHTML = "";
+        mmx_dict.stmtSearchResult.style.textAlign = "left";
 
         let count = 0;
         for (let val of result.statements) {
-            const addStmtButton = bdoc.ele(
-                "input",
-                bdoc.attr("type", "button"),
-                bdoc.attr("value", "+"),
-                bdoc.eventListener("click", Mmx.AddStatementToKey)
-            );
-            addStmtButton.stmt = val;
-
             mmx_dict.stmtSearchResult.appendChild(
-                bdoc.ele(
-                    "div",
-                    bdoc.class("mm_stmt"),
-                    bdoc.ele("span", bdoc.class("mm_stmtAdd"), addStmtButton),
-                    bdoc.ele("span", bdoc.class("mm_stmtId"), val.id),
-                    bdoc.ele("span", bdoc.class("mm_stmtType"), val.stmtType),
-                    bdoc.ele("span", bdoc.class("mm_stmtText"), val.statement)
-                )
+                Mmx.GetStatementSearchResultElement(val)
             );
             ++count;
         }
