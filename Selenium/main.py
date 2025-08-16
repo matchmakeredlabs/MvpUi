@@ -1,16 +1,18 @@
 from selenium import webdriver
-from login import runLoginTests
-from exit import exit
+from login import run_login_tests
+from describe_browse import run_browse_collection_tests
+from helpers import exit
 
 def main():
-    runTests(webdriver.Firefox())
-    runTests(webdriver.Chrome())
+    run_tests(webdriver.Firefox())
+    run_tests(webdriver.Chrome())
     
     # Uncomment for Mac users
     # runTests(webdriver.Safari())
     
-def runTests(driver):
-    runLoginTests(driver)
+def run_tests(driver):
+    run_login_tests(driver)
+    run_browse_collection_tests(driver)
     # TODO: Add new tests for each part of UI interaction.
     exit(driver)
     
