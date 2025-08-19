@@ -1,12 +1,14 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
+from selenium.webdriver.support import expected_conditions as EC
 from helpers import click_home_button
+from helpers import wait_in_shadow
 
 def run_browse_collection_tests(driver):
     click_home_button(driver, "Browse & Describe")
     filter(driver, "Math", "Mathematics", "Math Help", "mathhelp")
     click_collection(driver, "Math Help's Bozonic Resources 2")
+    export(driver)
 
 def filter(driver, keyword=None, subject=None, publisher=None, organization=None):
     """
@@ -90,3 +92,36 @@ def click_collection(driver, name):
         }
       }
     """, name)
+    
+def export(driver):
+  WebDriverWait(driver, 50).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "mm-view-collection"))
+    )
+  
+  view_root = driver.find_element(By.CSS_SELECTOR, "mm-view-collection").shadow_root
+  columns = view_root.find_element(By.CLASS_NAME, "mm_columns")
+  container = columns.find_element(By.ID, "descriptor-container")
+  export_buttons = container.find_element(By.CLASS_NAME, "export-buttons")
+  
+  shadow_chain = [
+    (By.CSS_SELECTOR, "mm-view-collection", True),
+    (By.CLASS_NAME, "mm_columns", False),
+    (By.ID, "mmx_browse_tree", False),
+    (By.CSS_SELECTOR, "mm-collection", True)
+  ]
+  wait_in_shadow(driver, shadow_chain, timeout=50) # Wait until collection is fully loaded before clicking export matches button
+  
+  export_matches = export_buttons.find_element(By.ID, "match-collections-button")
+  export_matches.click()
+  
+  export_collection = export_buttons.find_element(By.CSS_SELECTOR, ".export-button.collection")
+  export_collection.click()
+  
+  export_modal = view_root.find_element(By.CSS_SELECTOR, "mm-modal")
+  button_container = export_modal.find_element(By.CLASS_NAME, "button-container-download")
+  
+  json_button = button_container.find_element(By.XPATH, "/mm-modal/div/div[1]") # Export JSON
+  json_button.click()
+  
+  csv_button = button_container.find_element(By.XPATH, "/mm-modal/div/div[2]") # Export CSV
+  csv_button.click()

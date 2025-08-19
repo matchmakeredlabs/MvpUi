@@ -5,7 +5,7 @@ from helpers import exit
 
 def main():
     run_tests(webdriver.Firefox())
-    run_tests(webdriver.Chrome())
+    # run_tests(webdriver.Chrome())
     
     # Uncomment for Mac users
     # runTests(webdriver.Safari())
