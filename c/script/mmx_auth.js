@@ -66,7 +66,7 @@ export default class mmxAuth {
         let logoutButton = document.createElement("span");
         logoutButton.id = "logout-button";
         logoutButton.className = "small-button small-button5";
-        logoutButton.textContent = "Logout";
+        logoutButton.textContent = "Log Out";
         logoutButton.addEventListener("click", function () {
             localStorage.removeItem(mmxAuth.sessionKey);
             mmxAuth.redirectToLogin();
