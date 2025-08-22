@@ -201,8 +201,8 @@ class Mmx {
 
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         if (event.target.textContent === "Text") {
-            mmid_search.style.display = "";
-            mmid_search_btn.style.display = "";
+            // mmid_search.style.display = "";
+            // mmid_search_btn.style.display = "";
 
             mmid_search.placeholder = "Add key words to search";
             let text = document.createElement("span");
@@ -221,8 +221,9 @@ class Mmx {
             searchResults.textContent =
                 "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
         } else {
-            mmid_search.style.display = "none";
-            mmid_search_btn.style.display = "none";
+            mmid_search.placeholder = "Add another term to augment the search";
+            // mmid_search.style.display = "none";
+            // mmid_search_btn.style.display = "none";
 
             searchResults.textContent = "Loading...";
             searchResults.style.textAlign = "center";
