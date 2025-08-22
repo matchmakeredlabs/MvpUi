@@ -26,7 +26,7 @@ export default class ViewCollection extends HTMLElement {
     };
 
     #collection;
-
+    isLoading = false;
     loadingElement;
 
     static fetchCollection = async (collectionId) => {
@@ -210,7 +210,9 @@ export default class ViewCollection extends HTMLElement {
     };
 
     connectedCallback() {
+        this.isLoading = true;
         this.loadingElement = bdoc.ele("h2", "Loading...");
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -245,8 +247,9 @@ export default class ViewCollection extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("export-button collection"),
-
+                            bdoc.id("export-collection-button"),
                             bdoc.attr("style", "margin-right: 25px"),
+                            bdoc.attr("disabled", "true"),
                             "Export Collection",
                             bdoc.eventListener("click", () => {
                                 customElements
@@ -260,7 +263,9 @@ export default class ViewCollection extends HTMLElement {
                         ),
                         bdoc.ele(
                             "button",
+                            bdoc.class("export-button matches"),
                             bdoc.id("match-collections-button"),
+                            bdoc.attr("disabled", "true"),
                             "Export Collection Matches",
                             bdoc.eventListener(
                                 "click",
@@ -330,6 +335,14 @@ export default class ViewCollection extends HTMLElement {
         });
 
         this.loadingElement.style.display = "none";
+        this.isLoading = false;
+
+        const exportBtn  = this.shadowRoot.getElementById("export-collection-button");
+        const matchesBtn = this.shadowRoot.getElementById("match-collections-button");
+        if (exportBtn)  {
+            exportBtn.disabled  = false;
+        }
+        if (matchesBtn) matchesBtn.disabled = false;
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
