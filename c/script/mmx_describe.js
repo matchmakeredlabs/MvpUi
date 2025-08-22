@@ -152,8 +152,6 @@ class Mmx {
     static RenderKey_Callback(jskey, element) {
         element.innerHTML = "";
 
-        console.log("whatever");
-
         element.appendChild(
             bdoc.ele(
                 "div",
@@ -196,12 +194,16 @@ class Mmx {
         });
 
         let mmid_search = document.getElementById("mmid_search");
+        let mmid_search_btn = document.getElementById("mmid_search_btn")
         let searchOneLiner = document.getElementById("searchOneLiner");
 
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
 
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
         if (event.target.textContent === "Text") {
+            mmid_search.style.display = "";
+            mmid_search_btn.style.display = "";
+
             mmid_search.placeholder = "Add key words to search";
             let text = document.createElement("span");
             text.style = "margin-right: 0.5em;";
@@ -219,7 +221,8 @@ class Mmx {
             searchResults.textContent =
                 "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
         } else {
-            mmid_search.placeholder = "Add another term to augment the search";
+            mmid_search.style.display = "none";
+            mmid_search_btn.style.display = "none";
 
             searchResults.textContent = "Loading...";
             searchResults.style.textAlign = "center";
@@ -363,6 +366,7 @@ class Mmx {
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "button"),
+                    bdoc.attr("id", "mmid_search_btn"),
                     bdoc.class("mmc_stmtSearchButton"),
                     bdoc.attr("value", "\uD83D\uDD0D"),
                     bdoc.eventListener("click", Mmx.SearchStatements)
