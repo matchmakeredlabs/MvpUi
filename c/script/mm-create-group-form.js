@@ -47,8 +47,14 @@ export default class MmCreateGroupForm extends HTMLElement {
             members: members,
         };
         const description = formData.get("description");
-        if (description && description.trim() !== "") {
+
+        if (description) {
+            if (description.trim() == "") {
+                variables.description = ""
+            }
             variables.description = formData.get("description");
+        } else {
+            variables.description = ""
         }
         const response = await MmCreateGroupForm.createGroup(variables);
 
