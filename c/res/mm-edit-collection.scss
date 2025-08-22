@@ -66,6 +66,11 @@
         height: auto;
     }
 
+    #expand-contract-buttons .expand-contract-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
     .expand-public-buttons {
         display: flex;
         flex-direction: row;
@@ -88,21 +93,25 @@
     }
 
     .export-button {
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin: 10px;
-            float: right;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin: 10px;
+        float: right;
     }
+    .export-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    } 
     .export-button.matches {
         background-color: #0068b3;
     }
     .export-button.collection {
         background-color: #5D9732;
     }
-        .export-button.collection:hover {
-            background-color: #467125;
-        }
+    .export-button.collection:hover {
+        background-color: #467125;
+    }
 }
