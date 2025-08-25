@@ -512,6 +512,7 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.ele(
                         "button",
                         bdoc.class("expand-contract-button"),
+                        bdoc.id("expand-btn"),
                         bdoc.eventListener(
                             "click",
                             collectionDisplay.expandAll
@@ -521,6 +522,8 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.ele(
                         "button",
                         bdoc.class("expand-contract-button"),
+                        bdoc.id("contract-btn"),
+                        bdoc.attr("disabled", "true"),
                         bdoc.eventListener("click", () => {
                             if (!collectionDisplay.contractAll()) {
                                 collectionHeaderButton.click();
