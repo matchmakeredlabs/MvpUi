@@ -362,6 +362,7 @@ export default class ViewCollection extends HTMLElement {
 
         bdoc.append(browseTree, headerContainer);
         const collectionEle = bdoc.ele("mm-collection");
+        collectionEle.numOnPage = 0;
         bdoc.append(browseTree, collectionEle);
         Promise.all([
             customElements.whenDefined("mm-collection"),

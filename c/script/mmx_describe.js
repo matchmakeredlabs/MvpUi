@@ -196,6 +196,7 @@ class Mmx {
         });
 
         let mmid_search = document.getElementById("mmid_search");
+        mmid_search.value = "";
         let mmid_search_btn = document.getElementById("mmid_search_btn")
         let searchOneLiner = document.getElementById("searchOneLiner");
 
@@ -1605,7 +1606,18 @@ class Mmx {
         );
         const data = await response.json();
         if (data.success) {
-            Mmx.LoadLrmiFormFromDatabase(data.id);
+            await Mmx.LoadLrmiFormFromDatabase(data.id);
+
+            let mmid_search = document.getElementById("mmid_search");
+            mmid_search.value = "";
+
+            if (window.searchProperty !== "Text") {
+                Mmx.SearchStatements();
+            } else {
+                const searchResults = document.querySelector(".mmc_stmtSearchResult");
+                searchResults.textContent =
+                "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
+            }
         } else {
             if (nextPrev) {
                 alert("No more descriptors.");

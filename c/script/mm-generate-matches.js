@@ -8,6 +8,7 @@ import MmElementCard from "./mm-element-card.js";
 
 class MmGenerateMatches extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
+    numOnPage = 0;
 
     #collections = [];
     #customSetsData = {};
@@ -493,12 +494,14 @@ class MmGenerateMatches extends HTMLElement {
     };
 
     #render = () => {
+        let seq = 0;
         const independentSetsContainer =
             this.shadowRoot.getElementById("independent-sets");
         const independentSets = this.#sets.independent;
 
-        const generateDisplaySet = (setName, descriptors, setId) => {
+        const generateDisplaySet = (setName, descriptors, setId, idx) => {
             const collectionDisplay = bdoc.ele("mm-collection");
+            collectionDisplay.numOnPage = idx;
 
             const collectionContainer = bdoc.ele(
                 "div",
@@ -512,7 +515,7 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.ele(
                         "button",
                         bdoc.class("expand-contract-button"),
-                        bdoc.id("expand-btn"),
+                        bdoc.id("expand-btn" + idx),
                         bdoc.eventListener(
                             "click",
                             collectionDisplay.expandAll
@@ -522,7 +525,7 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.ele(
                         "button",
                         bdoc.class("expand-contract-button"),
-                        bdoc.id("contract-btn"),
+                        bdoc.id("contract-btn" + idx),
                         bdoc.attr("disabled", "true"),
                         bdoc.eventListener("click", () => {
                             if (!collectionDisplay.contractAll()) {
@@ -593,10 +596,13 @@ class MmGenerateMatches extends HTMLElement {
                 switch (setType) {
                     case "custom-set":
                         for (const customSet of sets) {
+                            const idx = seq++;
                             displaySets.push(
                                 generateDisplaySet(
                                     customSet.name,
-                                    Object.values(customSet.descriptors)
+                                    Object.values(customSet.descriptors),
+                                    undefined,
+                                    idx
                                 )
                             );
                         }
@@ -605,15 +611,17 @@ class MmGenerateMatches extends HTMLElement {
                         for (const collection of sets) {
                             const elements =
                                 this.#collectionElements[collection.id];
-
+                            const idx = seq++
                             displaySets.push(
                                 generateDisplaySet(
                                     collection.name,
                                     elements,
-                                    collection.id
+                                    collection.id,
+                                    idx
                                 )
                             );
                         }
+                        break
                 }
 
                 bdoc.append(

@@ -10,6 +10,10 @@
 }
 
 #mmx_browse_tree {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 
     h2 {
         @include title2;
@@ -228,4 +232,12 @@
     // }
     
 
+}
+
+/* Make the custom element itself the scroll container */
+#mmx_browse_tree mm-collection {
+    display: block;   /* custom elements are inline by default */
+    flex: 1 1 auto;   /* take remaining height */
+    min-height: 0;    /* critical in flex layouts */
+    overflow: auto;   /* scrolls the shadow DOM contents */
 }

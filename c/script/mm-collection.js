@@ -10,6 +10,7 @@ class MmCollection extends HTMLElement {
     idToIntId = {};
 
     loadingElement;
+    numOnPage;
 
     maxIntId = 0;
 
@@ -66,7 +67,7 @@ class MmCollection extends HTMLElement {
 
         // Disable expand button if fully expanded on startup
         if (this.isFullyExpanded()) {
-            const expandBtn = this.getRootNode().getElementById("expand-btn")
+            const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
 
             if (expandBtn) {
                 expandBtn.disabled = true
@@ -339,6 +340,7 @@ class MmCollection extends HTMLElement {
 
     get expandAll() {
         return () => {
+            console.log(this.numOnPage)
             const listEles = this.shadowRoot.querySelectorAll("li");
 
             listEles.forEach((ele) => {
@@ -346,7 +348,7 @@ class MmCollection extends HTMLElement {
                     MmCollection.expand(ele.feid, ele, this);
 
                     // Enable contract button
-                    const contractBtn = this.getRootNode().getElementById("contract-btn")
+                    const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
                     if (contractBtn) {
                         contractBtn.disabled = false
                     }
@@ -355,7 +357,7 @@ class MmCollection extends HTMLElement {
 
             // Disable expand button if fully expanded
             if (this.isFullyExpanded()) {
-                const expandBtn = this.getRootNode().getElementById("expand-btn")
+                const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
 
                 if (expandBtn) {
                     expandBtn.disabled = true
@@ -366,6 +368,7 @@ class MmCollection extends HTMLElement {
 
     get contractAll() {
         return () => {
+            console.log(this.numOnPage)
             let contracted = false;
             const listEles = this.shadowRoot.querySelectorAll("li");
 
@@ -381,7 +384,7 @@ class MmCollection extends HTMLElement {
                     contracted = true;
 
                     // Enable expand button, since something was successfully contracted
-                    const expandBtn = this.getRootNode().getElementById("expand-btn")
+                    const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
                     if (expandBtn) {
                         expandBtn.disabled = false
                     }
@@ -389,7 +392,7 @@ class MmCollection extends HTMLElement {
             });
 
             if (this.isFullyContracted()) {
-                const contractBtn = this.getRootNode().getElementById("contract-btn")
+                const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
 
                 if (contractBtn) {
                     contractBtn.disabled = true
@@ -437,14 +440,14 @@ class MmCollection extends HTMLElement {
             bdoc.ele(
                 "button",
                 bdoc.class("expand-contract-button"),
-                bdoc.id("expand-btn"),
+                bdoc.id("expand-btn" + this.numOnPage),
                 bdoc.eventListener("click", this.expandAll),
                 "Expand"
             ),
             bdoc.ele(
                 "button",
                 bdoc.class("expand-contract-button"),
-                bdoc.id("contract-btn"),
+                bdoc.id("contract-btn" + this.numOnPage),
                 bdoc.attr("disabled", "true"),
                 bdoc.eventListener("click", this.contractAll),
                 "Collapse"
@@ -456,8 +459,8 @@ class MmCollection extends HTMLElement {
         (origin) =>
         ({ target }) => {
             const li = this.#getLi(target);
-            const expandBtn = this.getRootNode().getElementById("expand-btn")
-            const contractBtn = this.getRootNode().getElementById("contract-btn")
+            const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
+            const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
 
             if (li.expanded) {
                 MmCollection.contract(li);
