@@ -12,6 +12,8 @@ const session = new bsession(config.backEndUrl, config.sessionTag);
 // Container for MMX Globals
 let mmx_dict = {};
 window.searchProperty = "Text";
+mmx_dict.searchToken = 0;
+mmx_dict.inFlight = false;
 
 function extractStmtIDs() {
     const stmtIdElements = document.querySelectorAll(".mm_stmtId");
@@ -152,8 +154,6 @@ class Mmx {
     static RenderKey_Callback(jskey, element) {
         element.innerHTML = "";
 
-        console.log("whatever");
-
         element.appendChild(
             bdoc.ele(
                 "div",
@@ -196,6 +196,8 @@ class Mmx {
         });
 
         let mmid_search = document.getElementById("mmid_search");
+        mmid_search.value = "";
+        let mmid_search_btn = document.getElementById("mmid_search_btn")
         let searchOneLiner = document.getElementById("searchOneLiner");
 
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
@@ -220,9 +222,6 @@ class Mmx {
                 "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
         } else {
             mmid_search.placeholder = "Add another term to augment the search";
-
-            searchResults.textContent = "Loading...";
-            searchResults.style.textAlign = "center";
 
             if (window.searchProperty == "AI") {
                 let text = document.createElement("span");
@@ -363,6 +362,7 @@ class Mmx {
                 bdoc.ele(
                     "input",
                     bdoc.attr("type", "button"),
+                    bdoc.attr("id", "mmid_search_btn"),
                     bdoc.class("mmc_stmtSearchButton"),
                     bdoc.attr("value", "\uD83D\uDD0D"),
                     bdoc.eventListener("click", Mmx.SearchStatements)
@@ -397,62 +397,54 @@ class Mmx {
         };
 
         const scrollHandler = throttle(({ target }) => {
-            if (
-                target.scrollTop + target.clientHeight >=
-                target.scrollHeight - 1200
-            ) {
-                if (mmx_dict.loadingSearch) return;
+            const searchProperty = window.searchProperty;
 
-                const searchProperty = window.searchProperty;
-                const { offset, result } =
-                    mmx_dict.stmtSearchResultsDict[searchProperty];
-                if (!result) {
-                    return;
-                }
+            // guard 1: don’t paginate while a request is in flight
+            if (mmx_dict.inFlight) return;
 
-                const loadingMore = document.getElementById(
-                    "loading-more-results"
-                );
-                loadingMore.style.display = "block";
+            if (target.scrollTop + target.clientHeight < target.scrollHeight - 1200) return;
 
-                mmx_dict.loadingSearch = true;
+            // guard 2: must have a result set for this tab
+            const entry = mmx_dict.stmtSearchResultsDict[searchProperty];
+            if (!entry || !entry.result) return;
 
-                const requestBody = JSON.stringify({
-                    generatedEmbedding: result.generatedEmbedding,
-                    offset,
+            // guard 3: make sure this is still the latest search
+            if (entry.token !== mmx_dict.searchToken) return;
+
+            const loadingMore = document.getElementById("loading-more-results");
+            if (loadingMore) loadingMore.style.display = "block";
+
+            mmx_dict.inFlight = true;
+
+            const requestBody = JSON.stringify({
+                generatedEmbedding: entry.result.generatedEmbedding,
+                offset: entry.offset,
+            });
+
+            session.fetch("/api/match/palet", { method: "POST", body: requestBody })
+                .then(r => r.json())
+                .then(({ statements }) => {
+                    // stale? bail silently
+                    if (entry.token !== mmx_dict.searchToken) { mmx_dict.inFlight = false; return; }
+
+                    for (const stmt of statements) {
+                        if (window.searchProperty === searchProperty) {
+                        bdoc.append(
+                            mmx_dict.stmtSearchResult,
+                            Mmx.GetStatementSearchResultElement(stmt)
+                        );
+                        }
+                        entry.result.statements.push(stmt);
+                    }
+                    entry.offset += 1;
+                })
+                .finally(() => {
+                    mmx_dict.inFlight = false;
+                    const loadingMore = document.getElementById("loading-more-results");
+                    if (loadingMore) loadingMore.style.display = "none";
                 });
-                const url = `/api/match/palet`;
-                session
-                    .fetch(url, {
-                        method: "POST",
-                        body: requestBody,
-                    })
-                    .then((response) =>
-                        response.json().then((json) => {
-                            const { statements } = json;
-                            for (const stmt of statements) {
-                                if (window.searchProperty === searchProperty) {
-                                    bdoc.append(
-                                        mmx_dict.stmtSearchResult,
-                                        Mmx.GetStatementSearchResultElement(
-                                            stmt
-                                        )
-                                    );
-                                }
-
-                                mmx_dict.stmtSearchResultsDict[
-                                    searchProperty
-                                ].result.statements.push(stmt);
-                            }
-                            mmx_dict.loadingSearch = false;
-                            loadingMore.style.display = "none";
-                            mmx_dict.stmtSearchResultsDict[
-                                searchProperty
-                            ].offset += 1;
-                        })
-                    );
-            }
         }, 50);
+
 
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
@@ -901,48 +893,84 @@ class Mmx {
     }
 
     static SearchStatements() {
-        let keywords = document.getElementById("mmid_search").value;
-        if (window.searchProperty == "Text") {
-            let url = "/statements?keywords=" + encodeURIComponent(keywords);
-            Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
-        } else {
-            const text = Mmx.GetSearchText();
-            if (!text) {
-                return;
-            }
-            const requestBody = JSON.stringify({
-                matchText: text,
-            });
-            const { prevSearch, result } =
-                mmx_dict.stmtSearchResultsDict[window.searchProperty];
+        // claim a new search token
+        const token = ++mmx_dict.searchToken;
 
-            if (prevSearch && prevSearch === requestBody) {
-                Mmx.SearchStatements_Callback(result);
-                return;
-            }
-            console.log(requestBody);
+        // reset UI
+        const loadingMore = document.getElementById("loading-more-results");
+        if (loadingMore) loadingMore.style.display = "none";
 
-            let url = "/api/match/palet";
-            let options = {
-                method: "POST",
-                body: requestBody,
-                headers: {
-                    "Content-Type": "application/json; charset=UTF-8",
-                },
-            };
-            session
-                .fetch(url, options)
-                .then((response) => response.json())
-                .then((json) => {
-                    console.log(json);
-                    mmx_dict.stmtSearchResultsDict[window.searchProperty] = {
-                        offset: 0,
-                        prevSearch: requestBody,
-                        result: json,
-                    };
-                    Mmx.SearchStatements_Callback(json);
-                });
+        const searchResults = document.querySelector(".mmc_stmtSearchResult");
+        if (searchResults) {
+            searchResults.textContent = "Loading...";
+            searchResults.style.textAlign = "center";
+            searchResults.scrollTop = 0;
         }
+
+        mmx_dict.inFlight = true;
+
+        const keywords = document.getElementById("mmid_search").value;
+        if (window.searchProperty === "Text") {
+            const keywords = document.getElementById("mmid_search").value;
+            const url = "/statements?keywords=" + encodeURIComponent(keywords);
+            Mmx.LoadJsonAsync(url, (json) => {
+            // stale? ignore
+            if (token !== mmx_dict.searchToken) return;
+
+            // cache & render as you already do…
+            mmx_dict.inFlight = false;
+            if (loadingMore) loadingMore.style.display = "none";
+            Mmx.SearchStatements_Callback(json);
+            });
+            return;
+        }
+
+        // AI / AI + Context path
+        const text = Mmx.GetSearchText();
+        if (!text) { 
+            mmx_dict.inFlight = false;
+            return;
+        }
+
+        const requestBody = JSON.stringify({ matchText: text });
+
+        // cache lookup
+        const entry = mmx_dict.stmtSearchResultsDict[window.searchProperty];
+        if (entry?.prevSearch === requestBody && entry?.result) {
+            // refresh token association for this result set
+            entry.token = token;
+            entry.offset = 0;            // start pagination fresh
+            mmx_dict.inFlight = false;
+            if (loadingMore) loadingMore.style.display = "none";
+            return Mmx.SearchStatements_Callback(entry.result);
+        }
+
+        session.fetch("/api/match/palet", {
+            method: "POST",
+            body: requestBody,
+            headers: { "Content-Type": "application/json; charset=UTF-8" },
+        })
+        .then(r => r.json())
+        .then((json) => {
+            if (token !== mmx_dict.searchToken) return; // stale
+
+            mmx_dict.stmtSearchResultsDict[window.searchProperty] = {
+            token,                // bind this cache to the latest search
+            offset: 0,
+            prevSearch: requestBody,
+            result: json,
+            };
+
+            Mmx.SearchStatements_Callback(json);
+        })
+        .finally(() => {
+            // only the current search clears inFlight
+            if (token === mmx_dict.searchToken) {
+            mmx_dict.inFlight = false;
+            const loadingMore = document.getElementById("loading-more-results");
+            if (loadingMore) loadingMore.style.display = "none";
+            }
+        });
     }
 
     static GetStatementSearchResultElement(statement) {
@@ -1578,7 +1606,18 @@ class Mmx {
         );
         const data = await response.json();
         if (data.success) {
-            Mmx.LoadLrmiFormFromDatabase(data.id);
+            await Mmx.LoadLrmiFormFromDatabase(data.id);
+
+            let mmid_search = document.getElementById("mmid_search");
+            mmid_search.value = "";
+
+            if (window.searchProperty !== "Text") {
+                Mmx.SearchStatements();
+            } else {
+                const searchResults = document.querySelector(".mmc_stmtSearchResult");
+                searchResults.textContent =
+                "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
+            }
         } else {
             if (nextPrev) {
                 alert("No more descriptors.");

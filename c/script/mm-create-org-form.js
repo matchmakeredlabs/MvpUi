@@ -22,8 +22,13 @@ export default class MmCreateOrgForm extends HTMLElement {
             members: [],
         };
         const description = formData.get("description");
-        if (description && description.trim() !== "") {
+        if (description) {
+            if (description.trim() == "") {
+                variables.description = ""
+            }
             variables.description = formData.get("description");
+        } else {
+            variables.description = ""
         }
         const response = await MmCreateOrgForm.createOrg(variables);
 

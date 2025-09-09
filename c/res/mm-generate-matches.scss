@@ -139,6 +139,11 @@
             height: auto;
         }
 
+        #expand-contract-buttons .expand-contract-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         button.mmb_tri {
                 background-color: inherit;
                 width: 1.5em;

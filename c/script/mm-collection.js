@@ -10,6 +10,7 @@ class MmCollection extends HTMLElement {
     idToIntId = {};
 
     loadingElement;
+    numOnPage;
 
     maxIntId = 0;
 
@@ -63,6 +64,15 @@ class MmCollection extends HTMLElement {
             }
         }
         MmCollection.expand(0, this.shadowRoot, this);
+
+        // Disable expand button if fully expanded on startup
+        if (this.isFullyExpanded()) {
+            const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
+
+            if (expandBtn) {
+                expandBtn.disabled = true
+            }
+        }
     }
 
     dfsWithPostfixCallback = (intId, callback) => {
@@ -330,19 +340,38 @@ class MmCollection extends HTMLElement {
 
     get expandAll() {
         return () => {
+            console.log(this.numOnPage)
             const listEles = this.shadowRoot.querySelectorAll("li");
+
             listEles.forEach((ele) => {
                 if (ele.expanded === false) {
                     MmCollection.expand(ele.feid, ele, this);
+
+                    // Enable contract button
+                    const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
+                    if (contractBtn) {
+                        contractBtn.disabled = false
+                    }
                 }
             });
+
+            // Disable expand button if fully expanded
+            if (this.isFullyExpanded()) {
+                const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
+
+                if (expandBtn) {
+                    expandBtn.disabled = true
+                }
+            }
         };
     }
 
     get contractAll() {
         return () => {
+            console.log(this.numOnPage)
             let contracted = false;
             const listEles = this.shadowRoot.querySelectorAll("li");
+
             listEles.forEach((ele) => {
                 if (ele.expanded === true) {
                     const childLists = ele.querySelectorAll("li");
@@ -353,10 +382,55 @@ class MmCollection extends HTMLElement {
                     }
                     MmCollection.contract(ele);
                     contracted = true;
+
+                    // Enable expand button, since something was successfully contracted
+                    const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
+                    if (expandBtn) {
+                        expandBtn.disabled = false
+                    }
                 }
             });
+
+            if (this.isFullyContracted()) {
+                const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
+
+                if (contractBtn) {
+                    contractBtn.disabled = true
+                }
+            }
             return contracted;
         };
+    }
+
+    isFullyExpanded = () => {
+        // Check if the collection is fully expanded by seeing if any of the new list elements have children
+
+        const newListEles = this.shadowRoot.querySelectorAll("li");
+        let fullyExpanded = true;
+        newListEles.forEach((ele) => {
+            const d = this.descriptors[ele.feid];
+            const hasChildren = d && Array.isArray(d.intHasPart) && d.intHasPart.length > 0;
+
+            if (!ele.expanded && hasChildren) {
+                fullyExpanded = false
+            }
+        });
+
+        return fullyExpanded;
+
+    }
+
+    isFullyContracted = () => {
+        const newListEles = this.shadowRoot.querySelectorAll("li");
+        let fullyContracted = true;
+        newListEles.forEach((ele) => {
+            if (ele.expanded === true) {
+                fullyContracted = false;
+            }
+        })
+
+        return fullyContracted;
+        
     }
 
     get expandContractButtons() {
@@ -366,12 +440,15 @@ class MmCollection extends HTMLElement {
             bdoc.ele(
                 "button",
                 bdoc.class("expand-contract-button"),
+                bdoc.id("expand-btn" + this.numOnPage),
                 bdoc.eventListener("click", this.expandAll),
                 "Expand"
             ),
             bdoc.ele(
                 "button",
                 bdoc.class("expand-contract-button"),
+                bdoc.id("contract-btn" + this.numOnPage),
+                bdoc.attr("disabled", "true"),
                 bdoc.eventListener("click", this.contractAll),
                 "Collapse"
             )
@@ -382,10 +459,23 @@ class MmCollection extends HTMLElement {
         (origin) =>
         ({ target }) => {
             const li = this.#getLi(target);
+            const expandBtn = this.getRootNode().getElementById("expand-btn" + this.numOnPage)
+            const contractBtn = this.getRootNode().getElementById("contract-btn" + this.numOnPage)
+
             if (li.expanded) {
                 MmCollection.contract(li);
+
+                if (this.isFullyContracted()) {
+                    contractBtn.disabled = true;
+                }
+                expandBtn.disabled = false;
             } else {
                 MmCollection.expand(li.feid, li, origin);
+
+                if (this.isFullyExpanded()) {
+                    expandBtn.disabled = true
+                }
+                contractBtn.disabled = false;
             }
             this.clickSelect(origin)({ target: li.querySelector("span") });
             // origin.select(target, this.descriptors[target.parentElement.feid]);
