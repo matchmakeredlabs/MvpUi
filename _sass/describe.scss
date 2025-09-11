@@ -16,6 +16,15 @@ $w_type: 4em;
     margin-right: 1em;
 }
 
+.arrow_button {
+    cursor: pointer;
+}
+
+.arrow_button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .mm_descColumns>div:last-child {
     margin-right: 0;
 }
