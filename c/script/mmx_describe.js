@@ -7,6 +7,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmMatchProfileSelect from "./mm-match-profile-select.js";
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 // Container for MMX Globals
@@ -186,14 +187,18 @@ class Mmx {
     }
 
     static setActive(event) {
-        window.searchProperty = event.target.textContent;
+        var active = Array(3).fill(false);
 
-        let element = event.target;
         // Remove 'active' class from all buttons
         var buttons = document.querySelectorAll(".toggle-button");
-        buttons.forEach(function (button) {
+        buttons.forEach(function (button, index) {
+            active[index] = button.classList.contains("active");
             button.classList.remove("active");
         });
+
+        let text_btn = document.getElementById("search_text");
+        let desc_btn = document.getElementById("search_desc");
+        let context_btn = document.getElementById("search_context");
 
         let mmid_search = document.getElementById("mmid_search");
         mmid_search.value = "";
@@ -203,7 +208,7 @@ class Mmx {
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
 
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
-        if (event.target.textContent === "Text") {
+        if (event.target.textContent === "Text" || (event.target.textContent === "+ Descriptor" && active[1])) {
             mmid_search.placeholder = "Add key words to search";
             let text = document.createElement("span");
             text.style = "margin-right: 0.5em;";
@@ -219,11 +224,15 @@ class Mmx {
             searchOneLiner.innerHTML += tooltip;
 
             searchResults.textContent =
-                "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
+                "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.";
+            text_btn.classList.add("active");
+            window.searchProperty = "Text";
+
+            localStorage.setItem("preferredSearch", "Text");
         } else {
             mmid_search.placeholder = "Add another term to augment the search";
 
-            if (window.searchProperty == "AI") {
+            if (event.target.textContent == "+ Descriptor" || (event.target.textContent === "+ Context" && active[2])) {
                 let text = document.createElement("span");
                 text.style = "margin-right: 0.5em;";
                 text.textContent =
@@ -231,7 +240,14 @@ class Mmx {
                 searchOneLiner.innerHTML = "";
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
-            } else if (window.searchProperty == "AI + Context") {
+
+                text_btn.classList.add("active");
+                desc_btn.classList.add("active");
+
+                window.searchProperty = "+ Descriptor";
+
+                localStorage.setItem("preferredSearch", "+ Descriptor");
+            } else if (event.target.textContent == "+ Context" && !active[2]) {
                 let text = document.createElement("span");
                 text.style = "margin-right: 0.5em;";
                 text.textContent =
@@ -239,15 +255,27 @@ class Mmx {
                 searchOneLiner.innerHTML = "";
                 searchOneLiner.appendChild(text);
                 searchOneLiner.innerHTML += tooltip;
+
+                text_btn.classList.add("active");
+                desc_btn.classList.add("active");
+                context_btn.classList.add("active");
+
+                window.searchProperty = "+ Context";
+                localStorage.setItem("preferredSearch", "+ Context");
             }
+
             Mmx.SearchStatements();
         }
-
-        // Add 'active' class to the clicked button
-        element.classList.add("active");
     }
 
-    static RenderStatementSearch(element) {
+    static async RenderStatementSearch(element) {
+        // Load eco mode setting
+        if (localStorage.getItem("ecoChecked") === null) {
+            // If eco mode is not defined, have eco mode be turned off by default and AI search be preferred
+            localStorage.setItem("ecoChecked", false)
+            localStorage.setItem("preferredSearch", "Text")
+        }
+
         // Search replaces this element rather than going into it
         // This won't work when we make search into a webElement
         // but we'll cross that bridge later.
@@ -258,10 +286,9 @@ class Mmx {
         parent.appendChild(
             bdoc.ele(
                 "div",
-                // bdoc.class("control"),
                 bdoc.attr(
                     "style",
-                    "display: flex; flex-wrap: wrap; margin-bottom: 0.5rem; align-items: flex-end;"
+                    "flex-wrap: wrap; margin-bottom: 0.5rem; align-items: flex-end; justify-content: space-between"
                 ),
                 bdoc.class("toggle-container"),
                 bdoc.ele(
@@ -281,48 +308,45 @@ class Mmx {
                     bdoc.ele(
                         "div",
                         bdoc.class("toggle-button active"),
+                        bdoc.attr("id", "search_text"),
                         bdoc.eventListener("click", Mmx.setActive),
                         "Text"
                     ),
                     bdoc.ele(
                         "div",
-                        bdoc.class("toggle-button-bionic-container"),
-                        "Bionic",
+                        bdoc.class("toggle-button"),
+                        bdoc.attr("id", "search_desc"),
+                        bdoc.eventListener("click", Mmx.setActive),
+                        "+ Descriptor"
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("toggle-button"),
+                        bdoc.attr("id", "search_context"),
+                        bdoc.eventListener("click", Mmx.setActive),
+                        "+ Context"
+                    )
+                ),
+                bdoc.ele(
+                    "div",
+                    bdoc.attr(
+                        "style",
+                        "display: flex; flex-direction: column; align-items: center;"
+                    ),
+                    "Eco Mode",
+                    bdoc.ele(
+                        "span",
+                        document.createTextNode("On"),
                         bdoc.ele(
-                            "div",
-                            bdoc.class("toggle-button-container"),
-                            bdoc.ele(
-                                "div",
-                                bdoc.class("toggle-button"),
-                                bdoc.eventListener("click", Mmx.setActive),
-                                "AI"
-                            ),
-                            bdoc.ele(
-                                "div",
-                                bdoc.class("toggle-button"),
-                                bdoc.eventListener("click", Mmx.setActive),
-                                "AI + Context"
-                            )
-                        )
+                            "input",
+                            bdoc.attr("type", "checkbox"),
+                            bdoc.attr("id", "search_eco"),
+                            bdoc.class("toggle-switch"),
+                            bdoc.eventListener("click", Mmx.ToggleEco),
+                        ),
+                        document.createTextNode("AI")
                     )
                 )
-                // bdoc.ele(
-                //     "div",
-                //     bdoc.attr(
-                //         "style",
-                //         "display: flex; align-items: flex-end; padding-bottom: 0.25em; gap: 0.5em;"
-                //     ),
-                //     bdoc.ele("span", "AI Algorithm:  "),
-                //     bdoc.ele(
-                //         "select",
-                //         bdoc.attr("style", "width: 70px;"),
-                //         bdoc.ele(
-                //             "option",
-                //             bdoc.attr("value", "Cosine Similarity"),
-                //             "Cosine Similarity"
-                //         )
-                //     )
-                // )
             )
         );
 
@@ -351,7 +375,7 @@ class Mmx {
                     bdoc.attr("type", "search"),
                     bdoc.attr("id", "mmid_search"),
                     bdoc.class("mmc_stmtSearch"),
-                    bdoc.attr("placeholder", "Enter search keywords..."),
+                    bdoc.attr("placeholder", "Add key words to search"),
                     bdoc.eventListener("keydown", (e) => {
                         if (e.key === "Enter") {
                             e.preventDefault();
@@ -369,8 +393,6 @@ class Mmx {
                 )
             )
         );
-
-        // The remainder gets
 
         // Results header
         parent.appendChild(
@@ -449,7 +471,7 @@ class Mmx {
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
             bdoc.class("mmc_stmtSearchResult"),
-            "To search for Palet statements, try entering keywords above or clicking one of the AI search options.",
+            "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.",
             bdoc.eventListener("scroll", scrollHandler)
         );
         mmx_dict.stmtSearchResultsDict = {
@@ -468,6 +490,32 @@ class Mmx {
                 bdoc.attr("style", "display: none; text-align: center;")
             )
         );
+
+        const ecoSearch = document.getElementById("search_eco");
+        ecoSearch.checked = (localStorage.getItem("ecoChecked") === "true");
+
+        const preferredSearch = localStorage.getItem("preferredSearch");
+        let btn;
+
+        switch (preferredSearch) {
+            case ("Text"):
+                btn = document.getElementById("search_text");
+                break;
+            case ("+ Descriptor"):
+                btn = document.getElementById("search_desc");
+                break;
+            case ("+ Context"):
+                btn = document.getElementById("search_context");
+                break;
+        }
+        window.searchProperty = preferredSearch
+
+        Mmx.setActive({ target: btn });  // simulate click event
+    }
+
+    static ToggleEco() {
+        localStorage.setItem("ecoChecked", document.getElementById("search_eco").checked);
+        Mmx.SearchStatements();
     }
 
     static RenderKeyComposeForm(element) {
@@ -618,8 +666,12 @@ class Mmx {
         );
 
         {
-            let controlsLeft = bdoc.ele("span", bdoc.class("controls_left"));
-            let controlsRight = bdoc.ele("span", bdoc.class("controls_right"));
+            let controlsLeft = bdoc.ele("span", 
+                bdoc.class("controls_left"),
+            );
+            let controlsRight = bdoc.ele("span", 
+                bdoc.class("controls_right"),
+            );
             let controls = bdoc.ele(
                 "div",
                 bdoc.class("controls"),
@@ -671,7 +723,9 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.PrevDescriptor),
-                    bdoc.attr("style", "cursor: pointer;"),
+                    bdoc.class("arrow_button"),
+                    bdoc.attr("id", "left_arrow"),
+                    bdoc.attr("disabled", "true"),                    
                     "←"
                 )
             );
@@ -680,7 +734,9 @@ class Mmx {
                 bdoc.ele(
                     "button",
                     bdoc.eventListener("click", Mmx.NextDescriptor),
-                    bdoc.attr("style", "cursor: pointer;"),
+                    bdoc.class("arrow_button"),
+                    bdoc.attr("id", "right_arrow"),
+                    bdoc.attr("disabled", "true"),    
                     "→"
                 )
             );
@@ -880,13 +936,13 @@ class Mmx {
 
     static GetSearchText() {
         const keywords = document.getElementById("mmid_search").value;
-        if (window.searchProperty === "AI") {
+        if (window.searchProperty === "+ Descriptor") {
             return window.description
-                ? window.description + keywords
+                ? window.description + " " + keywords
                 : undefined;
-        } else if (window.searchProperty === "AI + Context") {
+        } else if (window.searchProperty === "+ Context") {
             return window.descriptorContext
-                ? window.descriptorContext + keywords
+                ? window.descriptorContext + " " + keywords
                 : undefined;
         }
         return keywords;
@@ -907,12 +963,14 @@ class Mmx {
             searchResults.scrollTop = 0;
         }
 
+        document.getElementById("left_arrow").disabled = true
+        document.getElementById("right_arrow").disabled = true
+
         mmx_dict.inFlight = true;
 
-        const keywords = document.getElementById("mmid_search").value;
-        if (window.searchProperty === "Text") {
-            const keywords = document.getElementById("mmid_search").value;
-            const url = "/statements?keywords=" + encodeURIComponent(keywords);
+        if (window.searchProperty === "Text" || localStorage.getItem("ecoChecked") === "false") {
+            console.log(Mmx.GetSearchText())
+            const url = "/statements?keywords=" + encodeURIComponent(Mmx.GetSearchText());
             Mmx.LoadJsonAsync(url, (json) => {
             // stale? ignore
             if (token !== mmx_dict.searchToken) return;
@@ -922,6 +980,9 @@ class Mmx {
             if (loadingMore) loadingMore.style.display = "none";
             Mmx.SearchStatements_Callback(json);
             });
+
+            document.getElementById("left_arrow").disabled = false
+            document.getElementById("right_arrow").disabled = false
             return;
         }
 
@@ -971,6 +1032,9 @@ class Mmx {
             if (loadingMore) loadingMore.style.display = "none";
             }
         });
+
+        document.getElementById("left_arrow").disabled = false
+        document.getElementById("right_arrow").disabled = false
     }
 
     static GetStatementSearchResultElement(statement) {
@@ -1616,7 +1680,7 @@ class Mmx {
             } else {
                 const searchResults = document.querySelector(".mmc_stmtSearchResult");
                 searchResults.textContent =
-                "To search for Palet statements, try entering keywords above or clicking one of the AI search options.";
+                "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.";
             }
         } else {
             if (nextPrev) {
@@ -1642,7 +1706,7 @@ class Mmx {
         return "";
     }
 
-    static OnPageLoad(keyParent) {
+    static async OnPageLoad(keyParent) {
         // Check for style override in the query string
         let query = new URLSearchParams(window.location.search);
         {
@@ -1670,10 +1734,6 @@ class Mmx {
             Mmx.RenderKeyComposeForm(ele);
         }
 
-        for (ele of document.getElementsByClassName("mmx_statementSearch")) {
-            Mmx.RenderStatementSearch(ele);
-        }
-
         for (ele of document.getElementsByClassName("mmx_lrmiCompose")) {
             Mmx.RenderLrmiForm(ele);
             if (query.get("src") == "dynamic") {
@@ -1681,10 +1741,17 @@ class Mmx {
             } else {
                 const descId = query.get("id");
                 if (descId) {
-                    Mmx.LoadLrmiFormFromDatabase(descId);
+                    await Mmx.LoadLrmiFormFromDatabase(descId);
                 }
             }
         }
+
+        for (ele of document.getElementsByClassName("mmx_statementSearch")) {
+            await Mmx.RenderStatementSearch(ele);
+        }
+
+        document.getElementById("left_arrow").disabled = false
+        document.getElementById("right_arrow").disabled = false
 
         for (ele of document.getElementsByClassName(
             "mmx_descriptorSearchForm"
