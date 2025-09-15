@@ -1657,7 +1657,8 @@ export default class Mmx {
         if (modifyBtn) {
             modifyBtn.onclick = function () {
                 match_modal.style.display = "none";
-                window.location.href = `/c/MatchConsole?matchKey=${mmx_dict.searchKey}`;
+                const stmtId = mmx_dict.searchSuppressId;
+                window.location.href = `/c/MatchConsole?id=${stmtId}`;
             };
         }
 

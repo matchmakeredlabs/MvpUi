@@ -33,6 +33,7 @@ class MmRange extends HTMLElement {
                 // console.log(`Range: ${target.value}`);
                 _self.#numberInput.value = target.value;
                 _self.#internals.setFormValue(target.value);
+                _self.dispatchEvent(new Event("change"));
             })
         );
         container.appendChild(this.#rangeInput);
@@ -49,6 +50,7 @@ class MmRange extends HTMLElement {
                 // console.log(`Number: ${target.value}`);
                 _self.#rangeInput.value = target.value;
                 _self.#internals.setFormValue(target.value);
+                _self.dispatchEvent(new Event("change"));
             })
         );
         container.appendChild(this.#numberInput);

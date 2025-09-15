@@ -1,9 +1,19 @@
 import bdoc from "./bdoc.js";
 
 export default class MmMatchProfileModal extends HTMLElement {
+    static observedAttributes = ["descriptorId"];
+
+    descriptorId = null;
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === "descriptorId") {
+            this.descriptorId = newValue;
+        }
     }
 
     static matchSettings = [
@@ -255,7 +265,11 @@ export default class MmMatchProfileModal extends HTMLElement {
                             bdoc.class("modify-btn_console"),
                             "Modify",
                             bdoc.eventListener("click", () => {
-                                window.location.href = "/c/MatchConsole";
+                                window.location.href =
+                                    "/c/MatchConsole" +
+                                    (this.descriptorId
+                                        ? `?id=${this.descriptorId}`
+                                        : "");
                             })
                         )
                     )

@@ -149,7 +149,10 @@ export default class MmMatchConsole extends HTMLElement {
                     bdoc.attr("min", "0"),
                     bdoc.attr("max", "2"),
                     bdoc.attr("step", "0.01"),
-                    bdoc.attr("value", "0")
+                    bdoc.attr("value", "0"),
+                    bdoc.eventListener("change", () => {
+                        this.updateApplyButtonState();
+                    })
                 ),
                 bdoc.ele(
                     "mm-range",
@@ -158,7 +161,10 @@ export default class MmMatchConsole extends HTMLElement {
                     bdoc.attr("min", "0"),
                     bdoc.attr("max", "1"),
                     bdoc.attr("step", "0.01"),
-                    bdoc.attr("value", "0")
+                    bdoc.attr("value", "0"),
+                    bdoc.eventListener("change", () => {
+                        this.updateApplyButtonState();
+                    })
                 )
             );
         });
@@ -215,7 +221,10 @@ export default class MmMatchConsole extends HTMLElement {
                     bdoc.attr("min", "0"),
                     bdoc.attr("max", "2"),
                     bdoc.attr("step", "0.01"),
-                    bdoc.attr("value", "0")
+                    bdoc.attr("value", "0"),
+                    bdoc.eventListener("change", () => {
+                        this.updateApplyButtonState();
+                    })
                 ),
                 bdoc.ele(
                     "mm-range",
@@ -224,7 +233,10 @@ export default class MmMatchConsole extends HTMLElement {
                     bdoc.attr("min", "0"),
                     bdoc.attr("max", "1"),
                     bdoc.attr("step", "0.01"),
-                    bdoc.attr("value", "0")
+                    bdoc.attr("value", "0"),
+                    bdoc.eventListener("change", () => {
+                        this.updateApplyButtonState();
+                    })
                 )
             );
         });
@@ -256,7 +268,9 @@ export default class MmMatchConsole extends HTMLElement {
                     bdoc.ele(
                         "button",
                         "Apply Match Settings",
-                        bdoc.attr("style", "cursor: pointer;"),
+                        bdoc.attr("disabled"),
+                        bdoc.id("apply-match-settings-button"),
+                        bdoc.attr("style", "cursor: not-allowed;"),
                         bdoc.eventListener("click", (e) => {
                             e.preventDefault();
                             this.updateMatches();
@@ -295,7 +309,7 @@ export default class MmMatchConsole extends HTMLElement {
         const buttons = [
             {
                 id: "view-profile",
-                text: "View Current Settings",
+                text: "View Active Settings",
                 onClick: () => {
                     const matchWeightsObj =
                         MmMatchProfileModal.getMatchWeights();
@@ -372,12 +386,59 @@ export default class MmMatchConsole extends HTMLElement {
         // console.log(matchWeightsObj);
         this.updateWeightsVisual(matchWeightsObj);
 
-        const key = new URLSearchParams(window.location.search).get("matchKey");
-        if (key) {
+        const searchParams = new URLSearchParams(window.location.search);
+
+        const key = searchParams.get("matchKey");
+
+        const id = searchParams.get("id");
+
+        if (id) {
+            const response = await MmMatchConsole.session.fetch(
+                `/api/descriptors/${id}`
+            );
+            if (response.status === 200) {
+                const result = await response.json();
+
+                if (
+                    result &&
+                    result.descriptors[0] &&
+                    result.descriptors[0].key
+                ) {
+                    const descriptor = result.descriptors[0];
+                    this.shadowRoot.getElementById("matchKey").textContent =
+                        this.stripKeyPrefix(descriptor.key);
+
+                    this.shadowRoot.getElementById(
+                        "matchKeyDetails"
+                    ).innerHTML = `${descriptor.name} - ${descriptor.provenance}<br/>${descriptor.description}`;
+                    this.shadowRoot.getElementById(
+                        "matches-from-header"
+                    ).textContent = "Matches from";
+                    this.updateMatches();
+                }
+            }
+        } else if (key) {
             this.shadowRoot.getElementById("matchKey").textContent = key;
             this.shadowRoot.getElementById("matches-from-header").textContent =
                 "Matches from";
             this.updateMatches();
+        }
+    }
+
+    updateApplyButtonState() {
+        const [matchWeightsObj, weights] = this.getFormMatchWeights();
+        const currentWeights = MmMatchProfileModal.getMatchWeights();
+        const applyButton = this.shadowRoot.getElementById(
+            "apply-match-settings-button"
+        );
+        if (
+            JSON.stringify(matchWeightsObj) !== JSON.stringify(currentWeights)
+        ) {
+            applyButton.disabled = false;
+            applyButton.style.cursor = "pointer";
+        } else {
+            applyButton.disabled = true;
+            applyButton.style.cursor = "not-allowed";
         }
     }
 
@@ -395,7 +456,11 @@ export default class MmMatchConsole extends HTMLElement {
 
         MmMatchProfileModal.setMatchWeights(matchWeightsObj);
 
+        this.updateApplyButtonState();
+
         const key = this.shadowRoot.getElementById("matchKey").textContent;
+
+        const id = new URLSearchParams(window.location.search).get("id");
 
         if (!key) {
             return;
@@ -411,6 +476,10 @@ export default class MmMatchConsole extends HTMLElement {
 
         const response = await MmMatchConsole.session.fetch(url);
         const result = await response.json();
+
+        result.descriptors = result.descriptors.filter(
+            (desc) => desc.id !== id
+        );
 
         let ele = this.shadowRoot.getElementById("matchResult");
 
@@ -442,10 +511,6 @@ export default class MmMatchConsole extends HTMLElement {
         ele.appendChild(bdoc.ele("hr", bdoc.class("mm_listHr")));
 
         const matches = bdoc.ele("div", bdoc.class("con_matches"));
-
-        this.shadowRoot.getElementById(
-            "matchKeyDetails"
-        ).innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance}<br>${result.descriptors[0].description}`;
 
         for (const desc of result.descriptors) {
             matches.appendChild(

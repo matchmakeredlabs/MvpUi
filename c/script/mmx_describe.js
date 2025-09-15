@@ -202,13 +202,18 @@ class Mmx {
 
         let mmid_search = document.getElementById("mmid_search");
         mmid_search.value = "";
-        let mmid_search_btn = document.getElementById("mmid_search_btn")
+        let mmid_search_btn = document.getElementById("mmid_search_btn");
         let searchOneLiner = document.getElementById("searchOneLiner");
 
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
 
         let tooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Palet statements are returned from most similar (as defined by the AI algorithm) to least similar</span> </div> </div>`;
-        if (event.target.textContent === "Text" || (event.target.textContent === "+ Descriptor" && active[1])) {
+        if (
+            event.target.textContent === "Text" ||
+            (event.target.textContent === "+ Descriptor" &&
+                active[1] &&
+                !active[2])
+        ) {
             mmid_search.placeholder = "Add key words to search";
             let text = document.createElement("span");
             text.style = "margin-right: 0.5em;";
@@ -232,7 +237,10 @@ class Mmx {
         } else {
             mmid_search.placeholder = "Add another term to augment the search";
 
-            if (event.target.textContent == "+ Descriptor" || (event.target.textContent === "+ Context" && active[2])) {
+            if (
+                event.target.textContent == "+ Descriptor" ||
+                (event.target.textContent === "+ Context" && active[2])
+            ) {
                 let text = document.createElement("span");
                 text.style = "margin-right: 0.5em;";
                 text.textContent =
@@ -263,17 +271,17 @@ class Mmx {
                 window.searchProperty = "+ Context";
                 localStorage.setItem("preferredSearch", "+ Context");
             }
-
-            Mmx.SearchStatements();
         }
+
+        Mmx.SearchStatements();
     }
 
     static async RenderStatementSearch(element) {
         // Load eco mode setting
-        if (localStorage.getItem("ecoChecked") === null) {
+        if (localStorage.getItem("useAIPaletSearch") === null) {
             // If eco mode is not defined, have eco mode be turned off by default and AI search be preferred
-            localStorage.setItem("ecoChecked", false)
-            localStorage.setItem("preferredSearch", "Text")
+            localStorage.setItem("useAIPaletSearch", false);
+            localStorage.setItem("preferredSearch", "Text");
         }
 
         // Search replaces this element rather than going into it
@@ -342,7 +350,7 @@ class Mmx {
                             bdoc.attr("type", "checkbox"),
                             bdoc.attr("id", "search_eco"),
                             bdoc.class("toggle-switch"),
-                            bdoc.eventListener("click", Mmx.ToggleEco),
+                            bdoc.eventListener("click", Mmx.ToggleEco)
                         ),
                         document.createTextNode("AI")
                     )
@@ -424,7 +432,11 @@ class Mmx {
             // guard 1: don’t paginate while a request is in flight
             if (mmx_dict.inFlight) return;
 
-            if (target.scrollTop + target.clientHeight < target.scrollHeight - 1200) return;
+            if (
+                target.scrollTop + target.clientHeight <
+                target.scrollHeight - 1200
+            )
+                return;
 
             // guard 2: must have a result set for this tab
             const entry = mmx_dict.stmtSearchResultsDict[searchProperty];
@@ -432,6 +444,13 @@ class Mmx {
 
             // guard 3: make sure this is still the latest search
             if (entry.token !== mmx_dict.searchToken) return;
+
+            if (
+                localStorage.getItem("useAIPaletSearch") === "false" ||
+                searchProperty === "Text"
+            ) {
+                return;
+            }
 
             const loadingMore = document.getElementById("loading-more-results");
             if (loadingMore) loadingMore.style.display = "block";
@@ -443,30 +462,38 @@ class Mmx {
                 offset: entry.offset,
             });
 
-            session.fetch("/api/match/palet", { method: "POST", body: requestBody })
-                .then(r => r.json())
-                .then(({ statements }) => {
+            session
+                .fetch("/api/match/palet?useVectorSearch", {
+                    method: "POST",
+                    body: requestBody,
+                })
+                .then((r) => r.json())
+                .then(({ statements, nextOffset }) => {
                     // stale? bail silently
-                    if (entry.token !== mmx_dict.searchToken) { mmx_dict.inFlight = false; return; }
+                    if (entry.token !== mmx_dict.searchToken) {
+                        mmx_dict.inFlight = false;
+                        return;
+                    }
 
                     for (const stmt of statements) {
                         if (window.searchProperty === searchProperty) {
-                        bdoc.append(
-                            mmx_dict.stmtSearchResult,
-                            Mmx.GetStatementSearchResultElement(stmt)
-                        );
+                            bdoc.append(
+                                mmx_dict.stmtSearchResult,
+                                Mmx.GetStatementSearchResultElement(stmt)
+                            );
                         }
                         entry.result.statements.push(stmt);
                     }
-                    entry.offset += 1;
+                    entry.offset = nextOffset;
                 })
                 .finally(() => {
                     mmx_dict.inFlight = false;
-                    const loadingMore = document.getElementById("loading-more-results");
+                    const loadingMore = document.getElementById(
+                        "loading-more-results"
+                    );
                     if (loadingMore) loadingMore.style.display = "none";
                 });
         }, 50);
-
 
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
@@ -492,29 +519,32 @@ class Mmx {
         );
 
         const ecoSearch = document.getElementById("search_eco");
-        ecoSearch.checked = (localStorage.getItem("ecoChecked") === "true");
+        ecoSearch.checked = localStorage.getItem("useAIPaletSearch") === "true";
 
         const preferredSearch = localStorage.getItem("preferredSearch");
         let btn;
 
         switch (preferredSearch) {
-            case ("Text"):
+            case "Text":
                 btn = document.getElementById("search_text");
                 break;
-            case ("+ Descriptor"):
+            case "+ Descriptor":
                 btn = document.getElementById("search_desc");
                 break;
-            case ("+ Context"):
+            case "+ Context":
                 btn = document.getElementById("search_context");
                 break;
         }
-        window.searchProperty = preferredSearch
+        window.searchProperty = preferredSearch;
 
-        Mmx.setActive({ target: btn });  // simulate click event
+        Mmx.setActive({ target: btn }); // simulate click event
     }
 
     static ToggleEco() {
-        localStorage.setItem("ecoChecked", document.getElementById("search_eco").checked);
+        localStorage.setItem(
+            "useAIPaletSearch",
+            document.getElementById("search_eco").checked
+        );
         Mmx.SearchStatements();
     }
 
@@ -666,12 +696,8 @@ class Mmx {
         );
 
         {
-            let controlsLeft = bdoc.ele("span", 
-                bdoc.class("controls_left"),
-            );
-            let controlsRight = bdoc.ele("span", 
-                bdoc.class("controls_right"),
-            );
+            let controlsLeft = bdoc.ele("span", bdoc.class("controls_left"));
+            let controlsRight = bdoc.ele("span", bdoc.class("controls_right"));
             let controls = bdoc.ele(
                 "div",
                 bdoc.class("controls"),
@@ -725,7 +751,7 @@ class Mmx {
                     bdoc.eventListener("click", Mmx.PrevDescriptor),
                     bdoc.class("arrow_button"),
                     bdoc.attr("id", "left_arrow"),
-                    bdoc.attr("disabled", "true"),                    
+                    bdoc.attr("disabled", "true"),
                     "←"
                 )
             );
@@ -736,7 +762,7 @@ class Mmx {
                     bdoc.eventListener("click", Mmx.NextDescriptor),
                     bdoc.class("arrow_button"),
                     bdoc.attr("id", "right_arrow"),
-                    bdoc.attr("disabled", "true"),    
+                    bdoc.attr("disabled", "true"),
                     "→"
                 )
             );
@@ -892,6 +918,11 @@ class Mmx {
         const data = await response.json();
 
         for (let val of data.statements) {
+            const renderedInSearch = document.getElementById("stmt_" + val.id);
+            if (renderedInSearch) {
+                renderedInSearch.style.display = "none";
+            }
+
             const stmtRemoveInput = bdoc.ele(
                 "input",
                 bdoc.attr("type", "button"),
@@ -905,6 +936,7 @@ class Mmx {
                 bdoc.ele(
                     "div",
                     bdoc.class("mm_stmt"),
+                    bdoc.id("stmt_key_" + val.id),
                     bdoc.ele("span", bdoc.class("mm_stmtAdd"), stmtRemoveInput),
                     bdoc.ele(
                         "span",
@@ -948,6 +980,18 @@ class Mmx {
         return keywords;
     }
 
+    static SetNavigationButtonState(disabled) {
+        const leftArrow = document.getElementById("left_arrow");
+        const rightArrow = document.getElementById("right_arrow");
+        if (disabled) {
+            leftArrow.setAttribute("disabled", "true");
+            rightArrow.setAttribute("disabled", "true");
+        } else {
+            leftArrow.removeAttribute("disabled");
+            rightArrow.removeAttribute("disabled");
+        }
+    }
+
     static SearchStatements() {
         // claim a new search token
         const token = ++mmx_dict.searchToken;
@@ -956,6 +1000,13 @@ class Mmx {
         const loadingMore = document.getElementById("loading-more-results");
         if (loadingMore) loadingMore.style.display = "none";
 
+        const text = Mmx.GetSearchText();
+        if (!text || text.trim().length === 0) {
+            mmx_dict.inFlight = false;
+            Mmx.SetNavigationButtonState(false);
+            return;
+        }
+
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
         if (searchResults) {
             searchResults.textContent = "Loading...";
@@ -963,78 +1014,80 @@ class Mmx {
             searchResults.scrollTop = 0;
         }
 
-        document.getElementById("left_arrow").disabled = true
-        document.getElementById("right_arrow").disabled = true
+        Mmx.SetNavigationButtonState(true);
 
         mmx_dict.inFlight = true;
 
-        if (window.searchProperty === "Text" || localStorage.getItem("ecoChecked") === "false") {
-            console.log(Mmx.GetSearchText())
-            const url = "/statements?keywords=" + encodeURIComponent(Mmx.GetSearchText());
-            Mmx.LoadJsonAsync(url, (json) => {
-            // stale? ignore
-            if (token !== mmx_dict.searchToken) return;
-
-            // cache & render as you already do…
-            mmx_dict.inFlight = false;
-            if (loadingMore) loadingMore.style.display = "none";
-            Mmx.SearchStatements_Callback(json);
-            });
-
-            document.getElementById("left_arrow").disabled = false
-            document.getElementById("right_arrow").disabled = false
-            return;
-        }
-
-        // AI / AI + Context path
-        const text = Mmx.GetSearchText();
-        if (!text) { 
-            mmx_dict.inFlight = false;
-            return;
-        }
-
+        const useTextSearch =
+            window.searchProperty === "Text" ||
+            localStorage.getItem("useAIPaletSearch") === "false";
         const requestBody = JSON.stringify({ matchText: text });
+
+        if (useTextSearch) {
+            session
+                .fetch(`/api/match/palet`, {
+                    method: "POST",
+                    body: requestBody,
+                    headers: {
+                        "Content-Type": "application/json; charset=UTF-8",
+                    },
+                })
+                .then((r) => r.json())
+                .then((json) => {
+                    // only the current search clears inFlight
+                    if (token === mmx_dict.searchToken) {
+                        Mmx.SearchStatements_Callback(json);
+                        mmx_dict.inFlight = false;
+                        const loadingMore = document.getElementById(
+                            "loading-more-results"
+                        );
+                        if (loadingMore) loadingMore.style.display = "none";
+
+                        Mmx.SetNavigationButtonState(false);
+                    }
+                });
+            return;
+        }
 
         // cache lookup
         const entry = mmx_dict.stmtSearchResultsDict[window.searchProperty];
         if (entry?.prevSearch === requestBody && entry?.result) {
             // refresh token association for this result set
             entry.token = token;
-            entry.offset = 0;            // start pagination fresh
             mmx_dict.inFlight = false;
             if (loadingMore) loadingMore.style.display = "none";
+            Mmx.SetNavigationButtonState(false);
             return Mmx.SearchStatements_Callback(entry.result);
         }
 
-        session.fetch("/api/match/palet", {
-            method: "POST",
-            body: requestBody,
-            headers: { "Content-Type": "application/json; charset=UTF-8" },
-        })
-        .then(r => r.json())
-        .then((json) => {
-            if (token !== mmx_dict.searchToken) return; // stale
+        session
+            .fetch(`/api/match/palet?useVectorSearch`, {
+                method: "POST",
+                body: requestBody,
+                headers: {
+                    "Content-Type": "application/json; charset=UTF-8",
+                },
+            })
+            .then((r) => r.json())
+            .then((json) => {
+                if (token !== mmx_dict.searchToken) return; // stale
 
-            mmx_dict.stmtSearchResultsDict[window.searchProperty] = {
-            token,                // bind this cache to the latest search
-            offset: 0,
-            prevSearch: requestBody,
-            result: json,
-            };
+                mmx_dict.stmtSearchResultsDict[window.searchProperty] = {
+                    token, // bind this cache to the latest search
+                    offset: json.nextOffset,
+                    prevSearch: requestBody,
+                    result: json,
+                };
 
-            Mmx.SearchStatements_Callback(json);
-        })
-        .finally(() => {
-            // only the current search clears inFlight
-            if (token === mmx_dict.searchToken) {
-            mmx_dict.inFlight = false;
-            const loadingMore = document.getElementById("loading-more-results");
-            if (loadingMore) loadingMore.style.display = "none";
-            }
-        });
+                Mmx.SearchStatements_Callback(json);
+                mmx_dict.inFlight = false;
+                const loadingMore = document.getElementById(
+                    "loading-more-results"
+                );
+                if (loadingMore) loadingMore.style.display = "none";
 
-        document.getElementById("left_arrow").disabled = false
-        document.getElementById("right_arrow").disabled = false
+                Mmx.SetNavigationButtonState(false);
+            });
     }
 
     static GetStatementSearchResultElement(statement) {
@@ -1046,14 +1099,17 @@ class Mmx {
         );
         addStmtButton.stmt = statement;
 
-        return bdoc.ele(
+        const stmtDiv = bdoc.ele(
             "div",
             bdoc.class("mm_stmt"),
+            bdoc.id("stmt_" + statement.id),
             bdoc.ele("span", bdoc.class("mm_stmtAdd"), addStmtButton),
             bdoc.ele("span", bdoc.class("mm_stmtId"), statement.id),
             bdoc.ele("span", bdoc.class("mm_stmtType"), statement.stmtType),
             bdoc.ele("span", bdoc.class("mm_stmtText"), statement.statement)
         );
+
+        return stmtDiv;
     }
 
     static SearchStatements_Callback(result) {
@@ -1063,10 +1119,13 @@ class Mmx {
 
         let count = 0;
         for (let val of result.statements) {
-            mmx_dict.stmtSearchResult.appendChild(
-                Mmx.GetStatementSearchResultElement(val)
-            );
-            ++count;
+            const renderedInKey = document.getElementById("stmt_key_" + val.id);
+            if (!renderedInKey) {
+                mmx_dict.stmtSearchResult.appendChild(
+                    Mmx.GetStatementSearchResultElement(val)
+                );
+                ++count;
+            }
         }
 
         if (count == 0) {
@@ -1441,6 +1500,7 @@ class Mmx {
 
     static AddStatementToKey(event) {
         let row = event.target.parentElement.parentElement.cloneNode(true);
+
         const stmt = event.target.stmt;
         let cellAdd = row.firstElementChild;
         let cellId = cellAdd.nextElementSibling;
@@ -1481,15 +1541,27 @@ class Mmx {
                 ),
                 cellId
             );
+            bdoc.append(row, bdoc.id("stmt_key_" + cellId.textContent));
 
             // Change class of last element
             cellStmt.className = "mm_stmtKeyText";
             mmx_dict.keyTable.appendChild(row);
+
+            event.target.parentElement.parentElement.style.display = "none";
         }
     }
 
     static RemoveStatementFromKey(event) {
         let row = event.target.parentElement.parentElement;
+
+        console.log(row.id);
+        if (row.id) {
+            let stmtId = row.id.substring("stmt_key_".length);
+            let renderedInSearch = document.getElementById("stmt_" + stmtId);
+            if (renderedInSearch) {
+                renderedInSearch.style.display = "block";
+            }
+        }
         row.remove();
     }
 
@@ -1675,12 +1747,20 @@ class Mmx {
             let mmid_search = document.getElementById("mmid_search");
             mmid_search.value = "";
 
+            mmx_dict.stmtSearchResultsDict = {
+                Text: { offset: 0 },
+                AI: { offset: 0 },
+                ["AI + Context"]: { offset: 0 },
+            };
+
             if (window.searchProperty !== "Text") {
                 Mmx.SearchStatements();
             } else {
-                const searchResults = document.querySelector(".mmc_stmtSearchResult");
+                const searchResults = document.querySelector(
+                    ".mmc_stmtSearchResult"
+                );
                 searchResults.textContent =
-                "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.";
+                    "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.";
             }
         } else {
             if (nextPrev) {
@@ -1750,8 +1830,7 @@ class Mmx {
             await Mmx.RenderStatementSearch(ele);
         }
 
-        document.getElementById("left_arrow").disabled = false
-        document.getElementById("right_arrow").disabled = false
+        Mmx.SetNavigationButtonState(false);
 
         for (ele of document.getElementsByClassName(
             "mmx_descriptorSearchForm"

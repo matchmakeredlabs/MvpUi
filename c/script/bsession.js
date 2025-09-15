@@ -55,15 +55,15 @@ export default class bsession {
             }
 
             if (response.status === 401) {
-                localStorage.removeItem(auth.sessionKey);
+                localStorage.clear();
                 alert("Session expired. Please log in again.");
                 auth.redirectToLogin();
             }
 
             return response;
         } catch (err) {
-            // assume the error is due to unauthorized access
-            localStorage.removeItem(auth.sessionKey);
+            // assume the error is due to unauthorized access, should change when CORS is fixed in the backend
+            localStorage.clear();
             alert("Session expired. Please log in again.");
             auth.redirectToLogin();
 

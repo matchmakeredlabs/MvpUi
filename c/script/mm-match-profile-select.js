@@ -168,6 +168,8 @@ export default class MmMatchProfileSelect extends HTMLElement {
 
         matchProfiles[profileName] = matchWeights;
 
+        this.#matchProfiles = matchProfiles;
+
         const response = await MmMatchProfileSelect.updateSettings(settings, {
             matchProfiles: matchProfiles,
         });
@@ -176,7 +178,7 @@ export default class MmMatchProfileSelect extends HTMLElement {
             return Promise.reject();
         }
 
-        this.renderMatchProfiles();
+        await this.renderMatchProfiles();
     };
 
     static setCurrentMatchProfileName = (profileName) => {
