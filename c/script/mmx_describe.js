@@ -341,10 +341,10 @@ class Mmx {
                         "style",
                         "display: flex; flex-direction: column; align-items: center;"
                     ),
-                    "Eco Mode",
+                    "Search Mode",
                     bdoc.ele(
                         "span",
-                        document.createTextNode("On"),
+                        document.createTextNode("Eco"),
                         bdoc.ele(
                             "input",
                             bdoc.attr("type", "checkbox"),

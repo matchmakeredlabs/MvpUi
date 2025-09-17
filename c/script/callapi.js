@@ -315,6 +315,15 @@ const templates = [
             ],
         },
     },
+    {
+        name: "PaletGen Project",
+        verb: "POST",
+        url: "/api/paletgen",
+        body: {
+            name: "Project Name",
+            referenceId: "339252ec-9858-4c50-bd57-c4a2bdc915b0",
+        },
+    },
 ];
 
 function onTemplateClick(e) {
