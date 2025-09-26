@@ -200,8 +200,8 @@ class Mmx {
         let desc_btn = document.getElementById("search_desc");
         let context_btn = document.getElementById("search_context");
 
-        let mmid_search = document.getElementById("mmid_search");
-        mmid_search.value = "";
+        // let mmid_search = document.getElementById("mmid_search");
+        // mmid_search.value = "";
         let mmid_search_btn = document.getElementById("mmid_search_btn");
         let searchOneLiner = document.getElementById("searchOneLiner");
 
@@ -341,6 +341,7 @@ class Mmx {
                         "style",
                         "display: flex; flex-direction: column; align-items: center;"
                     ),
+                    bdoc.attr("id", "search_mode_container"),
                     "Search Mode",
                     bdoc.ele(
                         "span",
@@ -373,7 +374,10 @@ class Mmx {
         searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`;
         parent.appendChild(searchOneLiner);
 
-        // Search bar
+        let searchContainer = document.getElementById("search_mode_container");
+        let searchTooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Eco search mode uses strict keyword matching to return results, while AI search mode uses Vector Space Model for similarity matching. Eco search mode uses less energy than AI search mode.</span> </div> </div>`;
+        searchContainer.innerHTML += searchTooltip;
+
         parent.appendChild(
             bdoc.ele(
                 "div",

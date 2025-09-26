@@ -19,6 +19,8 @@
     dl>div {
         display: flex;
         margin: 0.25em 0;
+        flex-wrap: wrap;
+        align-items: flex-start;
     }
     
     dt {
@@ -37,5 +39,24 @@
         min-width: 0; /* Default min-with for flex is the length of the content. This enables overflow-wrap */
         vertical-align: top;
         overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 700px) {
+        dl>div {
+            flex-direction: column;
+        }
+
+        dt {
+            width: 100%;
+        }
+
+        dd {
+            width: 100%;
+        }
+
+        dd select,
+        dd .select {
+            width: 100%;
+        }
     }
 }
