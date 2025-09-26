@@ -297,7 +297,9 @@ export default class MmElementCard extends HTMLElement {
                     bdoc.attr(
                         "href",
                         MmElementCard.keyLinkPrefix +
-                            MmElementCard.StripKeyPrefix(val.key)
+                            MmElementCard.StripKeyPrefix(val.key) +
+                            "&id=" +
+                            encodeURIComponent(val.id)
                     ),
                     MmElementCard.StripKeyPrefix(val.key)
                 )

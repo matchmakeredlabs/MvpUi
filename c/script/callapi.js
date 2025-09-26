@@ -316,12 +316,32 @@ const templates = [
         },
     },
     {
-        name: "PaletGen Project",
+        name: "PaletGen Projects",
         verb: "POST",
-        url: "/api/paletgen",
+        url: "/api/paletgen/projects",
         body: {
             name: "Project Name",
             referenceId: "339252ec-9858-4c50-bd57-c4a2bdc915b0",
+        },
+    },
+    {
+        name: "PaletGen Statements",
+        verb: "GET",
+        url: "/api/paletgen/statements?projectId=688ce637-b7ee-40be-9754-0a8f1136f1a7",
+        body: {
+            matchText:
+                "The sun is a mass of incandescent gas, a gigantic nuclear furnace. Where hydrogen is smashed into helium at temperatures of millions of degrees.",
+            offset: 0,
+        },
+    },
+    {
+        name: "PaletGen Descriptors",
+        verb: "GET",
+        url: "/api/paletgen/descriptors?projectId=688ce637-b7ee-40be-9754-0a8f1136f1a7",
+        body: {
+            matchText:
+                "The sun is a mass of incandescent gas, a gigantic nuclear furnace. Where hydrogen is smashed into helium at temperatures of millions of degrees.",
+            offset: 0,
         },
     },
 ];

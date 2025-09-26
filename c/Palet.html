@@ -15,12 +15,17 @@ title: Palet Key
     function loadDetail() {
         let query = new URLSearchParams(window.location.search);
         let key = query.get("key");
+        const id = query.get("id");
         if (key) {
 
             ele = document.getElementById("console");
             ele.innerHtml = "";
             a = document.createElement("a");
-            a.href = `/c/MatchConsole?matchKey=${key}`;
+            if (id) {
+                a.href = `/c/MatchConsole?id=${encodeURIComponent(id)}`;
+            } else {
+                a.href = `/c/MatchConsole?matchKey=${key}`;
+            }
             a.textContent = key;
             ele.appendChild(a);
         }

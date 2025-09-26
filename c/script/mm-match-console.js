@@ -241,19 +241,19 @@ export default class MmMatchConsole extends HTMLElement {
             );
         });
 
-        // Alternative Anchor Row
-        addRow(
-            bdoc.ele(
-                "span",
-                bdoc.attr("class", "con-col1"),
-                "Alternative Anchor"
-            ),
-            bdoc.ele(
-                "input",
-                bdoc.attr("type", "checkbox"),
-                bdoc.attr("name", "alg-self-anchor")
-            )
-        );
+        // // Alternative Anchor Row
+        // addRow(
+        //     bdoc.ele(
+        //         "span",
+        //         bdoc.attr("class", "con-col1"),
+        //         "Alternative Anchor"
+        //     ),
+        //     bdoc.ele(
+        //         "input",
+        //         bdoc.attr("type", "checkbox"),
+        //         bdoc.attr("name", "alg-self-anchor")
+        //     )
+        // );
 
         // Apply Match Settings Button
         bdoc.append(
