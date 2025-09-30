@@ -342,7 +342,30 @@ class Mmx {
                         "display: flex; flex-direction: column; align-items: center;"
                     ),
                     bdoc.attr("id", "search_mode_container"),
-                    "Search Mode",
+                    bdoc.ele(
+                        "span",
+                        "Search Mode",
+                        bdoc.ele(
+                            "div",
+                            bdoc.class("info-button-wrapper"),
+                            bdoc.attr(
+                                "style",
+                                "margin-left: 0.25em; vertical-align: top;"
+                            ),
+                            bdoc.ele(
+                                "div",
+                                bdoc.class("info-button"),
+                                "i",
+                                bdoc.ele(
+                                    "span",
+                                    bdoc.class("info-tooltip"),
+                                    bdoc.attr("style", "width: 250px;"),
+                                    "Eco search mode uses keyword matching to return results, while AI search mode uses a vector space model for semantic matching. Eco search mode uses less energy than AI search mode."
+                                )
+                            )
+                        )
+                    ),
+
                     bdoc.ele(
                         "span",
                         document.createTextNode("Eco"),
@@ -373,10 +396,6 @@ class Mmx {
         searchOneLiner.innerHTML += tooltip;
         searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`;
         parent.appendChild(searchOneLiner);
-
-        let searchContainer = document.getElementById("search_mode_container");
-        let searchTooltip = `<div class="info-button-wrapper"> <div class="info-button">i <span class="info-tooltip">Eco search mode uses strict keyword matching to return results, while AI search mode uses Vector Space Model for similarity matching. Eco search mode uses less energy than AI search mode.</span> </div> </div>`;
-        searchContainer.innerHTML += searchTooltip;
 
         parent.appendChild(
             bdoc.ele(
