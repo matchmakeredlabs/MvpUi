@@ -200,8 +200,8 @@ class Mmx {
         let desc_btn = document.getElementById("search_desc");
         let context_btn = document.getElementById("search_context");
 
-        let mmid_search = document.getElementById("mmid_search");
-        mmid_search.value = "";
+        // let mmid_search = document.getElementById("mmid_search");
+        // mmid_search.value = "";
         let mmid_search_btn = document.getElementById("mmid_search_btn");
         let searchOneLiner = document.getElementById("searchOneLiner");
 
@@ -341,7 +341,31 @@ class Mmx {
                         "style",
                         "display: flex; flex-direction: column; align-items: center;"
                     ),
-                    "Search Mode",
+                    bdoc.attr("id", "search_mode_container"),
+                    bdoc.ele(
+                        "span",
+                        "Search Mode",
+                        bdoc.ele(
+                            "div",
+                            bdoc.class("info-button-wrapper"),
+                            bdoc.attr(
+                                "style",
+                                "margin-left: 0.25em; vertical-align: top;"
+                            ),
+                            bdoc.ele(
+                                "div",
+                                bdoc.class("info-button"),
+                                "i",
+                                bdoc.ele(
+                                    "span",
+                                    bdoc.class("info-tooltip"),
+                                    bdoc.attr("style", "width: 250px;"),
+                                    "Eco search mode uses keyword matching to return results, while AI search mode uses a vector space model for semantic matching. Eco search mode uses less energy than AI search mode."
+                                )
+                            )
+                        )
+                    ),
+
                     bdoc.ele(
                         "span",
                         document.createTextNode("Eco"),
@@ -373,7 +397,6 @@ class Mmx {
         searchOneLiner.style = `font-style: italic; font-size: 10px; margin-bottom: 0.5em;"`;
         parent.appendChild(searchOneLiner);
 
-        // Search bar
         parent.appendChild(
             bdoc.ele(
                 "div",

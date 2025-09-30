@@ -68,9 +68,7 @@ export default class mmxAuth {
         logoutButton.className = "small-button small-button5";
         logoutButton.textContent = "Log Out";
         logoutButton.addEventListener("click", function () {
-            localStorage.removeItem("ecoChecked");
-            localStorage.removeItem("preferredSearch");
-            localStorage.removeItem(mmxAuth.sessionKey);
+            localStorage.clear();
             mmxAuth.redirectToLogin();
         });
 
