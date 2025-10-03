@@ -58,6 +58,7 @@ export default class mmxAuth {
     // to the login page whenever an API call results in a 401 Unauthorized.
     static requireAuthentication() {
         if (!mmxAuth.isAuthenticated()) {
+            localStorage.clear();
             console.log("Redirecting to login.");
             mmxAuth.redirectToLogin();
         }
