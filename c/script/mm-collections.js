@@ -69,6 +69,23 @@ export default class MmCollections extends HTMLElement {
             ) {
                 // default to 0described
                 collection.percentDescribed = 0;
+                continue;
+            }
+
+            if (leafCount < 0 || leafWithKeyCount < 0) {
+                const negativeCounts = [];
+                if (leafCount < 0) {
+                    negativeCounts.push(`leafCount (${leafCount})`);
+                }
+                if (leafWithKeyCount < 0) {
+                    negativeCounts.push(`leafWithKeyCount (${leafWithKeyCount})`);
+                }
+                const negativeDetails = negativeCounts.join(" and ");
+                alert(
+                    `Error: Collection "${collection.name}" contains invalid negative values for ${negativeDetails}.`
+                );
+                collection.percentDescribed = 0;
+                continue;
             }
             collection.percentDescribed = Math.round(
                 (leafWithKeyCount / leafCount) * 100

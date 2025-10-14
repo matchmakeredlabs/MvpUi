@@ -78,6 +78,22 @@ export default class MmViewCustomSets extends HTMLElement {
                 }
             }
 
+            if (leafCount < 0 || leafWithKeyCount < 0) {
+                const negativeCounts = [];
+                if (leafCount < 0) {
+                    negativeCounts.push(`leafCount (${leafCount})`);
+                }
+                if (leafWithKeyCount < 0) {
+                    negativeCounts.push(`leafWithKeyCount (${leafWithKeyCount})`);
+                }
+                const negativeDetails = negativeCounts.join(" and ");
+                alert(
+                    `Error: Custom set "${customSetName}" contains invalid negative values for ${negativeDetails}.`
+                );
+                leafCount = Math.max(leafCount, 0);
+                leafWithKeyCount = Math.max(leafWithKeyCount, 0);
+            }
+
             let summarizedCustomSet = {};
 
             summarizedCustomSet.percentDescribed =
