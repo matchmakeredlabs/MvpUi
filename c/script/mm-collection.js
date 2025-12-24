@@ -150,22 +150,26 @@ class MmCollection extends HTMLElement {
         let describedLeafCountToDecrement = descriptor.leafWithKeyCount;
 
         const decrementLeafCounts = (descriptorEle, intId) => {
+            const descriptorLi = this.#getLi(descriptorEle);
+            const currentDescriptor = this.descriptors[descriptorLi.feid];
+            currentDescriptor.leafCount -= leafCountToDecrement;
             if (!descriptorEle || intId === 0) {
                 // if no parent, remove from root
                 this.descriptors[0].leafCount -= leafCountToDecrement;
                 if (described) {
                     this.descriptors[0].leafWithKeyCount -=
                         leafCountToDecrement;
+
+                    // if (currentDescriptor.leafCount < 0) currentDescriptor.leafCount = 0;
                 }
                 return;
             }
 
-            const descriptorLi = this.#getLi(descriptorEle);
-            const currentDescriptor = this.descriptors[descriptorLi.feid];
-            currentDescriptor.leafCount -= leafCountToDecrement;
             if (described) {
                 currentDescriptor.leafWithKeyCount -=
                     describedLeafCountToDecrement;
+
+                // if (currentDescriptor.leafWithKeyCount < 0) currentDescriptor.leafWithKeyCount = 0;
             }
             const descButton = descriptorLi.querySelector("button.mmb_tri");
 
@@ -185,8 +189,12 @@ class MmCollection extends HTMLElement {
         // if parent only has this descriptor, parent will become leaf, so leaf count increases by one
         if (parentDescriptor.intHasPart.length === 1) {
             leafCountToDecrement--;
+
+            // if (leafCountToDecrement < 0) leafCountToDecrement = 0;
+
             if (parentDescribed) {
                 describedLeafCountToDecrement--;
+                // if (describedLeafCountToDecrement < 0) describedLeafCountToDecrement = 0;
             }
             if (parentDescriptorEle) {
                 const descButton =
