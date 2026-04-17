@@ -42,6 +42,14 @@ export default class MmAddMemberForm extends HTMLElement {
         return await response.json();
     };
 
+    static fetchCustomer = async (customerId) => {
+        const response = await MmAddMemberForm.session.fetch(
+            "/api/customers/" + customerId
+        );
+
+        return await response.json();
+    };
+
     onSettled = () => {};
 
     static roles = ["reader", "editor", "owner"];
@@ -114,6 +122,19 @@ export default class MmAddMemberForm extends HTMLElement {
         });
     };
 
+    static updateCustomer = async (customerId, customerObj) => {
+        return await MmAddMemberForm.session.fetch(
+            "/api/customers/" + customerId,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(customerObj),
+            }
+        );
+    };
+
     static addMemberToEntity = async (
         parentId,
         memberObj,
@@ -125,6 +146,8 @@ export default class MmAddMemberForm extends HTMLElement {
             currentParent = await MmAddMemberForm.fetchOrganization(parentId);
         } else if (parentType === "group") {
             currentParent = await MmAddMemberForm.fetchGroup(parentId);
+        } else if (parentType === "customer") {
+            currentParent = await MmAddMemberForm.fetchCustomer(parentId);
         }
 
         const existsTextMemberText = {
@@ -145,10 +168,26 @@ export default class MmAddMemberForm extends HTMLElement {
                 addMember: () => currentParent.members.push(memberObj.id),
                 update: MmAddMemberForm.updateGroup,
             },
+            customer: {
+                existsTextParentText: "customer",
+                checkId: (member) => member.id === memberObj.id,
+                addMember: () => {
+                    if (!Array.isArray(currentParent.roles)) {
+                        currentParent.roles = [];
+                    }
+                    currentParent.roles.push(memberObj);
+                },
+                update: MmAddMemberForm.updateCustomer,
+            },
         };
 
         if (currentParent) {
-            if (currentParent.members.find(parameters[parentType].checkId)) {
+            const parentMembers =
+                parentType === "customer"
+                    ? currentParent.roles || []
+                    : currentParent.members || [];
+
+            if (parentMembers.find(parameters[parentType].checkId)) {
                 alert(
                     `${existsTextMemberText[memberType]} with id ${memberObj.id} is already a member of ${parameters[parentType].existsTextParentText} with id ${parentId}`
                 );
@@ -232,13 +271,19 @@ export default class MmAddMemberForm extends HTMLElement {
             ...formFields[this.#memberType]
         );
 
-        if (this.#parentType === "org") {
+        if (this.#parentType === "org" || this.#parentType === "customer") {
             bdoc.append(
                 formGroupsContainer,
                 bdoc.ele(
                     "div",
                     bdoc.class("form-group"),
-                    bdoc.ele("label", bdoc.attr("for", "role"), "Role"),
+                    bdoc.ele(
+                        "label",
+                        bdoc.attr("for", "role"),
+                        this.#parentType === "customer"
+                            ? "Role (Customer)"
+                            : "Role"
+                    ),
                     bdoc.ele(
                         "select",
                         bdoc.attr("id", "role"),

@@ -106,7 +106,7 @@ class MmCreateGroupModal extends HTMLElement {
                             (this.#parentType !== "org" ||
                                 createGroupForm
                                     .getInnerForm()
-                                    .querySelector("#organization").value !==
+                                    .querySelector("#owner").value !==
                                     this.#orgId)
                         ) {
                             const body = await response.json();
@@ -140,7 +140,7 @@ class MmCreateGroupModal extends HTMLElement {
                         this.#parentType === "org" &&
                         createGroupForm
                             .getInnerForm()
-                            .querySelector("#organization").value ===
+                            .querySelector("#owner").value ===
                             this.#orgId
                     ) {
                         const body = await response.json();
@@ -320,12 +320,12 @@ class MmCreateGroupModal extends HTMLElement {
                 addToParent.style.display = "none";
             }
 
-            const organizationInput = createGroupForm
+            const ownerInput = createGroupForm
                 .getInnerForm()
-                .querySelector("#organization");
+                .querySelector("#owner");
             bdoc.append(
-                organizationInput,
-                bdoc.eventListener("change", ({ target }) => {
+                ownerInput,
+                bdoc.eventListener("ownerchange", ({ target }) => {
                     if (target.value === this.#orgId) {
                         addToParent.style.display = "none";
                     } else {

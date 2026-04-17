@@ -202,6 +202,16 @@ const templates = [
         },
     },
     {
+        name: "Customers",
+        verb: "GET",
+        url: "/api/customers",
+        body: {
+            name: "CustomerName",
+            description: "display name / description",
+            members: [{ id: "MemberId", role: "owner" }],
+        },
+    },
+    {
         name: "ReportMxn",
         verb: "POST",
         url: "/api/report/mxn",

@@ -1,9 +1,16 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmCustomers from "./mm-customers.js";
 
 export default class MmOrganizations extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
+
+    static getCustomerLabel = (customerMap, customerId) => {
+        if (!customerId) return "";
+        const customer = customerMap[customerId];
+        return customer?.name || customer?.id || customerId;
+    };
 
     constructor() {
         super();
@@ -13,6 +20,14 @@ export default class MmOrganizations extends HTMLElement {
     static fetchOrganizations = async () => {
         const response = await MmOrganizations.session.fetch("/api/orgs");
         return (await response.json()).items;
+    };
+
+    static fetchCustomers = async () => {
+        try {
+            return await MmCustomers.fetchCustomers();
+        } catch {
+            return [];
+        }
     };
 
     connectedCallback() {
@@ -49,7 +64,7 @@ export default class MmOrganizations extends HTMLElement {
                 bdoc.attr("style", "max-height: 80%; margin: 20px"),
                 bdoc.ele(
                     "mm-table",
-                    bdoc.attr("sort-properties", "name,description")
+                    bdoc.attr("sort-properties", "name,Customer,description")
                 ),
                 bdoc.ele(
                     "script",
@@ -62,7 +77,13 @@ export default class MmOrganizations extends HTMLElement {
     }
 
     #renderOrganizations = async () => {
-        const organizations = await MmOrganizations.fetchOrganizations();
+        const [organizations, customers] = await Promise.all([
+            MmOrganizations.fetchOrganizations(),
+            MmOrganizations.fetchCustomers(),
+        ]);
+        const customerMap = Object.fromEntries(
+            customers.map((customer) => [customer.id, customer])
+        );
 
         customElements.whenDefined("mm-table").then(() => {
             const table = this.shadowRoot.querySelector("mm-table");
@@ -73,10 +94,29 @@ export default class MmOrganizations extends HTMLElement {
                         bdoc.attr("href", `/c/Organization?id=${org.id}`),
                         org.name
                     ),
+                Customer: (org) => {
+                    const customerId = org.customerId || org.customer || "";
+                    if (!customerId) return "";
+                    return bdoc.ele(
+                        "a",
+                        bdoc.attr("href", `/c/Customer?id=${customerId}`),
+                        MmOrganizations.getCustomerLabel(customerMap, customerId)
+                    );
+                },
                 description: (org) => org.description,
             };
             table.customSorts = {
                 name: (a, b) => a.name.localeCompare(b.name),
+                Customer: (a, b) =>
+                    MmOrganizations.getCustomerLabel(
+                        customerMap,
+                        a.customerId || a.customer || ""
+                    ).localeCompare(
+                        MmOrganizations.getCustomerLabel(
+                            customerMap,
+                            b.customerId || b.customer || ""
+                        )
+                    ),
                 description: (a, b) =>
                     (a.description || "").localeCompare(b.description || ""),
             };

@@ -12,12 +12,13 @@ export default class bsession {
     // Options is the same as used with conventional fetch.
     async fetch(path, options = null) {
         const url = this.baseUrl + path;
+        const sessionKey = "bsession_" + this.tag;
 
         // Shallow clone the options so that we can add headers without changing the original
         const req = Object.assign({ headers: {} }, options);
 
         // Add the token if it exists
-        const token = localStorage.getItem("bsession_" + this.tag);
+        const token = localStorage.getItem(sessionKey);
         if (token) {
             console.log("Bearer-Retrieve=" + token);
             req.headers = Object.assign(
@@ -55,17 +56,15 @@ export default class bsession {
             }
 
             if (response.status === 401) {
-                localStorage.clear();
+                localStorage.removeItem(sessionKey);
                 alert("Session expired. Please log in again.");
                 auth.redirectToLogin();
             }
 
             return response;
         } catch (err) {
-            // assume the error is due to unauthorized access, should change when CORS is fixed in the backend
-            localStorage.clear();
-            alert("Session expired. Please log in again.");
-            auth.redirectToLogin();
+            // Network/CORS/server connectivity errors should not force-logout users.
+            // Keep the session token and let callers handle UI-specific error messages.
 
             throw err;
         }
@@ -115,7 +114,9 @@ export default class bsession {
         WriteGroup: 0x0020,
         ReadOrg: 0x0040,
         WriteOrg: 0x0080,
-        All: 0x00ff,
+        ReadCustomer: 0x0100,
+        WriteCustomer: 0x0200,
+        All: 0x03ff,
     };
 
     getCachedAcl = () => {

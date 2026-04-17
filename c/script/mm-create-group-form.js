@@ -2,22 +2,32 @@ import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
 import MmOrganizations from "./mm-organizations.js";
+import MmCustomers from "./mm-customers.js";
 import MmAddMemberForm from "./mm-add-member-form.js";
 
 export default class MmCreateGroupForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
-    static observedAttributes = ["org-id", "add-self"];
+    static observedAttributes = ["org-id", "owner-id", "owner-type", "add-self"];
 
     #orgId;
-
+    #ownerId;
+    #ownerType = "org";
     #addSelf;
+    #cachedCustomers;
+    #cachedOrganizations;
+    #ownersPreloadPromise;
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "org-id") {
             this.#orgId = newValue;
-        }
-        if (name === "add-self") {
+            this.#ownerId = newValue;
+            this.#ownerType = "org";
+        } else if (name === "owner-id") {
+            this.#ownerId = newValue;
+        } else if (name === "owner-type") {
+            this.#ownerType = newValue || "org";
+        } else if (name === "add-self") {
             this.#addSelf = true;
         }
     }
@@ -28,6 +38,25 @@ export default class MmCreateGroupForm extends HTMLElement {
     }
 
     onSettled = () => {};
+
+    #preloadOwners = async () => {
+        if (!this.#ownersPreloadPromise) {
+            this.#ownersPreloadPromise = Promise.all([
+                MmCustomers.fetchCustomers().catch(() => []),
+                MmOrganizations.fetchOrganizations().catch(() => []),
+            ])
+                .then(([customers, organizations]) => {
+                    this.#cachedCustomers = customers || [];
+                    this.#cachedOrganizations = organizations || [];
+                })
+                .catch(() => {
+                    this.#cachedCustomers = [];
+                    this.#cachedOrganizations = [];
+                });
+        }
+
+        await this.#ownersPreloadPromise;
+    };
 
     #submitCreateGroup = async (event) => {
         event.preventDefault();
@@ -40,12 +69,20 @@ export default class MmCreateGroupForm extends HTMLElement {
             members.push(currUserId);
         }
 
+        const ownerType = (formData.get("owner-type") || "org").toString();
+        const ownerId = formData.get("owner");
         const variables = {
             name: formData.get("name"),
-            org: formData.get("organization"),
-            role: formData.get("role"),
             members: members,
+            role: formData.get("role"),
         };
+
+        if (ownerType === "customer") {
+            variables.customerId = ownerId;
+        } else {
+            variables.org = ownerId;
+        }
+
         const description = formData.get("description");
 
         if (description) {
@@ -63,10 +100,17 @@ export default class MmCreateGroupForm extends HTMLElement {
 
     static createGroup = async (groupObj) => {
         const groupRole = groupObj.role;
+        const groupOwnerType = groupObj.customerId ? "customer" : "org";
+        const groupOwnerId = groupObj.customerId || groupObj.org;
         delete groupObj.role;
 
+        const createGroupUrl =
+            groupOwnerType === "customer"
+                ? `/api/groups/customers/${encodeURIComponent(groupOwnerId)}`
+                : `/api/groups/orgs/${encodeURIComponent(groupOwnerId)}`;
+
         const createGroupResponse = await MmCreateGroupForm.session.fetch(
-            "/api/groups",
+            createGroupUrl,
             {
                 method: "POST",
                 headers: {
@@ -76,6 +120,11 @@ export default class MmCreateGroupForm extends HTMLElement {
             }
         );
 
+        // If create failed (e.g., invalid name), return the original error response.
+        if (!createGroupResponse.ok) {
+            return createGroupResponse;
+        }
+
         if (groupRole === "none") {
             return createGroupResponse;
         }
@@ -83,22 +132,20 @@ export default class MmCreateGroupForm extends HTMLElement {
         try {
             const group = await createGroupResponse.json();
 
-            const [org, groupId] = group.id.split(":");
-
-            const orgResponse = await MmAddMemberForm.addMemberToEntity(
-                org,
+            const parentResponse = await MmAddMemberForm.addMemberToEntity(
+                groupOwnerId,
                 { id: group.id, role: groupRole },
                 "group",
-                "org"
+                groupOwnerType
             );
-            if (!orgResponse.ok) {
+            if (!parentResponse || !parentResponse.ok) {
                 await MmCreateGroupForm.session.fetch(
                     "/api/groups/" + group.id,
                     {
                         method: "DELETE",
                     }
                 );
-                return orgResponse;
+                return parentResponse;
             }
 
             return originalResponse;
@@ -107,32 +154,84 @@ export default class MmCreateGroupForm extends HTMLElement {
         }
     };
 
-    #getOrgs = async () => {
-        let orgs = await MmOrganizations.fetchOrganizations();
+    #populateOwners = async () => {
+        const ownerTypeSelect = this.shadowRoot.querySelector("#owner-type");
+        const ownerSelect = this.shadowRoot.querySelector("#owner");
+        if (!ownerTypeSelect || !ownerSelect) return;
 
-        if (!this.#orgId) {
-            orgs = [{ id: "", name: "Select an organization" }, ...orgs];
-        }
+        const ownerType = ownerTypeSelect.value || this.#ownerType || "org";
+        ownerSelect.innerHTML = "";
 
-        for (const org of orgs) {
-            if (!org["_canWriteGroups"]) {
-                continue;
+        if (ownerType === "customer") {
+            await this.#preloadOwners();
+            const customers = this.#cachedCustomers || [];
+            const eligibleCustomers = customers.filter(
+                (customer) => customer._canWriteCustomer !== false
+            );
+
+            bdoc.append(
+                ownerSelect,
+                bdoc.ele(
+                    "option",
+                    bdoc.attr("value", ""),
+                    bdoc.attr("disabled", "true"),
+                    bdoc.attr("selected", "true"),
+                    eligibleCustomers.length
+                        ? "Select a customer"
+                        : "No customers available"
+                )
+            );
+
+            for (const customer of eligibleCustomers) {
+                const option = bdoc.ele(
+                    "option",
+                    bdoc.attr("value", customer.id),
+                    customer.name || customer.id
+                );
+                if (
+                    this.#ownerId &&
+                    customer.id.toLowerCase() === this.#ownerId.toLowerCase()
+                ) {
+                    bdoc.append(option, bdoc.attr("selected"));
+                }
+                bdoc.append(ownerSelect, option);
             }
 
+            ownerSelect.disabled = eligibleCustomers.length === 0;
+            return;
+        }
+
+        await this.#preloadOwners();
+        let orgs = this.#cachedOrganizations || [];
+        const eligibleOrgs = orgs.filter((org) => org["_canWriteGroups"]);
+
+        bdoc.append(
+            ownerSelect,
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", ""),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("selected", "true"),
+                eligibleOrgs.length ? "Select an organization" : "No organizations available"
+            )
+        );
+
+        for (const org of eligibleOrgs) {
             const option = bdoc.ele(
                 "option",
                 bdoc.attr("value", org.id),
                 org.name
             );
             if (
-                org.id === "" ||
-                (this.#orgId &&
-                    org.id.toLowerCase() === this.#orgId.toLowerCase())
+                this.#ownerId &&
+                org.id.toLowerCase() === this.#ownerId.toLowerCase()
             ) {
                 bdoc.append(option, bdoc.attr("selected"));
             }
-            bdoc.append(this.shadowRoot.querySelector("select"), option);
+            bdoc.append(ownerSelect, option);
         }
+
+        ownerSelect.disabled = eligibleOrgs.length === 0;
     };
 
     getInnerForm = () => {
@@ -165,6 +264,11 @@ export default class MmCreateGroupForm extends HTMLElement {
                     bdoc.attr("type", "text"),
                     bdoc.attr("id", "name"),
                     bdoc.attr("name", "name"),
+                    bdoc.attr("pattern", "^\\w+$"),
+                    bdoc.attr(
+                        "title",
+                        "Group name may only contain letters, numbers, and underscore (no spaces)."
+                    ),
                     bdoc.attr("required", "true")
                 )
             ),
@@ -173,15 +277,16 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.class("form-group"),
                 bdoc.ele(
                     "label",
-                    bdoc.attr("for", "organization"),
-                    "Parent Organization",
+                    bdoc.attr("for", "owner-type"),
+                    "Owned By Type",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
                     "select",
-                    bdoc.attr("id", "organization"),
-                    bdoc.attr("name", "organization"),
-                    bdoc.attr("required", "true")
+                    bdoc.attr("id", "owner-type"),
+                    bdoc.attr("name", "owner-type"),
+                    bdoc.ele("option", bdoc.attr("value", "org"), "Organization"),
+                    bdoc.ele("option", bdoc.attr("value", "customer"), "Customer")
                 )
             ),
             bdoc.ele(
@@ -189,6 +294,24 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.class("form-group"),
                 bdoc.ele(
                     "label",
+                    bdoc.attr("for", "owner"),
+                    "Owned By",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                ),
+                bdoc.ele(
+                    "select",
+                    bdoc.attr("id", "owner"),
+                    bdoc.attr("name", "owner"),
+                    bdoc.attr("required", "true")
+                )
+            ),
+            bdoc.ele(
+                "div",
+                bdoc.class("form-group"),
+                bdoc.id("role-group"),
+                bdoc.ele(
+                    "label",
+                    bdoc.id("role-label"),
                     bdoc.attr("for", "role"),
                     "Role in Parent Organization",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
@@ -240,7 +363,43 @@ export default class MmCreateGroupForm extends HTMLElement {
             )
         );
 
-        this.#getOrgs();
+        const ownerTypeSelect = this.shadowRoot.querySelector("#owner-type");
+        const ownerSelect = this.shadowRoot.querySelector("#owner");
+        const roleGroup = this.shadowRoot.querySelector("#role-group");
+        const roleLabel = this.shadowRoot.querySelector("#role-label");
+
+        const updateRoleLabel = () => {
+            roleLabel.textContent =
+                ownerTypeSelect.value === "customer"
+                    ? "Role in Parent Customer"
+                    : "Role in Parent Organization";
+            roleLabel.appendChild(
+                bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+            );
+        };
+
+        ownerTypeSelect.value = this.#ownerType || "org";
+        bdoc.append(
+            ownerTypeSelect,
+            bdoc.eventListener("change", async () => {
+                roleGroup.style.display = "block";
+                updateRoleLabel();
+                await this.#populateOwners();
+            })
+        );
+
+        bdoc.append(
+            ownerSelect,
+            bdoc.eventListener("change", () => {
+                // keep the add-to-parent logic in the modal in sync when the owner changes
+                ownerSelect.dispatchEvent(new Event("ownerchange"));
+            })
+        );
+
+        roleGroup.style.display = "block";
+        updateRoleLabel();
+        this.#preloadOwners();
+        this.#populateOwners();
     }
 }
 

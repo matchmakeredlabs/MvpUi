@@ -724,6 +724,10 @@ class Mmx {
             let controls = bdoc.ele(
                 "div",
                 bdoc.class("controls"),
+                bdoc.attr(
+                    "style",
+                    "position: sticky; top: 0; z-index: 20; background: white; padding-bottom: 0.35em;"
+                ),
                 controlsLeft,
                 controlsRight
             );

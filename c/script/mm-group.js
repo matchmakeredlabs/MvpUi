@@ -1,9 +1,48 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmCustomers from "./mm-customers.js";
 
 export default class MmGroup extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
+
+    static getOwnedByType = (group) => {
+        return group.customerId || group.customer || group.ownerType === "customer"
+            ? "Customer"
+            : "Organization";
+    };
+
+    static getOwnedById = (group) => {
+        return group.customerId || group.customer || group.org || group.orgId || "";
+    };
+
+    static getOwnedByLabel = (group) => {
+        const ownerType = MmGroup.getOwnedByType(group);
+        const ownerId = MmGroup.getOwnedById(group);
+        return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
+    };
+
+    static getCustomerLabel = (customerMap, customerId) => {
+        if (!customerId) return "";
+        const customer = customerMap[customerId];
+        return customer?.name || customer?.id || customerId;
+    };
+
+    static fetchCustomers = async () => {
+        try {
+            return await MmCustomers.fetchCustomers();
+        } catch {
+            return [];
+        }
+    };
+
+    static getRoleScopeType = (role) => {
+        return role.customerId || role.customer ? "Customer" : "Organization";
+    };
+
+    static getRoleScopeId = (role) => {
+        return role.customerId || role.customer || role.orgId || role.org || "";
+    };
 
     groups = [];
     users = [];
@@ -53,6 +92,66 @@ export default class MmGroup extends HTMLElement {
                   orgId
               )
             : orgId;
+    };
+
+    static renderOwnedBy = (group, cachedAcl, customerMap) => {
+        const ownerType = MmGroup.getOwnedByType(group);
+        const ownerId = MmGroup.getOwnedById(group);
+
+        if (!ownerId) {
+            return ownerType;
+        }
+
+        if (ownerType === "Customer") {
+            return bdoc.ele(
+                "span",
+                `${ownerType}: `,
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", `/c/Customer?id=${ownerId}`),
+                    MmGroup.getCustomerLabel(customerMap, ownerId)
+                )
+            );
+        }
+
+        return bdoc.ele(
+            "span",
+            `${ownerType}: `,
+            (ownerId in cachedAcl || "admin" in cachedAcl)
+                ? bdoc.ele(
+                      "a",
+                      bdoc.attr("href", `/c/Organization?id=${ownerId}`),
+                      ownerId
+                  )
+                : ownerId
+        );
+    };
+
+    static renderRoleScope = (role, cachedAcl, customerMap) => {
+        const scopeType = MmGroup.getRoleScopeType(role);
+        const scopeId = MmGroup.getRoleScopeId(role);
+
+        if (!scopeId) {
+            return scopeType;
+        }
+
+        if (scopeType === "Customer") {
+            return bdoc.ele(
+                "span",
+                `${scopeType}: `,
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", `/c/Customer?id=${scopeId}`),
+                    MmGroup.getCustomerLabel(customerMap, scopeId)
+                )
+            );
+        }
+
+        return bdoc.ele(
+            "span",
+            `${scopeType}: `,
+            MmGroup.renderLinkIfCachedPermsOnOrg(scopeId, cachedAcl)
+        );
     };
 
     // static renderLinkIfCachedPermsOnGroup = (groupId, cachedAcl) => {
@@ -193,6 +292,11 @@ export default class MmGroup extends HTMLElement {
             this.shadowRoot.querySelector(".headers-container");
 
         const cachedAcl = MmGroup.session.getCachedAcl();
+        const customers = await MmGroup.fetchCustomers();
+        const customerMap = customers.reduce((acc, customer) => {
+            acc[customer.id] = customer;
+            return acc;
+        }, {});
 
         const descriptionContainer = bdoc.ele(
             "div",
@@ -205,7 +309,7 @@ export default class MmGroup extends HTMLElement {
             bdoc.ele(
                 "p",
                 "Owned by: ",
-                MmGroup.renderLinkIfCachedPermsOnOrg(group.org, cachedAcl)
+                MmGroup.renderOwnedBy(group, cachedAcl, customerMap)
             )
         );
 
@@ -305,8 +409,8 @@ export default class MmGroup extends HTMLElement {
         descriptionEditButtons.style.display = "none";
 
         if (
-            (group.org in cachedAcl &&
-                cachedAcl[group.org].includes("WriteGroup")) ||
+            (MmGroup.getOwnedById(group) in cachedAcl &&
+                cachedAcl[MmGroup.getOwnedById(group)].includes("WriteGroup")) ||
             "admin" in cachedAcl
         ) {
             bdoc.append(
@@ -364,15 +468,19 @@ export default class MmGroup extends HTMLElement {
             const properties = {
                 group: {
                     ["sort-properties"]: "name,Owned by",
-                    ["filter-properties"]: "org",
+                    ["filter-properties"]: "Owned by",
                     ["dropdown-text"]: "Groups",
                     ["cols"]: {
                         name: (group) => group.groupId,
-                        ["Owned by"]: (group) =>
-                            MmGroup.renderLinkIfCachedPermsOnOrg(
-                                group.org,
-                                cachedAcl
-                            ),
+                        ["Owned by"]: (group) => {
+                            const ownerType = MmGroup.getOwnedByType(group);
+                            const ownerId = MmGroup.getOwnedById(group);
+                            if (!ownerId) return ownerType;
+                            if (ownerType === "Customer") {
+                                return `${ownerType}: ${MmGroup.getCustomerLabel(customerMap, ownerId)}`;
+                            }
+                            return `${ownerType}: ${ownerId}`;
+                        },
                     },
                     ["identifier"]: "groupId",
                     ["button-group"]: null,
@@ -383,6 +491,7 @@ export default class MmGroup extends HTMLElement {
                         return {
                             id: group.id,
                             org,
+                            customerId: group.customerId,
                             groupId,
                         };
                     },
@@ -501,7 +610,10 @@ export default class MmGroup extends HTMLElement {
                 filterTable.customSorts = {
                     ID: (a, b) => (a.id > b.id ? 1 : -1),
                     name: (a, b) => (a.name > b.name ? 1 : -1),
-                    ["Owned by"]: (a, b) => (a.org > b.org ? 1 : -1),
+                    ["Owned by"]: (a, b) =>
+                        properties.group["cols"]["Owned by"](a).localeCompare(
+                            properties.group["cols"]["Owned by"](b)
+                        ),
                 };
                 filterTable.customColStyles = {
                     Actions: "width: 1%;",
@@ -538,7 +650,7 @@ export default class MmGroup extends HTMLElement {
                     if (type === "group") {
                         const createGroupModal = bdoc.ele(
                             "mm-create-group-modal",
-                            bdoc.attr("org-id", group.org),
+                            bdoc.attr("org-id", MmGroup.getOwnedById(group)),
                             bdoc.attr("parent-id", groupId),
                             bdoc.attr("parent-type", "group")
                         );
@@ -598,21 +710,22 @@ export default class MmGroup extends HTMLElement {
                 const filterTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.attr("id", `roles-filter-table`),
-                    bdoc.attr("sort-properties", "organization,role"),
+                    bdoc.attr("sort-properties", "scope,role"),
                     bdoc.attr("slot", "dropdown-body"),
                     bdoc.attr("first-col-width", "inherit")
                 );
                 bdoc.append(rolesDropdown, filterTable);
                 filterTable.generateCols = () => ({
-                    organization: (role) =>
-                        MmGroup.renderLinkIfCachedPermsOnOrg(
-                            role.orgId,
-                            cachedAcl
-                        ),
+                    scope: (role) =>
+                        MmGroup.renderRoleScope(role, cachedAcl, customerMap),
                     role: (role) => role.role,
                 });
                 filterTable.customSorts = {
-                    organization: (a, b) => (a.orgId > b.orgId ? 1 : -1),
+                    scope: (a, b) => {
+                        const aScope = `${MmGroup.getRoleScopeType(a)}:${MmGroup.getRoleScopeId(a)}`;
+                        const bScope = `${MmGroup.getRoleScopeType(b)}:${MmGroup.getRoleScopeId(b)}`;
+                        return aScope > bScope ? 1 : -1;
+                    },
                     role: (a, b) => {
                         const roleOrder = ["owner", "editor", "reader"];
                         return (
@@ -627,7 +740,7 @@ export default class MmGroup extends HTMLElement {
                     rolesDropdown,
                     bdoc.ele(
                         "p",
-                        "This group has no roles on any organization.",
+                        "This group has no roles on any organization or customer.",
                         bdoc.attr("slot", "dropdown-body"),
                         bdoc.attr("style", "margin: 1em;")
                     )

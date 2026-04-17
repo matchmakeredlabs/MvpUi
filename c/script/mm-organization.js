@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmCustomer from "./mm-customer.js";
 import MmAddMemberForm from "./mm-add-member-form.js";
 
 export default class MmOrganization extends HTMLElement {
@@ -29,6 +30,15 @@ export default class MmOrganization extends HTMLElement {
         return await response.json();
 
         // what happens when user does not have perms for org?
+    };
+
+    static renderCustomerLink = (customerId, customer) => {
+        const label = customer?.name || customer?.id || customerId;
+        return bdoc.ele(
+            "a",
+            bdoc.attr("href", `/c/Customer?id=${customerId}`),
+            label
+        );
     };
 
     static updateOrg = async (orgId, orgObj) => {
@@ -184,6 +194,13 @@ export default class MmOrganization extends HTMLElement {
             window.location.href = "/c/Organizations";
         });
 
+        const customer = organization.customerId
+            ? await MmCustomer.fetchCustomer(organization.customerId).catch(
+                  () => null
+              )
+            : null;
+        const customerId = organization.customerId || organization.customer;
+
         if (organization._canUpdate) {
             this.#permissions.add("update");
         }
@@ -222,6 +239,16 @@ export default class MmOrganization extends HTMLElement {
         const infoContainer = bdoc.ele(
             "div",
             bdoc.class("info-container"),
+            customerId
+                ? bdoc.ele(
+                      "p",
+                      "Customer: ",
+                      MmOrganization.renderCustomerLink(
+                          customerId,
+                          customer
+                      )
+                  )
+                : null,
             descriptionContainer
         );
 

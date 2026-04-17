@@ -5,6 +5,43 @@ import config from "/config.js";
 export default class MmCreateOrgForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
+    static customerRoutes = [
+        "/api/customers",
+        "/api/customer",
+        "/customers",
+        "/customer",
+    ];
+
+    static orgRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+
+    static fetchCustomers = async () => {
+        for (const route of MmCreateOrgForm.customerRoutes) {
+            const response = await MmCreateOrgForm.session.fetch(route);
+            if (response.status === 200) {
+                const json = await response.json();
+                return json.items || [];
+            }
+            if (response.status !== 404) return Promise.reject(response);
+        }
+        return Promise.reject(
+            new Response(null, {
+                status: 404,
+                statusText: "Customers endpoint not found",
+            })
+        );
+    };
+
+    static handleError = async (response) => {
+        try {
+            const body = await response.json();
+            if (body.error) alert(body.error);
+            else if (body.log?.[0]?.message) alert(body.log[0].message);
+            else alert(`Error: ${response.status} ${response.statusText}`);
+        } catch {
+            alert(`Error: ${response.status} ${response.statusText}`);
+        }
+    };
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -19,6 +56,7 @@ export default class MmCreateOrgForm extends HTMLElement {
 
         const variables = {
             name: formData.get("name"),
+            customerId: formData.get("customer"),
             members: [],
         };
         const description = formData.get("description");
@@ -36,12 +74,30 @@ export default class MmCreateOrgForm extends HTMLElement {
     };
 
     static createOrg = async (orgObj) => {
-        return await MmCreateOrgForm.session.fetch("/api/orgs", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(orgObj),
+        const customerId = orgObj.customerId;
+        const payload = { ...orgObj };
+        delete payload.customerId;
+
+        for (const route of MmCreateOrgForm.orgRoutes) {
+            const separator = route.includes("?") ? "&" : "?";
+            const response = await MmCreateOrgForm.session.fetch(
+                `${route}${separator}customerId=${encodeURIComponent(
+                    customerId
+                )}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+            if (response.status === 200) return response;
+            if (response.status !== 404) return response;
+        }
+        return new Response(null, {
+            status: 404,
+            statusText: "Organization create endpoint not found",
         });
     };
 
@@ -55,29 +111,97 @@ export default class MmCreateOrgForm extends HTMLElement {
         );
     };
 
+    #populateCustomers = async () => {
+        const customers = await MmCreateOrgForm.fetchCustomers().catch(
+            async (response) => {
+                await MmCreateOrgForm.handleError(response);
+                return [];
+            }
+        );
+
+        const customerSelect = this.shadowRoot.querySelector("#customer");
+        if (!customerSelect) return;
+        customerSelect.innerHTML = "";
+
+        const eligibleCustomers = customers.filter(
+            (customer) => customer._canCreateOrgs !== false
+        );
+
+        bdoc.append(
+            customerSelect,
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", ""),
+                bdoc.attr("disabled", "true"),
+                bdoc.attr("selected", "true"),
+                eligibleCustomers.length
+                    ? "Select a customer"
+                    : "No customers available"
+            )
+        );
+
+        for (const customer of eligibleCustomers) {
+            bdoc.append(
+                customerSelect,
+                bdoc.ele(
+                    "option",
+                    bdoc.attr("value", customer.id),
+                    customer.name || customer.id
+                )
+            );
+        }
+
+        if (!eligibleCustomers.length) {
+            customerSelect.setAttribute("disabled", "true");
+        } else {
+            customerSelect.removeAttribute("disabled");
+        }
+    };
+
     connectedCallback() {
         const formGroupsContainer = bdoc.ele(
             "div",
             bdoc.class("form-groups-container"),
-            bdoc.ele(
-                "div",
-                bdoc.class("form-group"),
-                bdoc.ele(
-                    "label",
-                    bdoc.attr("for", "name"),
-                    "Organization Name",
-                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
-                ),
-                bdoc.ele(
-                    "input",
-                    bdoc.attr("type", "text"),
-                    bdoc.attr("id", "name"),
 
-                    bdoc.attr("placeholder", "Acme Anvils"),
-                    bdoc.attr("name", "name"),
-                    bdoc.attr("required", "true")
-                )
-            ),
+                bdoc.ele(
+                    "div",
+                    bdoc.class("form-group"),
+                    bdoc.ele(
+                        "label",
+                        bdoc.attr("for", "name"),
+                        "Organization Name",
+                        bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                    ),
+                    bdoc.ele(
+                        "input",
+                        bdoc.attr("type", "text"),
+                        bdoc.attr("id", "name"),
+
+                        bdoc.attr("placeholder", "Acme Anvils"),
+                        bdoc.attr("name", "name"),
+                        bdoc.attr("required", "true")
+                    )
+                ),
+
+                bdoc.ele(
+                    "div",
+                    bdoc.class("form-group"),
+                    bdoc.ele(
+                        "label",
+                        bdoc.attr("for", "customer"),
+                        "Customer Name",
+                        bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
+                    ),
+                    bdoc.ele(
+                        "select",
+                        bdoc.attr("id", "customer"),
+                        bdoc.attr("name", "customer"),
+                        bdoc.attr("required", "true")
+                    )
+                ),
+
+
+
             bdoc.ele(
                 "div",
                 bdoc.class("form-group"),
@@ -114,6 +238,8 @@ export default class MmCreateOrgForm extends HTMLElement {
                 bdoc.ele("slot", bdoc.attr("name", "form-footer"))
             )
         );
+
+        this.#populateCustomers();
     }
 }
 
