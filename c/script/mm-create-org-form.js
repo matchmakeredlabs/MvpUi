@@ -53,11 +53,14 @@ export default class MmCreateOrgForm extends HTMLElement {
         event.preventDefault();
 
         const formData = new FormData(event.target);
+        const currentUserId = MmCreateOrgForm.session.getCachedUserID();
 
         const variables = {
             name: formData.get("name"),
             customerId: formData.get("customer"),
-            members: [],
+            members: currentUserId
+                ? [{ id: currentUserId.toLowerCase(), role: "owner" }]
+                : [],
         };
         const description = formData.get("description");
         if (description) {
@@ -74,26 +77,62 @@ export default class MmCreateOrgForm extends HTMLElement {
     };
 
     static createOrg = async (orgObj) => {
-        const customerId = orgObj.customerId;
-        const payload = { ...orgObj };
-        delete payload.customerId;
-
         for (const route of MmCreateOrgForm.orgRoutes) {
-            const separator = route.includes("?") ? "&" : "?";
-            const response = await MmCreateOrgForm.session.fetch(
-                `${route}${separator}customerId=${encodeURIComponent(
-                    customerId
-                )}`,
+            const payloadCustomerId = {
+                ...orgObj,
+                customerId: orgObj.customerId,
+            };
+            const payloadCustomer = {
+                ...orgObj,
+                customer: orgObj.customerId,
+            };
+            const payloadNoCustomer = { ...orgObj };
+            delete payloadNoCustomer.customerId;
+            delete payloadNoCustomer.customer;
+
+            const attempts = [
                 {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
+                    url: route,
+                    payload: payloadCustomerId,
+                },
+                {
+                    url: route,
+                    payload: payloadCustomer,
+                },
+                {
+                    url: `${route}?customerId=${encodeURIComponent(
+                        orgObj.customerId || ""
+                    )}`,
+                    payload: payloadNoCustomer,
+                },
+                {
+                    url: `${route}?customer=${encodeURIComponent(
+                        orgObj.customerId || ""
+                    )}`,
+                    payload: payloadNoCustomer,
+                },
+            ];
+
+            let lastResponse = null;
+            for (const attempt of attempts) {
+                const response = await MmCreateOrgForm.session.fetch(
+                    attempt.url,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(attempt.payload),
+                    }
+                );
+
+                if (response.status === 200) return response;
+                if (response.status !== 404) {
+                    lastResponse = response;
                 }
-            );
-            if (response.status === 200) return response;
-            if (response.status !== 404) return response;
+            }
+
+            if (lastResponse) return lastResponse;
         }
         return new Response(null, {
             status: 404,
@@ -169,7 +208,7 @@ export default class MmCreateOrgForm extends HTMLElement {
                     bdoc.ele(
                         "label",
                         bdoc.attr("for", "name"),
-                        "Organization Name",
+                        "Project Name",
                         bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                     ),
                     bdoc.ele(

@@ -91,22 +91,6 @@ export default class MmCreateUserForm extends HTMLElement {
                 bdoc.class("form-group"),
                 bdoc.ele(
                     "label",
-                    bdoc.attr("for", "name"),
-                    "Customer Name",
-                    bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
-                ),
-                bdoc.ele(
-                    "select",
-                    bdoc.attr("id", "customer"),
-                    bdoc.attr("name", "customer"),
-                    bdoc.attr("required", "true")
-                )
-            ),
-            bdoc.ele(
-                "div",
-                bdoc.class("form-group"),
-                bdoc.ele(
-                    "label",
                     bdoc.attr("for", "password"),
                     "User Password",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")

@@ -100,7 +100,7 @@ class MmCreateOrgModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Create Org",
+                            "Create Project",
                             bdoc.eventListener("click", () => {
                                 createOrgForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -118,7 +118,7 @@ class MmCreateOrgModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button"),
-                            "Create and View Org",
+                            "Create and View Project",
                             bdoc.eventListener("click", () => {
                                 createOrgForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
@@ -128,7 +128,7 @@ class MmCreateOrgModal extends HTMLElement {
                                             addedGroup
                                         );
 
-                                        window.location.href = `/c/Organization?id=${response.id}`;
+                                        window.location.href = `/c/Project?id=${response.id}`;
                                     }
                                 );
                                 createOrgForm.submit();
@@ -144,7 +144,7 @@ class MmCreateOrgModal extends HTMLElement {
 
                 bdoc.ele(
                     "h2",
-                    "Create Organization",
+                    "Create Project",
                     bdoc.attr("style", "margin-left: 18px;")
                 ),
                 createOrgForm

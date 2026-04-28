@@ -11,7 +11,7 @@ export default class MmGroups extends HTMLElement {
     static getOwnedByType = (group) => {
         return group.customerId || group.customer || group.ownerType === "customer"
             ? "Customer"
-            : "Organization";
+            : "Project";
     };
 
     static getOwnedById = (group) => {
@@ -62,7 +62,7 @@ export default class MmGroups extends HTMLElement {
             ownerId in cachedAcl || "admin" in cachedAcl
                 ? bdoc.ele(
                       "a",
-                      bdoc.attr("href", `/c/Organization?id=${ownerId}`),
+                      bdoc.attr("href", `/c/Project?id=${ownerId}`),
                       ownerId
                   )
                 : ownerId
@@ -101,9 +101,19 @@ export default class MmGroups extends HTMLElement {
                 bdoc.attr("href", "/c/res/mm-groups.css")
             ),
             bdoc.ele(
-                "h2",
-                "My Groups",
-                bdoc.attr("style", "margin-left: 1.5em")
+                "div",
+                bdoc.class("header-container"),
+                bdoc.ele(
+                    "h2",
+                    "My Groups",
+                    bdoc.attr("style", "margin-left: 1.5em")
+                ),
+                bdoc.ele(
+                    "button",
+                    bdoc.attr("id", "create-group-button"),
+                    bdoc.class("header-button add-entity-button2"),
+                    "✐  Create New Group"
+                )
             ),
             bdoc.ele(
                 "mm-filter-table",
@@ -217,18 +227,14 @@ export default class MmGroups extends HTMLElement {
             const createGroupModal = this.shadowRoot.querySelector(
                 "mm-create-group-modal"
             );
-            createGroupModal.onSuccess = (variables, response) => {
-                const newGroup = {
-                    ...response,
-                    ...variables,
-                    id: response.id,
+            if (createGroupButton && createGroupModal) {
+                createGroupModal.onSuccess = async () => {
+                    await this.#reloadPage();
                 };
-                groups.unshift(newGroup);
-                filterTable.loadData(groups.map(toTableRow));
-            };
-            createGroupButton.onclick = () => {
-                createGroupModal.show();
-            };
+                createGroupButton.onclick = () => {
+                    createGroupModal.show();
+                };
+            }
 
             loadingRow?.remove();
         });

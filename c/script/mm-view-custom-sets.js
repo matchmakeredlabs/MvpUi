@@ -280,12 +280,12 @@ export default class MmViewCustomSets extends HTMLElement {
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Organization",
+                            ["_orgId"]: "Project",
                         })
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "subject,publisher,name,Organization,Described"
+                        "subject,publisher,name,Project,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -324,7 +324,7 @@ export default class MmViewCustomSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    Organization: (collection) => collection._orgId || "Null",
+                    Project: (collection) => collection._orgId || "Null",
 
                     ["Described"]: (customSet) =>
                         bdoc.ele(
@@ -338,7 +338,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
                     },
-                    Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                    Project: (a, b) => (a._orgId < b._orgId ? -1 : 1),
                 };
 
                 filterTable.loadData(Object.values(displayCustomSets));

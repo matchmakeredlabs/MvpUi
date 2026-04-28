@@ -9,7 +9,7 @@ export default class MmGroup extends HTMLElement {
     static getOwnedByType = (group) => {
         return group.customerId || group.customer || group.ownerType === "customer"
             ? "Customer"
-            : "Organization";
+            : "Project";
     };
 
     static getOwnedById = (group) => {
@@ -37,7 +37,7 @@ export default class MmGroup extends HTMLElement {
     };
 
     static getRoleScopeType = (role) => {
-        return role.customerId || role.customer ? "Customer" : "Organization";
+        return role.customerId || role.customer ? "Customer" : "Project";
     };
 
     static getRoleScopeId = (role) => {
@@ -88,7 +88,7 @@ export default class MmGroup extends HTMLElement {
         return orgId in cachedAcl || "admin" in cachedAcl
             ? bdoc.ele(
                   "a",
-                  bdoc.attr("href", `/c/Organization?id=${orgId}`),
+                  bdoc.attr("href", `/c/Project?id=${orgId}`),
                   orgId
               )
             : orgId;
@@ -120,7 +120,7 @@ export default class MmGroup extends HTMLElement {
             (ownerId in cachedAcl || "admin" in cachedAcl)
                 ? bdoc.ele(
                       "a",
-                      bdoc.attr("href", `/c/Organization?id=${ownerId}`),
+                      bdoc.attr("href", `/c/Project?id=${ownerId}`),
                       ownerId
                   )
                 : ownerId
@@ -648,30 +648,20 @@ export default class MmGroup extends HTMLElement {
                     );
 
                     if (type === "group") {
+                        const ownerType =
+                            MmGroup.getOwnedByType(group) === "Customer"
+                                ? "customer"
+                                : "org";
                         const createGroupModal = bdoc.ele(
                             "mm-create-group-modal",
-                            bdoc.attr("org-id", MmGroup.getOwnedById(group)),
+                            bdoc.attr("owner-id", MmGroup.getOwnedById(group)),
+                            bdoc.attr("owner-type", ownerType),
                             bdoc.attr("parent-id", groupId),
                             bdoc.attr("parent-type", "group")
                         );
-                        createGroupModal.onSuccess = async (
-                            variables,
-                            response,
-                            addedGroup
-                        ) => {
-                            if (addedGroup) {
-                                this[`${type}s`].push(
-                                    properties[`${type}`]["get-obj"](variables)
-                                );
-                                if (this[`${type}s`].length === 1) {
-                                    generateTable(type);
-                                }
-                                const filterTable =
-                                    this.shadowRoot.getElementById(
-                                        `${type}s-filter-table`
-                                    );
-                                filterTable.loadData(this[`${type}s`]);
-                            }
+                        createGroupModal.onSuccess = async () => {
+                            this.shadowRoot.innerHTML = "";
+                            this.connectedCallback();
                         };
                         bdoc.append(this.shadowRoot, createGroupModal);
                         bdoc.append(

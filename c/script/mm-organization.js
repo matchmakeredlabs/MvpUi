@@ -41,6 +41,56 @@ export default class MmOrganization extends HTMLElement {
         );
     };
 
+    static getGroupOwnerType = (group) =>
+        group.customerId || group.customer || group.ownerType === "customer"
+            ? "Customer"
+            : "Project";
+
+    static getGroupOwnerId = (group) =>
+        group.customerId ||
+        group.customer ||
+        group.org ||
+        group.orgId ||
+        group.id?.split(":")[0] ||
+        "";
+
+    static getGroupOwnedByLabel = (group) => {
+        const ownerType = MmOrganization.getGroupOwnerType(group);
+        const ownerId = MmOrganization.getGroupOwnerId(group);
+        return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
+    };
+
+    static renderGroupOwnedBy = (group, cachedAcl) => {
+        const ownerType = MmOrganization.getGroupOwnerType(group);
+        const ownerId = MmOrganization.getGroupOwnerId(group);
+
+        if (!ownerId) return ownerType;
+
+        if (ownerType === "Customer") {
+            return bdoc.ele(
+                "span",
+                `${ownerType}: `,
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", `/c/Customer?id=${ownerId}`),
+                    ownerId
+                )
+            );
+        }
+
+        return bdoc.ele(
+            "span",
+            `${ownerType}: `,
+            ownerId in cachedAcl || "admin" in cachedAcl
+                ? bdoc.ele(
+                      "a",
+                      bdoc.attr("href", `/c/Project?id=${ownerId}`),
+                      ownerId
+                  )
+                : ownerId
+        );
+    };
+
     static updateOrg = async (orgId, orgObj) => {
         const response = await MmOrganization.session.fetch(
             "/api/orgs/" + orgId,
@@ -67,7 +117,7 @@ export default class MmOrganization extends HTMLElement {
             (member) => member.id !== entityId
         );
         if (newMembers.length === currentOrg.members.length) {
-            alert(`${entityId} not found in organization ${orgId}`);
+            alert(`${entityId} not found in project ${orgId}`);
             return Promise.reject();
         }
 
@@ -119,7 +169,7 @@ export default class MmOrganization extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("headers-container"),
-                bdoc.ele("h2", `Organization`)
+                bdoc.ele("h2", `Project`)
             ),
             bdoc.ele(
                 "div",
@@ -168,10 +218,27 @@ export default class MmOrganization extends HTMLElement {
         const groups = [];
         for (let member of organization.members) {
             if (member.id.includes(":")) {
-                const [org, groupId] = member.id.split(":");
+                const [ownerId, ...groupIdParts] = member.id.split(":");
+                const groupId = groupIdParts.join(":");
+                const ownerType =
+                    member.customerId || member.customer ? "customer" : "org";
                 groups.push({
                     ...member,
-                    org,
+                    org: member.org || (ownerType === "org" ? ownerId : ""),
+                    customerId:
+                        member.customerId ||
+                        member.customer ||
+                        (ownerType === "customer" ? ownerId : ""),
+                    ownerType,
+                    ownedByLabel: MmOrganization.getGroupOwnedByLabel({
+                        ...member,
+                        org: member.org || (ownerType === "org" ? ownerId : ""),
+                        customerId:
+                            member.customerId ||
+                            member.customer ||
+                            (ownerType === "customer" ? ownerId : ""),
+                        ownerType,
+                    }),
                     groupId,
                 });
             } else {
@@ -185,13 +252,13 @@ export default class MmOrganization extends HTMLElement {
         const orgId = new URLSearchParams(window.location.search).get("id");
 
         if (!orgId) {
-            window.location.href = "/c/Organizations";
+            window.location.href = "/c/Projects";
         }
 
         const organization = await MmOrganization.fetchOrganization(
             orgId
         ).catch(() => {
-            window.location.href = "/c/Organizations";
+            window.location.href = "/c/Projects";
         });
 
         const customer = organization.customerId
@@ -217,17 +284,6 @@ export default class MmOrganization extends HTMLElement {
         this.#org = organization;
 
         const cachedAcl = MmOrganization.session.getCachedAcl();
-
-        const renderLinkIfCachedPermsOnOrg = (linkOrgId) => {
-            return (linkOrgId in cachedAcl || "admin" in cachedAcl) &&
-                linkOrgId !== orgId
-                ? bdoc.ele(
-                      "a",
-                      bdoc.attr("href", `/c/Organization?id=${linkOrgId}`),
-                      linkOrgId
-                  )
-                : linkOrgId;
-        };
 
         const headerContainer =
             this.shadowRoot.querySelector(".headers-container");
@@ -378,7 +434,10 @@ export default class MmOrganization extends HTMLElement {
             const properties = {
                 group: {
                     ["sort-properties"]: "name,Owned by,role",
-                    ["filter-properties"]: "org,role",
+                    ["filter-properties"]: "ownedByLabel,role",
+                    ["filter-display-names"]: JSON.stringify({
+                        ownedByLabel: "Owned by",
+                    }),
 
                     ["cols"]: {
                         name: (group) =>
@@ -389,18 +448,41 @@ export default class MmOrganization extends HTMLElement {
                             ),
                         role: (group) => group.role || "",
                         ["Owned by"]: (group) =>
-                            renderLinkIfCachedPermsOnOrg(group.org),
+                            MmOrganization.renderGroupOwnedBy(group, cachedAcl),
                     },
                     ["identifier"]: "groupId",
                     ["button-group"]: null,
-                    ["add-button-text"]: "+ Add Group to Organization",
+                    ["add-button-text"]: "+ Add Group to Project",
                     ["dropdown"]: groupsDropdown,
                     ["get-obj"]: (group) => {
-                        const [org, groupId] = group.id.split(":");
+                        const [ownerId, ...groupIdParts] = group.id.split(":");
+                        const groupId = groupIdParts.join(":");
+                        const ownerType =
+                            group.customerId || group.customer
+                                ? "customer"
+                                : "org";
                         return {
                             ...group,
                             id: group.id,
-                            org,
+                            org:
+                                group.org ||
+                                (ownerType === "org" ? ownerId : ""),
+                            customerId:
+                                group.customerId ||
+                                group.customer ||
+                                (ownerType === "customer" ? ownerId : ""),
+                            ownerType,
+                            ownedByLabel: MmOrganization.getGroupOwnedByLabel({
+                                ...group,
+                                org:
+                                    group.org ||
+                                    (ownerType === "org" ? ownerId : ""),
+                                customerId:
+                                    group.customerId ||
+                                    group.customer ||
+                                    (ownerType === "customer" ? ownerId : ""),
+                                ownerType,
+                            }),
                             groupId,
                         };
                     },
@@ -414,7 +496,7 @@ export default class MmOrganization extends HTMLElement {
                     },
                     ["identifier"]: "id",
                     ["button-group"]: null,
-                    ["add-button-text"]: "+ Add User to Organization",
+                    ["add-button-text"]: "+ Add User to Project",
                     ["dropdown"]: usersDropdown,
                     ["get-obj"]: (user) => {
                         return {
@@ -452,6 +534,16 @@ export default class MmOrganization extends HTMLElement {
                         bdoc.attr(
                             "filter-properties",
                             properties[type]["filter-properties"]
+                        )
+                    );
+                }
+
+                if (properties[type]["filter-display-names"]) {
+                    bdoc.append(
+                        filterTable,
+                        bdoc.attr(
+                            "filter-display-names",
+                            properties[type]["filter-display-names"]
                         )
                     );
                 }
@@ -643,7 +735,7 @@ export default class MmOrganization extends HTMLElement {
                                                       properties[type]
                                                           .identifier
                                                   ]
-                                              } from the organization?`
+                                              } from the project?`
                                           );
                                           if (confirmRemove) {
                                               MmOrganization.removeEntityFromOrg(
@@ -698,7 +790,10 @@ export default class MmOrganization extends HTMLElement {
                     },
                     ID: (a, b) => (a.id < b.id ? -1 : 1),
                     name: (a, b) => (a.groupId < b.groupId ? -1 : 1),
-                    ["Owned by"]: (a, b) => (a.org < b.org ? -1 : 1),
+                    ["Owned by"]: (a, b) =>
+                        MmOrganization.getGroupOwnedByLabel(a).localeCompare(
+                            MmOrganization.getGroupOwnedByLabel(b)
+                        ),
                 };
                 filterTable.customColStyles = {
                     ["Actions"]: "width: 1%;",

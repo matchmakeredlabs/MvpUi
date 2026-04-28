@@ -275,7 +275,7 @@ export default class MmCreateElementForm extends HTMLElement {
                       bdoc.ele(
                           "label",
                           bdoc.attr("for", "org"),
-                          "Organization",
+                          "Project",
                           bdoc.ele(
                               "span",
                               bdoc.class("mmc_form_required"),

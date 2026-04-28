@@ -46,18 +46,20 @@ export default class MmOrganizations extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("header-container"),
-
                 bdoc.ele(
                     "h2",
-                    "Organizations",
+                    "Projects",
                     bdoc.attr("style", "margin-left: 1.5em")
+                ),
+                bdoc.ele(
+                    "button",
+                    bdoc.attr("id", "create-org-button"),
+                    bdoc.class("header-button add-entity-button2"),
+                    "✐  Create New Project"
                 )
-
-                // bdoc.ele(
-                //     "button",
-                //     bdoc.class("header-button add-entity-button2"),
-                //     "✐  Create New Organization"
-                // )
+            ),
+            bdoc.ele(
+                "mm-create-org-modal"
             ),
             bdoc.ele(
                 "div",
@@ -70,6 +72,11 @@ export default class MmOrganizations extends HTMLElement {
                     "script",
                     bdoc.attr("type", "module"),
                     bdoc.attr("src", "/c/script/mm-table.js")
+                ),
+                bdoc.ele(
+                    "script",
+                    bdoc.attr("type", "module"),
+                    bdoc.attr("src", "/c/script/mm-create-org-modal.js")
                 )
             )
         );
@@ -91,7 +98,7 @@ export default class MmOrganizations extends HTMLElement {
                 name: (org) =>
                     bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/Organization?id=${org.id}`),
+                        bdoc.attr("href", `/c/Project?id=${org.id}`),
                         org.name
                     ),
                 Customer: (org) => {
@@ -121,6 +128,23 @@ export default class MmOrganizations extends HTMLElement {
                     (a.description || "").localeCompare(b.description || ""),
             };
             table.data = organizations;
+
+            const createOrgButton = this.shadowRoot.getElementById(
+                "create-org-button"
+            );
+            customElements.whenDefined("mm-create-org-modal").then(() => {
+                const createOrgModal = this.shadowRoot.querySelector(
+                    "mm-create-org-modal"
+                );
+                if (createOrgModal) {
+                    createOrgModal.onSuccess = async () => {
+                        await this.#renderOrganizations();
+                    };
+                    createOrgButton.onclick = () => {
+                        createOrgModal.show();
+                    };
+                }
+            });
         });
     };
 }

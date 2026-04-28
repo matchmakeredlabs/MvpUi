@@ -21,11 +21,11 @@ class MmAdminister extends HTMLElement {
             bdoc.ele("mm-create-org-modal"),
             bdoc.ele("mm-create-customer-modal"),
             bdoc.ele("mm-create-group-modal"),
-            bdoc.ele("mm-modal"),
-            bdoc.script("mm-modal.js"),
+            bdoc.ele("mm-create-user-modal"),
             bdoc.script("mm-create-org-modal.js"),
             bdoc.script("mm-create-customer-modal.js"),
-            bdoc.script("mm-create-group-modal.js")
+            bdoc.script("mm-create-group-modal.js"),
+            bdoc.script("mm-create-user-modal.js"),
         );
         const buttonContainer = bdoc.ele(
             "div",
@@ -142,6 +142,9 @@ class MmAdminister extends HTMLElement {
             const createGroupModal = this.shadowRoot.querySelector(
                 "mm-create-group-modal"
             );
+            const createUserModal = this.shadowRoot.querySelector(
+                "mm-create-user-modal"
+            );
 
             bdoc.append(
                 buttonContainer,
@@ -158,9 +161,9 @@ class MmAdminister extends HTMLElement {
                               )
                             : null,
                         makeButton(
-                            "/c/Organizations",
-                            "Organizations",
-                            "View and manage your organizations",
+                            "/c/Projects",
+                            "Projects",
+                            "View and manage your projects",
                             "big-button1"
                         ),
                         hasCustomerRead || isAdmin
@@ -173,41 +176,17 @@ class MmAdminister extends HTMLElement {
                             : null,
                     ].filter(Boolean)
                 ),
-                makeSection(
-                    "Create",
-                    "Create new entities.",
-                    [
-                        hasGroupWrite || hasCustomerWrite || isAdmin
-                            ? makeActionButton(
-                                    "Group",
-                                    "Create a new group",
-                                    "big-button4",
-                                    () => showModal("mm-create-group-modal", createGroupModal)
-                                )
-                            : null,
-                        hasOrgWrite || hasCustomerWrite || isAdmin
-                            ? makeActionButton(
-                                  "Organization",
-                                  "Create a new organization",
-                                  "big-button1",
-                                  () => showModal("mm-create-org-modal", createOrgModal)
-                              )
-                            : null,
-                        hasCustomerWrite || isAdmin
-                            ? makeActionButton(
-                                  "Customer",
-                                  "Create a new customer",
-                                  "big-button2",
-                                  () => showModal("mm-create-customer-modal", createCustomerModal)
-                              )
-                            : null,
-                    ].filter(Boolean)
-                ),
                 isAdmin
                     ? makeSection(
-                          "Call API",
+                          "Admin Tools",
                           "Explore and test backend endpoints.",
                           [
+                              makeActionButton(
+                                  "Create User",
+                                  "Create a new user",
+                                  "big-button2",
+                                  () => showModal("mm-create-user-modal", createUserModal)
+                              ), 
                               makeButton(
                                   "/c/callapi",
                                   "Call API",

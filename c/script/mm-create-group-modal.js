@@ -8,12 +8,16 @@ class MmCreateGroupModal extends HTMLElement {
 
     static observedAttributes = [
         "org-id",
+        "owner-id",
+        "owner-type",
         "parent-id",
         "parent-type",
         "add-self",
     ];
 
     #orgId;
+    #ownerId;
+    #ownerType;
     #parentId;
     #parentType;
     #addSelf;
@@ -21,6 +25,10 @@ class MmCreateGroupModal extends HTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "org-id") {
             this.#orgId = newValue;
+        } else if (name === "owner-id") {
+            this.#ownerId = newValue;
+        } else if (name === "owner-type") {
+            this.#ownerType = newValue;
         } else if (name === "parent-id") {
             this.#parentId = newValue;
         } else if (name === "parent-type") {
@@ -241,7 +249,13 @@ class MmCreateGroupModal extends HTMLElement {
 
             const createGroupForm = bdoc.ele(
                 "mm-create-group-form",
-                bdoc.attr("org-id", this.#orgId),
+                this.#orgId ? bdoc.attr("org-id", this.#orgId) : null,
+                this.#ownerId
+                    ? bdoc.attr("owner-id", this.#ownerId)
+                    : null,
+                this.#ownerType
+                    ? bdoc.attr("owner-type", this.#ownerType)
+                    : null,
                 this.#addSelf ? bdoc.attr("add-self") : null,
                 bdoc.ele(
                     "div",
@@ -323,16 +337,18 @@ class MmCreateGroupModal extends HTMLElement {
             const ownerInput = createGroupForm
                 .getInnerForm()
                 .querySelector("#owner");
-            bdoc.append(
-                ownerInput,
-                bdoc.eventListener("ownerchange", ({ target }) => {
-                    if (target.value === this.#orgId) {
-                        addToParent.style.display = "none";
-                    } else {
-                        addToParent.style.display = "flex";
-                    }
-                })
-            );
+            if (this.#parentType === "org") {
+                bdoc.append(
+                    ownerInput,
+                    bdoc.eventListener("ownerchange", ({ target }) => {
+                        if (target.value === this.#orgId) {
+                            addToParent.style.display = "none";
+                        } else {
+                            addToParent.style.display = "flex";
+                        }
+                    })
+                );
+            }
         });
     }
 }

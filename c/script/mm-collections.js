@@ -40,12 +40,12 @@ export default class MmCollections extends HTMLElement {
                 bdoc.attr(
                     "filter-display-names",
                     JSON.stringify({
-                        ["_orgId"]: "Organization",
+                        ["_orgId"]: "Project",
                     })
                 ),
                 bdoc.attr(
                     "sort-properties",
-                    "Name,Subject,Publisher,Organization,Described"
+                    "Name,Subject,Publisher,Project,Described"
                 )
             ),
             bdoc.ele(
@@ -117,7 +117,7 @@ export default class MmCollections extends HTMLElement {
                     ),
                 ["Subject"]: attrOrNull("subject"),
                 ["Publisher"]: attrOrNull("publisher"),
-                Organization: (collection) => collection._orgId || "Null",
+                ["Project"]: (collection) => collection._orgId || "Null",
                 ["Described"]: (collection) => {
                     const percent = collection.percentDescribed;
                     return bdoc.ele(
@@ -141,7 +141,7 @@ export default class MmCollections extends HTMLElement {
                 ["Name"]: sortPotentiallyNull("name"),
                 ["Subject"]: sortPotentiallyNull("subject"),
                 ["Publisher"]: sortPotentiallyNull("publisher"),
-                Organization: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                ["Project"]: (a, b) => (a._orgId < b._orgId ? -1 : 1),
                 ["Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },

@@ -11,12 +11,33 @@ export default class MmCustomer extends HTMLElement {
         "/customer",
     ];
     static orgRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+    static userRoutes = ["/api/users", "/api/user", "/users", "/user"];
 
     static principalTypeFromId = (principalId) =>
         `${principalId || ""}`.includes(":") ? "Group" : "User";
 
+    static fetchUsers = async () => {
+        for (const route of MmCustomer.userRoutes) {
+            const response = await MmCustomer.session.fetch(route);
+            if (response.status === 200) {
+                const json = await response.json();
+                return json.items || [];
+            }
+            if (response.status !== 404) return Promise.reject(response);
+        }
+        return Promise.reject(
+            new Response(null, {
+                status: 404,
+                statusText: "Users endpoint not found",
+            })
+        );
+    };
+
+    static getUserLabel = (user) => user?.fullName || user?.name || user?.id || "";
+
     #customer;
     #orgs = [];
+    #users = [];
 
     constructor() {
         super();
@@ -150,7 +171,7 @@ export default class MmCustomer extends HTMLElement {
                     bdoc.attr("id", "organizations-dropdown"),
                     bdoc.ele(
                         "h3",
-                        "Organizations",
+                        "Projects",
                         bdoc.attr("style", "margin: 0;"),
                         bdoc.attr("slot", "button-text")
                     ),
@@ -193,17 +214,31 @@ export default class MmCustomer extends HTMLElement {
             return;
         }
 
-        const [customer, orgs] = await Promise.all([
-            MmCustomer.fetchCustomer(customerId),
-            MmCustomer.fetchOrgs(),
-        ]).catch(async (response) => {
-            await MmCustomer.handleError(response);
-            return [null, []];
-        });
+        const customer = await MmCustomer.fetchCustomer(customerId).catch(
+            async (response) => {
+                await MmCustomer.handleError(response);
+                return null;
+            }
+        );
 
         if (!customer) return;
+
+        const [orgs, users] = await Promise.all([
+            MmCustomer.fetchOrgs().catch(() => []),
+            MmCustomer.fetchUsers().catch(() => []),
+        ]);
         this.#customer = customer;
-        this.#orgs = orgs.filter((o) => o.customerId === customerId);
+        this.#users = users;
+
+        const orgsFromList = orgs.filter((o) => o.customerId === customerId);
+        const orgIdsFromCustomer = Array.isArray(customer._orgs)
+            ? customer._orgs
+            : [];
+
+        this.#orgs =
+            orgsFromList.length > 0
+                ? orgsFromList
+                : orgIdsFromCustomer.map((id) => ({ id }));
 
         this.shadowRoot.querySelector("#customer-name-title").textContent =
             customer.name || customer.id;
@@ -408,6 +443,61 @@ export default class MmCustomer extends HTMLElement {
 
         const canWrite = !!this.#customer._canWriteCustomer;
         const roleEntries = this.#customer.roles || [];
+        const userOptions = [
+            bdoc.ele("option", bdoc.attr("value", ""), "Select a user"),
+            ...this.#users.map((user) =>
+                bdoc.ele(
+                    "option",
+                    bdoc.attr("value", user.id),
+                    MmCustomer.getUserLabel(user)
+                )
+            ),
+        ];
+
+        const newPrincipalIdSelect = bdoc.ele(
+            "select",
+            !canWrite ? bdoc.attr("disabled", "true") : null,
+            ...userOptions
+        );
+        const newRoleSelect = bdoc.ele(
+            "select",
+            !canWrite ? bdoc.attr("disabled", "true") : null,
+            bdoc.ele("option", bdoc.attr("value", "reader"), "reader"),
+            bdoc.ele("option", bdoc.attr("value", "editor"), "editor"),
+            bdoc.ele("option", bdoc.attr("value", "owner"), "owner")
+        );
+        const addRoleButton = bdoc.ele(
+            "button",
+            "Add User Permission",
+            !canWrite ? bdoc.attr("disabled", "true") : null,
+            bdoc.eventListener("click", async () => {
+                const id = newPrincipalIdSelect.value.trim();
+                if (!id) return;
+                if (roleEntries.some((r) => r.id === id)) {
+                    alert("Principal already has a role.");
+                    return;
+                }
+                await this.#saveRoles([
+                    ...roleEntries,
+                    { id, role: newRoleSelect.value },
+                ]);
+            })
+        );
+
+        bdoc.append(
+            container,
+            bdoc.ele(
+                "div",
+                bdoc.attr(
+                    "style",
+                    "display:flex;gap:0.5em;align-items:center;flex-wrap:wrap;margin-bottom:0.75em"
+                ),
+                newPrincipalIdSelect,
+                newRoleSelect,
+                addRoleButton
+            )
+        );
+
         const filterTable = bdoc.ele(
             "mm-filter-table",
             bdoc.attr("id", "users-filter-table"),
@@ -507,7 +597,12 @@ export default class MmCustomer extends HTMLElement {
         const container = this.shadowRoot.querySelector("#members-container");
         container.innerHTML = "";
 
-        const projectIds = this.#customer.members || this.#customer._orgs || [];
+        const projectIds =
+            this.#orgs.length > 0
+                ? this.#orgs.map((org) => org.id || org)
+                : Array.isArray(this.#customer._orgs)
+                  ? this.#customer._orgs
+                  : [];
 
         if (!projectIds.length) {
             bdoc.append(container, bdoc.ele("p", "No organizations."));
@@ -529,7 +624,7 @@ export default class MmCustomer extends HTMLElement {
             ID: (org) =>
                 bdoc.ele(
                     "a",
-                    bdoc.attr("href", `/c/Organization?id=${org.id}`),
+                    bdoc.attr("href", `/c/Project?id=${org.id}`),
                     org.id
                 ),
         });

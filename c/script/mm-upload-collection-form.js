@@ -162,7 +162,7 @@ export default class MmUploadCollectionForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "org"),
-                    "Organization",
+                    "Project",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.attr("style", "flex: 1"),

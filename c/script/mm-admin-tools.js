@@ -55,89 +55,17 @@ class MmAdminTools extends HTMLElement {
                             "Create a new user"
                         )
                     )
-                ),
-                bdoc.ele(
-                    "a",
-                    bdoc.attr(
-                        "style",
-                        "text-decoration: none; border-radius: 12px"
-                    ),
-                    bdoc.id("create-org-button"),
-                    bdoc.ele(
-                        "div",
-                        bdoc.class("big-button big-button3"),
-                        bdoc.ele(
-                            "div",
-                            bdoc.class("button-text"),
-                            "Create Org"
-                        ),
-                        bdoc.ele(
-                            "div",
-                            bdoc.class("button-description"),
-                            "Create a new organization"
-                        )
-                    )
-                ),
-                bdoc.ele(
-                    "a",
-                    bdoc.attr(
-                        "style",
-                        "text-decoration: none; border-radius: 12px"
-                    ),
-                    bdoc.id("create-customer-button"),
-                    bdoc.ele(
-                        "div",
-                        bdoc.class("big-button big-button4"),
-                        bdoc.ele(
-                            "div",
-                            bdoc.class("button-text"),
-                            "Create Customer"
-                        ),
-                        bdoc.ele(
-                            "div",
-                            bdoc.class("button-description"),
-                            "Create a new customer"
-                        )
-                    )
-                ),
-                bdoc.ele(
-                    "a",
-                    bdoc.attr(
-                        "style",
-                        "text-decoration: none; border-radius: 12px"
-                    ),
-                    bdoc.id("create-group-button"),
-                    bdoc.ele(
-                        "div",
-                        bdoc.class("big-button big-button4"),
-                        bdoc.ele("div", bdoc.class("button-text"), "Create Group"),
-                        bdoc.ele(
-                            "div",
-                            bdoc.class("button-description"),
-                            "Create a new group"
-                        )
-                    )
                 )
             ),
-            bdoc.ele("mm-create-org-modal"),
-            bdoc.ele("mm-create-customer-modal"),
-            bdoc.ele("mm-create-group-modal"),
-
             bdoc.ele("mm-modal"),
 
             bdoc.script("mm-modal.js"),
-            bdoc.script("mm-create-user-form.js"),
-            bdoc.script("mm-create-org-modal.js"),
-            bdoc.script("mm-create-customer-modal.js"),
-            bdoc.script("mm-create-group-modal.js")
+            bdoc.script("mm-create-user-form.js")
         );
 
         Promise.all([
             customElements.whenDefined("mm-modal"),
             customElements.whenDefined("mm-create-user-form"),
-            customElements.whenDefined("mm-create-org-modal"),
-            customElements.whenDefined("mm-create-customer-modal"),
-            customElements.whenDefined("mm-create-group-modal"),
         ]).then(() => {
             const createUserModal = this.shadowRoot.querySelector("mm-modal");
 
@@ -180,60 +108,8 @@ class MmAdminTools extends HTMLElement {
                     );
                 }
             };
-
-            const createOrgButton =
-                this.shadowRoot.getElementById("create-org-button");
-
-            const createOrgModal = this.shadowRoot.querySelector(
-                "mm-create-org-modal"
-            );
-            const createCustomerButton = this.shadowRoot.getElementById(
-                "create-customer-button"
-            );
-            const createCustomerModal = this.shadowRoot.querySelector(
-                "mm-create-customer-modal"
-            );
-            const createGroupButton = this.shadowRoot.getElementById(
-                "create-group-button"
-            );
-            const createGroupModal = this.shadowRoot.querySelector(
-                "mm-create-group-modal"
-            );
-
-            const entity = new URLSearchParams(window.location.search).get("entity");
-
-            createCustomerModal.onSuccess = async (variables, response) => {
-                alert(`Customer with id ${response.id} successfully created`);
-            };
-
-            createGroupModal.onSuccess = async (variables, response) => {
-                alert(`Group with id ${response.id} successfully created`);
-            };
-
-            bdoc.append(
-                createOrgButton,
-                bdoc.eventListener("click", () => {
-                    createOrgModal.show();
-                })
-            );
-
-            bdoc.append(
-                createCustomerButton,
-                bdoc.eventListener("click", () => {
-                    createCustomerModal.show();
-                })
-            );
-
-            bdoc.append(
-                createGroupButton,
-                bdoc.eventListener("click", () => {
-                    createGroupModal.show();
-                })
-            );
-
             bdoc.append(
                 createUserModal,
-
                 bdoc.ele(
                     "h2",
                     "Create User",
@@ -248,14 +124,6 @@ class MmAdminTools extends HTMLElement {
                     createUserModal.show();
                 })
             );
-
-            if (entity === "org") {
-                createOrgModal.show();
-            } else if (entity === "customer") {
-                createCustomerModal.show();
-            } else if (entity === "group") {
-                createGroupModal.show();
-            }
         });
     }
 }

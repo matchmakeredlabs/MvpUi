@@ -55,14 +55,26 @@ export default class MmCustomers extends HTMLElement {
                 bdoc.attr("href", "/c/res/styles.css")
             ),
             bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-organizations.css")
+            ),
+            bdoc.ele(
                 "div",
                 bdoc.class("header-container"),
                 bdoc.ele(
                     "h2",
                     "Customers",
                     bdoc.attr("style", "margin-left: 1.5em")
+                ),
+                bdoc.ele(
+                    "button",
+                    bdoc.attr("id", "create-customer-button"),
+                    bdoc.class("header-button add-entity-button2"),
+                    "✐  Create New Customer"
                 )
             ),
+            bdoc.ele("mm-create-customer-modal"),
             bdoc.ele(
                 "div",
                 bdoc.attr("style", "max-height: 80%; margin: 20px"),
@@ -73,7 +85,16 @@ export default class MmCustomers extends HTMLElement {
                         "name,description,allowedProjects,usersPerProject"
                     )
                 ),
-                bdoc.script("mm-table.js")
+                bdoc.ele(
+                    "script",
+                    bdoc.attr("type", "module"),
+                    bdoc.attr("src", "/c/script/mm-table.js")
+                ),
+                bdoc.ele(
+                    "script",
+                    bdoc.attr("type", "module"),
+                    bdoc.attr("src", "/c/script/mm-create-customer-modal.js")
+                )
             )
         );
         this.#renderCustomers();
@@ -112,6 +133,23 @@ export default class MmCustomers extends HTMLElement {
                     (a.usersPerProject || 0) - (b.usersPerProject || 0),
             };
             table.data = customers;
+
+            const createCustomerButton = this.shadowRoot.getElementById(
+                "create-customer-button"
+            );
+            customElements.whenDefined("mm-create-customer-modal").then(() => {
+                const createCustomerModal = this.shadowRoot.querySelector(
+                    "mm-create-customer-modal"
+                );
+                if (createCustomerModal) {
+                    createCustomerModal.onSuccess = async () => {
+                        await this.#renderCustomers();
+                    };
+                    createCustomerButton.onclick = () => {
+                        createCustomerModal.show();
+                    };
+                }
+            });
         });
     };
 }

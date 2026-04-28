@@ -502,12 +502,12 @@ class MmMatchSets extends HTMLElement {
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Organization",
+                            ["_orgId"]: "Project",
                         })
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Organization,Ind.,Dep.,Described"
+                        "name,subject,publisher,Project,Ind.,Dep.,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -572,7 +572,7 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    ["Organization"]: (collection) =>
+                    ["Project"]: (collection) =>
                         collection._orgId || "Null",
                     ["Described"]: (collection) =>
                         bdoc.ele(
@@ -627,7 +627,7 @@ class MmMatchSets extends HTMLElement {
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
                     },
-                    ["Organization"]: (a, b) => {
+                    ["Project"]: (a, b) => {
                         return a._orgId < b._orgId ? -1 : 1;
                     },
                     ["Ind."]: (a, b) => {
@@ -693,12 +693,12 @@ class MmMatchSets extends HTMLElement {
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Organization",
+                            ["_orgId"]: "Project",
                         })
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Organization,Described,Ind.,Dep."
+                        "name,subject,publisher,Project,Described,Ind.,Dep."
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -745,7 +745,7 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    Organization: (customSet) => customSet._orgId || "Null",
+                    Project: (customSet) => customSet._orgId || "Null",
                     ["Described"]: (customSet) =>
                         bdoc.ele(
                             "td",
@@ -790,7 +790,7 @@ class MmMatchSets extends HTMLElement {
                         }
                         return a.publisher > b.publisher ? 1 : -1;
                     },
-                    Organization: (a, b) => {
+                    Project: (a, b) => {
                         return a._orgId < b._orgId ? -1 : 1;
                     },
                     ["Described"]: (a, b) => {
