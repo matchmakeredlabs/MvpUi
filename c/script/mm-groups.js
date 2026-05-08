@@ -45,13 +45,18 @@ export default class MmGroups extends HTMLElement {
         }
 
         if (ownerType === "Customer") {
+            const label = MmGroups.getCustomerLabel(customerMap, ownerId);
+            if (!MmGroups.canWriteCustomer(ownerId)) {
+                return `${ownerType}: ${label}`;
+            }
+
             return bdoc.ele(
                 "span",
                 `${ownerType}: `,
                 bdoc.ele(
                     "a",
                     bdoc.attr("href", `/c/Customer?id=${ownerId}`),
-                    MmGroups.getCustomerLabel(customerMap, ownerId)
+                    label
                 )
             );
         }
@@ -59,7 +64,7 @@ export default class MmGroups extends HTMLElement {
         return bdoc.ele(
             "span",
             `${ownerType}: `,
-            ownerId in cachedAcl || "admin" in cachedAcl
+            MmGroups.canWriteProject(ownerId)
                 ? bdoc.ele(
                       "a",
                       bdoc.attr("href", `/c/Project?id=${ownerId}`),
@@ -87,6 +92,51 @@ export default class MmGroups extends HTMLElement {
         return (await response.json()).items;
     };
 
+    static canReadGroups = () => {
+        const acl = MmGroups.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return Object.values(acl).some((perms) => perms.includes("ReadGroup"));
+    };
+
+    static canCreateGroups = () => {
+        const acl = MmGroups.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return Object.values(acl).some(
+            (perms) => perms.includes("WriteGroup")
+        ) || Object.entries(acl).some(
+            ([scope, perms]) =>
+                scope !== "admincustomer" && perms.includes("WriteCustomer")
+        );
+    };
+
+    static canWriteGroup = (group) => {
+        const acl = MmGroups.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[group.org]?.includes("WriteGroup") || false;
+    };
+
+    static canWriteCustomer = (customerId) => {
+        const acl = MmGroups.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[customerId]?.includes("WriteCustomer") || false;
+    };
+
+    static canWriteProject = (projectId) => {
+        const acl = MmGroups.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[projectId]?.includes("WriteOrg") || false;
+    };
+
     #renderShell() {
         bdoc.append(
             this.shadowRoot,
@@ -100,21 +150,31 @@ export default class MmGroups extends HTMLElement {
                 bdoc.attr("rel", "stylesheet"),
                 bdoc.attr("href", "/c/res/mm-groups.css")
             ),
-            bdoc.ele(
-                "div",
-                bdoc.class("header-container"),
-                bdoc.ele(
-                    "h2",
-                    "My Groups",
-                    bdoc.attr("style", "margin-left: 1.5em")
-                ),
-                bdoc.ele(
-                    "button",
-                    bdoc.attr("id", "create-group-button"),
-                    bdoc.class("header-button add-entity-button2"),
-                    "✐  Create New Group"
-                )
-            ),
+            MmGroups.canCreateGroups()
+                ? bdoc.ele(
+                      "div",
+                      bdoc.class("header-container"),
+                      bdoc.ele(
+                          "h2",
+                          "My Groups",
+                          bdoc.attr("style", "margin-left: 1.5em")
+                      ),
+                      bdoc.ele(
+                          "button",
+                          bdoc.attr("id", "create-group-button"),
+                          bdoc.class("header-button add-entity-button2"),
+                          "✐  Create New Group"
+                      )
+                  )
+                : bdoc.ele(
+                      "div",
+                      bdoc.class("header-container"),
+                      bdoc.ele(
+                          "h2",
+                          "My Groups",
+                          bdoc.attr("style", "margin-left: 1.5em")
+                      )
+                  ),
             bdoc.ele(
                 "mm-filter-table",
                 bdoc.attr("style", "height: 100%"),
@@ -139,6 +199,20 @@ export default class MmGroups extends HTMLElement {
     };
 
     connectedCallback() {
+        if (!MmGroups.canReadGroups()) {
+            bdoc.append(
+                this.shadowRoot,
+                bdoc.ele(
+                    "link",
+                    bdoc.attr("rel", "stylesheet"),
+                    bdoc.attr("href", "/c/res/styles.css")
+                ),
+                bdoc.ele("h2", "My Groups"),
+                bdoc.ele("p", "You do not have permission to view groups.")
+            );
+            return;
+        }
+
         this.#renderShell();
 
         // Browser back/forward can restore this page from BFCache with stale data.
@@ -193,12 +267,17 @@ export default class MmGroups extends HTMLElement {
             });
 
             filterTable.generateCols = () => ({
-                name: (group) =>
-                    bdoc.ele(
+                name: (group) => {
+                    if (!MmGroups.canWriteGroup(group)) {
+                        return group.name;
+                    }
+
+                    return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Group?id=${group.id}`),
                         group.name
-                    ),
+                    );
+                },
                 ["Owned by"]: (group) =>
                     MmGroups.renderOwnedBy(group, cachedAcl, customerMap),
                 description: (group) =>

@@ -17,6 +17,33 @@ export default class MmOrganizations extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
+    static canCreateOrganizations = () => {
+        const acl = MmOrganizations.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return Object.entries(acl).some(
+            ([scope, perms]) =>
+                scope !== "admincustomer" && perms.includes("WriteCustomer")
+        );
+    };
+
+    static canWriteOrganization = (orgId) => {
+        const acl = MmOrganizations.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[orgId]?.includes("WriteOrg") || false;
+    };
+
+    static canWriteCustomer = (customerId) => {
+        const acl = MmOrganizations.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[customerId]?.includes("WriteCustomer") || false;
+    };
+
     static fetchOrganizations = async () => {
         const response = await MmOrganizations.session.fetch("/api/orgs");
         return (await response.json()).items;
@@ -51,12 +78,14 @@ export default class MmOrganizations extends HTMLElement {
                     "Projects",
                     bdoc.attr("style", "margin-left: 1.5em")
                 ),
-                bdoc.ele(
-                    "button",
-                    bdoc.attr("id", "create-org-button"),
-                    bdoc.class("header-button add-entity-button2"),
-                    "✐  Create New Project"
-                )
+                MmOrganizations.canCreateOrganizations()
+                    ? bdoc.ele(
+                          "button",
+                          bdoc.attr("id", "create-org-button"),
+                          bdoc.class("header-button add-entity-button2"),
+                          "✐  Create New Project"
+                      )
+                    : null
             ),
             bdoc.ele(
                 "mm-create-org-modal"
@@ -65,13 +94,13 @@ export default class MmOrganizations extends HTMLElement {
                 "div",
                 bdoc.attr("style", "max-height: 80%; margin: 20px"),
                 bdoc.ele(
-                    "mm-table",
+                    "mm-filter-table",
                     bdoc.attr("sort-properties", "name,Customer,description")
                 ),
                 bdoc.ele(
                     "script",
                     bdoc.attr("type", "module"),
-                    bdoc.attr("src", "/c/script/mm-table.js")
+                    bdoc.attr("src", "/c/script/mm-filter-table.js")
                 ),
                 bdoc.ele(
                     "script",
@@ -92,26 +121,36 @@ export default class MmOrganizations extends HTMLElement {
             customers.map((customer) => [customer.id, customer])
         );
 
-        customElements.whenDefined("mm-table").then(() => {
-            const table = this.shadowRoot.querySelector("mm-table");
-            table.cols = {
-                name: (org) =>
-                    bdoc.ele(
+        customElements.whenDefined("mm-filter-table").then(() => {
+            const table = this.shadowRoot.querySelector("mm-filter-table");
+            table.generateCols = () => ({
+                name: (org) => {
+                    if (!MmOrganizations.canWriteOrganization(org.id)) {
+                        return org.name;
+                    }
+
+                    return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Project?id=${org.id}`),
                         org.name
-                    ),
+                    );
+                },
                 Customer: (org) => {
                     const customerId = org.customerId || org.customer || "";
                     if (!customerId) return "";
+                    const label = MmOrganizations.getCustomerLabel(customerMap, customerId);
+                    if (!MmOrganizations.canWriteCustomer(customerId)) {
+                        return label;
+                    }
+
                     return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Customer?id=${customerId}`),
-                        MmOrganizations.getCustomerLabel(customerMap, customerId)
+                        label
                     );
                 },
                 description: (org) => org.description,
-            };
+            });
             table.customSorts = {
                 name: (a, b) => a.name.localeCompare(b.name),
                 Customer: (a, b) =>
@@ -127,11 +166,24 @@ export default class MmOrganizations extends HTMLElement {
                 description: (a, b) =>
                     (a.description || "").localeCompare(b.description || ""),
             };
-            table.data = organizations;
+            table.loadData(
+                organizations.map((org) => {
+                    const customerId = org.customerId || org.customer || "";
+                    return {
+                        ...org,
+                        Customer: MmOrganizations.getCustomerLabel(
+                            customerMap,
+                            customerId
+                        ),
+                    };
+                })
+            );
 
             const createOrgButton = this.shadowRoot.getElementById(
                 "create-org-button"
             );
+            if (!createOrgButton) return;
+
             customElements.whenDefined("mm-create-org-modal").then(() => {
                 const createOrgModal = this.shadowRoot.querySelector(
                     "mm-create-org-modal"

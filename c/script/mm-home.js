@@ -5,6 +5,10 @@ import bsession from "./bsession.js";
 class MmHome extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
+    static isAdmin = (acl) => {
+        return !!acl && "admin" in acl;
+    };
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -100,21 +104,13 @@ class MmHome extends HTMLElement {
         const userAcl = MmHome.session.getCachedAcl();
 
         let writeDescriptor = false;
-        let readGroupsOrOrgs = false;
         if (userAcl) {
             for (const orgPerms of Object.values(userAcl)) {
                 if (orgPerms.includes("WriteDescriptor")) {
                     writeDescriptor = true;
                 }
-                if (
-                    orgPerms.includes("ReadGroup") ||
-                    orgPerms.includes("ReadOrganization")
-                ) {
-                    readGroupsOrOrgs = true;
-                }
             }
-            if ("admin" in userAcl) {
-                readGroupsOrOrgs = true;
+            if (MmHome.isAdmin(userAcl)) {
                 writeDescriptor = true;
             }
         }
@@ -128,7 +124,7 @@ class MmHome extends HTMLElement {
 
         bdoc.append(this.shadowRoot, buttonContainer);
 
-        if (readGroupsOrOrgs) {
+        if (MmHome.isAdmin(userAcl)) {
             bdoc.append(this.shadowRoot, administerContainer);
         }
     }

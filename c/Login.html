@@ -34,10 +34,7 @@ async function login(un, pw) {
             body: JSON.stringify(payload)
         });
     if (response.ok) {
-        const query = new URLSearchParams(window.location.search);
-        let ret = query.get("returnTo");
-        if (!ret) ret = "/";
-        window.location.replace(ret);
+        window.location.replace("/c/index");
     }
     else {
         let json = await response.json();

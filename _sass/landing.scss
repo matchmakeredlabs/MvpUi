@@ -124,6 +124,55 @@
     width: 100%;
   }
 
+  .account-menu {
+    position: relative;
+    margin-left: auto;
+  }
+
+  .account-menu-button {
+    min-width: 6.5em;
+    width: auto;
+    font: inherit;
+  }
+
+  .account-menu-items {
+    position: absolute;
+    top: calc(100% + 0.25em);
+    right: 0;
+    z-index: 20;
+    display: none;
+    min-width: 12em;
+    padding: 0.35em 0;
+    background: white;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  }
+
+  .account-menu.open .account-menu-items {
+    display: block;
+  }
+
+  .account-menu-items a,
+  .account-menu-items button {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.55em 0.85em;
+    border: 0;
+    background: transparent;
+    color: black;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .account-menu-items a:hover,
+  .account-menu-items button:hover {
+    background-color: var(--clr_link_hover_bg);
+  }
+
   #download-matches:hover {
     cursor: pointer;
   }

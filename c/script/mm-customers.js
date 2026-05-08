@@ -16,6 +16,22 @@ export default class MmCustomers extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
+    static canCreateCustomers = () => {
+        const acl = MmCustomers.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl.admincustomer?.includes("WriteCustomer") || false;
+    };
+
+    static canWriteCustomer = (customerId) => {
+        const acl = MmCustomers.session.getCachedAcl();
+        if (!acl) return false;
+        if ("admin" in acl) return true;
+
+        return acl[customerId]?.includes("WriteCustomer") || false;
+    };
+
     static fetchCustomers = async () => {
         for (const route of MmCustomers.customerRoutes) {
             const response = await MmCustomers.session.fetch(route);
@@ -67,19 +83,21 @@ export default class MmCustomers extends HTMLElement {
                     "Customers",
                     bdoc.attr("style", "margin-left: 1.5em")
                 ),
-                bdoc.ele(
-                    "button",
-                    bdoc.attr("id", "create-customer-button"),
-                    bdoc.class("header-button add-entity-button2"),
-                    "✐  Create New Customer"
-                )
+                MmCustomers.canCreateCustomers()
+                    ? bdoc.ele(
+                          "button",
+                          bdoc.attr("id", "create-customer-button"),
+                          bdoc.class("header-button add-entity-button2"),
+                          "✐  Create New Customer"
+                      )
+                    : null
             ),
             bdoc.ele("mm-create-customer-modal"),
             bdoc.ele(
                 "div",
                 bdoc.attr("style", "max-height: 80%; margin: 20px"),
                 bdoc.ele(
-                    "mm-table",
+                    "mm-filter-table",
                     bdoc.attr(
                         "sort-properties",
                         "name,description,allowedProjects,usersPerProject"
@@ -88,7 +106,7 @@ export default class MmCustomers extends HTMLElement {
                 bdoc.ele(
                     "script",
                     bdoc.attr("type", "module"),
-                    bdoc.attr("src", "/c/script/mm-table.js")
+                    bdoc.attr("src", "/c/script/mm-filter-table.js")
                 ),
                 bdoc.ele(
                     "script",
@@ -106,22 +124,28 @@ export default class MmCustomers extends HTMLElement {
             return [];
         });
 
-        customElements.whenDefined("mm-table").then(() => {
-            const table = this.shadowRoot.querySelector("mm-table");
-            table.cols = {
-                name: (customer) =>
-                    bdoc.ele(
+        customElements.whenDefined("mm-filter-table").then(() => {
+            const table = this.shadowRoot.querySelector("mm-filter-table");
+            table.generateCols = () => ({
+                name: (customer) => {
+                    const label = customer.name || customer.id;
+                    if (!MmCustomers.canWriteCustomer(customer.id)) {
+                        return label;
+                    }
+
+                    return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Customer?id=${customer.id}`),
-                        customer.name || customer.id
-                    ),
+                        label
+                    );
+                },
                 description: (customer) => customer.description || "",
                 allowedProjects: (customer) =>
                     customer.allowedProjects ?? "",
                 usersPerProject: (customer) =>
                     customer.usersPerProject ?? "",
                 canUseApi: (customer) => (customer.canUseApi ? "Yes" : "No"),
-            };
+            });
             table.customSorts = {
                 name: (a, b) =>
                     (a.name || a.id || "").localeCompare(b.name || b.id || ""),
@@ -132,11 +156,18 @@ export default class MmCustomers extends HTMLElement {
                 usersPerProject: (a, b) =>
                     (a.usersPerProject || 0) - (b.usersPerProject || 0),
             };
-            table.data = customers;
+            table.loadData(
+                customers.map((customer) => ({
+                    ...customer,
+                    canUseApiLabel: customer.canUseApi ? "Yes" : "No",
+                }))
+            );
 
             const createCustomerButton = this.shadowRoot.getElementById(
                 "create-customer-button"
             );
+            if (!createCustomerButton) return;
+
             customElements.whenDefined("mm-create-customer-modal").then(() => {
                 const createCustomerModal = this.shadowRoot.querySelector(
                     "mm-create-customer-modal"
