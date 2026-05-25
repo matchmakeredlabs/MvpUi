@@ -148,6 +148,8 @@ export default class mmxAuth {
 
         const logoutButton = document.createElement("button");
         logoutButton.type = "button";
+        logoutButton.style.color = "red"
+        logoutButton.style.fontWeight = "bold"
         logoutButton.textContent = "Log Out";
         logoutButton.setAttribute("role", "menuitem");
         logoutButton.addEventListener("click", function () {

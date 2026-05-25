@@ -11,11 +11,11 @@ class MmMatchSets extends HTMLElement {
     #collections = [];
 
     #sets = {
-        independent: {
+        anchored: {
             ["custom-set"]: [],
             ["collections"]: [],
         },
-        dependent: {
+        responding: {
             ["custom-set"]: [],
             ["collections"]: [],
         },
@@ -156,30 +156,30 @@ class MmMatchSets extends HTMLElement {
                 bdoc.ele(
                     "div",
                     bdoc.class("chosen-sets-container"),
-                    bdoc.ele("h3", "Independent"),
+                    bdoc.ele("h3", "Anchored"),
                     bdoc.ele(
                         "div",
-                        bdoc.class("chosen-sets independent"),
-                        bdoc.id("independent-sets"),
+                        bdoc.class("chosen-sets anchored"),
+                        bdoc.id("anchored-sets"),
                         bdoc.ele(
                             "h4",
-                            bdoc.id("independent-sets-start-text"),
-                            'Click "Ind." to add sets'
+                            bdoc.id("anchored-sets-start-text"),
+                            'Click "Anchored" to add sets'
                         )
                     )
                 ),
                 bdoc.ele(
                     "div",
                     bdoc.class("chosen-sets-container"),
-                    bdoc.ele("h3", "Dependent"),
+                    bdoc.ele("h3", "Responding"),
                     bdoc.ele(
                         "div",
-                        bdoc.class("chosen-sets dependent"),
-                        bdoc.id("dependent-sets"),
+                        bdoc.class("chosen-sets responding"),
+                        bdoc.id("responding-sets"),
                         bdoc.ele(
                             "h4",
-                            bdoc.id("dependent-sets-start-text"),
-                            'Click "Dep." to add sets'
+                            bdoc.id("responding-sets-start-text"),
+                            'Click "Responding" to add sets'
                         )
                     )
                 )
@@ -277,7 +277,7 @@ class MmMatchSets extends HTMLElement {
                 )
             ) {
                 alert(
-                    "Need both independent and dependent sets to generate matches"
+                    "Need both anchored and responding sets to generate matches"
                 );
                 return;
             }
@@ -288,19 +288,19 @@ class MmMatchSets extends HTMLElement {
 
     #storeSets = () => {
         const setIds = {
-            independent: {
-                collections: this.#sets.independent.collections.map(
+            anchored: {
+                collections: this.#sets.anchored.collections.map(
                     (collection) => collection.id
                 ),
-                ["custom-set"]: this.#sets.independent["custom-set"].map(
+                ["custom-set"]: this.#sets.anchored["custom-set"].map(
                     (customSet) => customSet.name
                 ),
             },
-            dependent: {
-                collections: this.#sets.dependent.collections.map(
+            responding: {
+                collections: this.#sets.responding.collections.map(
                     (collection) => collection.id
                 ),
-                ["custom-set"]: this.#sets.dependent["custom-set"].map(
+                ["custom-set"]: this.#sets.responding["custom-set"].map(
                     (customSet) => customSet.name
                 ),
             },
@@ -393,7 +393,7 @@ class MmMatchSets extends HTMLElement {
         const addSet = (set, setCategory, setType, tableRoot) => {
             const identifierType = setType === "custom-set" ? "name" : "id";
             const otherCategory =
-                setCategory === "independent" ? "dependent" : "independent";
+                setCategory === "anchored" ? "responding" : "anchored";
             const otherSetType =
                 setType === "custom-set" ? "collections" : "custom-set";
 
@@ -507,7 +507,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Ind.,Dep.,Described"
+                        "name,subject,publisher,Project,Anchored,Responding,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -580,17 +580,17 @@ class MmMatchSets extends HTMLElement {
                             bdoc.attr("style", "text-align: center"),
                             `${collection.percentDescribed}%`
                         ),
-                    ["Ind."]: (collection, root) =>
+                    ["Anchored"]: (collection, root) =>
                         generateCheckbox(
                             collection,
-                            "independent",
+                            "anchored",
                             "collections",
                             root
                         ),
-                    ["Dep."]: (collection, root) =>
+                    ["Responding"]: (collection, root) =>
                         generateCheckbox(
                             collection,
-                            "dependent",
+                            "responding",
                             "collections",
                             root
                         ),
@@ -598,8 +598,8 @@ class MmMatchSets extends HTMLElement {
 
                 collectionsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Dep."]: "width: 1%",
-                    ["Ind."]: "width: 1%",
+                    ["Responding"]: "width: 1%",
+                    ["Anchored"]: "width: 1%",
                 };
 
                 collectionsTable.customSorts = {
@@ -630,15 +630,15 @@ class MmMatchSets extends HTMLElement {
                     ["Project"]: (a, b) => {
                         return a._orgId < b._orgId ? -1 : 1;
                     },
-                    ["Ind."]: (a, b) => {
-                        return this.#sets.independent.collections.find(
+                    ["Anchored"]: (a, b) => {
+                        return this.#sets.anchored.collections.find(
                             (collection) => collection.id === a.id
                         )
                             ? 1
                             : -1;
                     },
-                    ["Dep."]: (a, b) => {
-                        return this.#sets.dependent.collections.find(
+                    ["Responding"]: (a, b) => {
+                        return this.#sets.responding.collections.find(
                             (collection) => collection.id === a.id
                         )
                             ? 1
@@ -698,7 +698,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Described,Ind.,Dep."
+                        "name,subject,publisher,Project,Described,Anchored,Responding"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -752,17 +752,17 @@ class MmMatchSets extends HTMLElement {
                             bdoc.attr("style", "text-align: center"),
                             `${customSet.percentDescribed}%`
                         ),
-                    ["Ind."]: (customSet, root) =>
+                    ["Anchored"]: (customSet, root) =>
                         generateCheckbox(
                             customSet,
-                            "independent",
+                            "anchored",
                             "custom-set",
                             root
                         ),
-                    ["Dep."]: (customSet, root) =>
+                    ["Responding"]: (customSet, root) =>
                         generateCheckbox(
                             customSet,
-                            "dependent",
+                            "responding",
                             "custom-set",
                             root
                         ),
@@ -796,15 +796,15 @@ class MmMatchSets extends HTMLElement {
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
                     },
-                    ["Ind."]: (a, b) => {
-                        return this.#sets.independent["custom-set"].find(
+                    ["Anchored"]: (a, b) => {
+                        return this.#sets.anchored["custom-set"].find(
                             (customSet) => customSet.name === a.name
                         )
                             ? 1
                             : -1;
                     },
-                    ["Dep."]: (a, b) => {
-                        return this.#sets.dependent["custom-set"].find(
+                    ["Responding"]: (a, b) => {
+                        return this.#sets.responding["custom-set"].find(
                             (customSet) => customSet.name === a.name
                         )
                             ? 1

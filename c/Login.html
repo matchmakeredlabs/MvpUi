@@ -3,20 +3,27 @@ title: Login
 autht: "anonymous"
 ---
 
-<main style="height: 90%; display: flex; flex-direction: column; align-items: center;">
-    <form class="mmc_form" id="login_form">
+<div class="auth-page">
+    <form class="mmc_form auth-card" id="login_form">
         <h2>Sign In</h2>
-        <div id="form_msg" class="message" style="visibility: hidden;"></div>
-        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autofill="username" /></p>
-        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autofill="password" /></p>
-        <p style="text-align: center;"><input style="cursor: pointer;" type="submit" value="Login"/></p>
+        <div id="form_msg" class="message" aria-live="polite" style="visibility: hidden;"></div>
+        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" /></p>
+        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" /></p>
+        <p class="auth-form-actions"><input style="cursor: pointer;" type="submit" value="Login"/></p>
+        <p class="auth-toggle">
+            Need an account?
+            <button type="button" id="show_register" class="link-button">Create account</button>
+        </p>
     </form>
-</main>
+
+    <mm-self-register-form id="register_form" hidden></mm-self-register-form>
+</div>
 
 <script type="module">
 
 import config from '/config.js';
 import bsession from '/c/script/bsession.js';
+import '/c/script/mm-self-register-form.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 async function login(un, pw) {
@@ -40,6 +47,7 @@ async function login(un, pw) {
         let json = await response.json();
         let msgEle = document.getElementById("form_msg");
         msgEle.textContent = json.errors[0].detail;
+        msgEle.style.color = "darkred";
         msgEle.style.visibility = "visible";
     }
 }
@@ -52,6 +60,23 @@ function submitLogin(event) {
 }
 
 document.getElementById("login_form").addEventListener("submit", submitLogin);
+document.getElementById("show_register").addEventListener("click", () => {
+    document.getElementById("login_form").hidden = true;
+    document.getElementById("register_form").hidden = false;
+});
+document.getElementById("register_form").addEventListener("show-login", () => {
+    document.getElementById("register_form").hidden = true;
+    document.getElementById("login_form").hidden = false;
+});
+document.getElementById("register_form").addEventListener("registered", (event) => {
+    document.getElementById("register_form").hidden = true;
+    document.getElementById("login_form").hidden = false;
+    document.getElementById("username").value = event.detail.email;
+    const msgEle = document.getElementById("form_msg");
+    msgEle.textContent = "Account created. Sign in to continue.";
+    msgEle.style.color = "#5D9732";
+    msgEle.style.visibility = "visible";
+});
 console.log("addEventListener complete")
 
 </script>

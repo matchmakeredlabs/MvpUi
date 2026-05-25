@@ -54,16 +54,16 @@ class MmGenerateMatches extends HTMLElement {
             ),
             bdoc.ele(
                 "div",
-                bdoc.class("independent-sets-container"),
+                bdoc.class("anchored-sets-container"),
 
-                bdoc.ele("h1", "Independent Elements"),
+                bdoc.ele("h1", "Anchored Elements"),
                 bdoc.ele(
                     "div",
-                    bdoc.class("independent-sets"),
-                    bdoc.id("independent-sets"),
+                    bdoc.class("anchored-sets"),
+                    bdoc.id("anchored-sets"),
                     bdoc.ele(
                         "p",
-                        "Loading independent elements...",
+                        "Loading anchored elements...",
                         bdoc.id("loading")
                     )
                 )
@@ -240,7 +240,7 @@ class MmGenerateMatches extends HTMLElement {
                 this.shadowRoot,
                 bdoc.ele(
                     "div",
-                    "No independent or dependent sets selected. Please select sets to view matches."
+                    "No anchored or responding sets selected. Please select sets to view matches."
                 )
             );
             return;
@@ -274,8 +274,8 @@ class MmGenerateMatches extends HTMLElement {
         }
 
         const categoryToTarget = {
-            dependent: "dstDescriptorIds",
-            independent: "srcDescriptorIds",
+            responding: "dstDescriptorIds",
+            anchored: "srcDescriptorIds",
         };
 
         // build request ids
@@ -495,9 +495,9 @@ class MmGenerateMatches extends HTMLElement {
 
     #render = () => {
         let seq = 0;
-        const independentSetsContainer =
-            this.shadowRoot.getElementById("independent-sets");
-        const independentSets = this.#sets.independent;
+        const anchoredSetsContainer =
+            this.shadowRoot.getElementById("anchored-sets");
+        const anchoredSets = this.#sets.anchored;
 
         const generateDisplaySet = (setName, descriptors, setId, idx) => {
             const collectionDisplay = bdoc.ele("mm-collection");
@@ -583,8 +583,8 @@ class MmGenerateMatches extends HTMLElement {
             return collectionContainer;
         };
 
-        Object.keys(independentSets).forEach((setType) => {
-            const sets = independentSets[setType];
+        Object.keys(anchoredSets).forEach((setType) => {
+            const sets = anchoredSets[setType];
             if (Object.keys(sets).length > 0) {
                 const headerName = {
                     ["custom-set"]: "Custom Sets",
@@ -625,7 +625,7 @@ class MmGenerateMatches extends HTMLElement {
                 }
 
                 bdoc.append(
-                    independentSetsContainer,
+                    anchoredSetsContainer,
                     bdoc.ele(
                         "mm-dropdown",
                         bdoc.attr("id", setType + "-dropdown"),

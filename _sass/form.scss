@@ -20,6 +20,53 @@
     }
 }
 
+.auth-page {
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth-card {
+    width: min(100%, 32em);
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+        box-sizing: border-box;
+        width: 16em;
+        max-width: 100%;
+    }
+
+    button,
+    input[type="submit"] {
+        font: inherit;
+    }
+}
+
+.auth-form-actions,
+.auth-toggle {
+    text-align: center;
+}
+
+.auth-toggle {
+    margin-bottom: 0;
+}
+
+.link-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: $mm-blue;
+    cursor: pointer;
+    font: inherit;
+    text-decoration: underline;
+}
+
+mm-self-register-form[hidden] {
+    display: none;
+}
+
 
 .mmc_form_required {
     color: red
