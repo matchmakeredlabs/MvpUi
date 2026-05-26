@@ -12,7 +12,7 @@ export default class MmStatementGenerationForm extends HTMLElement {
 
     onSettled = () => {};
 
-    #submitCreateOrg = async (event) => {
+    #submitGenerateText = async (event) => {
         event.preventDefault();
 
         const formData = new FormData(event.target);
@@ -91,7 +91,7 @@ export default class MmStatementGenerationForm extends HTMLElement {
             bdoc.ele(
                 "form",
                 bdoc.class("form"),
-                bdoc.eventListener("submit", this.#submitCreateOrg),
+                bdoc.eventListener("submit", this.#submitGenerateText),
                 formGroupsContainer,
                 bdoc.ele("slot", bdoc.attr("name", "form-footer"))
             )

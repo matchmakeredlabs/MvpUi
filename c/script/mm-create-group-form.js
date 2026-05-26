@@ -1,26 +1,26 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
-import MmOrganizations from "./mm-organizations.js";
+import MmProjects from "./mm-projects.js";
 import MmCustomers from "./mm-customers.js";
 import MmAddMemberForm from "./mm-add-member-form.js";
 
 export default class MmCreateGroupForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
-    static observedAttributes = ["org-id", "owner-id", "owner-type", "add-self"];
+    static observedAttributes = ["project-id", "owner-id", "owner-type", "add-self"];
 
-    #orgId;
+    #projectId;
     #ownerId;
     #ownerType = "org";
     #addSelf;
     #cachedCustomers;
-    #cachedOrganizations;
+    #cachedProjects;
     #ownersPreloadPromise;
 
     attributeChangedCallback(name, oldValue, newValue) {
-        if (name === "org-id") {
-            this.#orgId = newValue;
+        if (name === "project-id") {
+            this.#projectId = newValue;
             this.#ownerId = newValue;
             this.#ownerType = "org";
         } else if (name === "owner-id") {
@@ -43,15 +43,15 @@ export default class MmCreateGroupForm extends HTMLElement {
         if (!this.#ownersPreloadPromise) {
             this.#ownersPreloadPromise = Promise.all([
                 MmCustomers.fetchCustomers().catch(() => []),
-                MmOrganizations.fetchOrganizations().catch(() => []),
+                MmProjects.fetchProjects().catch(() => []),
             ])
-                .then(([customers, organizations]) => {
+                .then(([customers, projects]) => {
                     this.#cachedCustomers = customers || [];
-                    this.#cachedOrganizations = organizations || [];
+                    this.#cachedProjects = projects || [];
                 })
                 .catch(() => {
                     this.#cachedCustomers = [];
-                    this.#cachedOrganizations = [];
+                    this.#cachedProjects = [];
                 });
         }
 
@@ -202,8 +202,8 @@ export default class MmCreateGroupForm extends HTMLElement {
         }
 
         await this.#preloadOwners();
-        let orgs = this.#cachedOrganizations || [];
-        const eligibleOrgs = orgs.filter((org) => org["_canWriteGroups"]);
+        let projects = this.#cachedProjects || [];
+        const eligibleProjects = projects.filter((project) => project["_canWriteGroups"]);
 
         bdoc.append(
             ownerSelect,
@@ -212,26 +212,28 @@ export default class MmCreateGroupForm extends HTMLElement {
                 bdoc.attr("value", ""),
                 bdoc.attr("disabled", "true"),
                 bdoc.attr("selected", "true"),
-                eligibleOrgs.length ? "Select a project" : "No projects available"
+                eligibleProjects.length
+                    ? "Select a project"
+                    : "No projects available"
             )
         );
 
-        for (const org of eligibleOrgs) {
+        for (const project of eligibleProjects) {
             const option = bdoc.ele(
                 "option",
-                bdoc.attr("value", org.id),
-                org.name
+                bdoc.attr("value", project.id),
+                project.name
             );
             if (
                 this.#ownerId &&
-                org.id.toLowerCase() === this.#ownerId.toLowerCase()
+                project.id.toLowerCase() === this.#ownerId.toLowerCase()
             ) {
                 bdoc.append(option, bdoc.attr("selected"));
             }
             bdoc.append(ownerSelect, option);
         }
 
-        ownerSelect.disabled = eligibleOrgs.length === 0;
+        ownerSelect.disabled = eligibleProjects.length === 0;
     };
 
     getInnerForm = () => {

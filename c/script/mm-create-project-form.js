@@ -2,7 +2,7 @@ import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
 
-export default class MmCreateOrgForm extends HTMLElement {
+export default class MmCreateProjectForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     static customerRoutes = [
@@ -12,11 +12,11 @@ export default class MmCreateOrgForm extends HTMLElement {
         "/customer",
     ];
 
-    static orgRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+    static projectRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
 
     static fetchCustomers = async () => {
-        for (const route of MmCreateOrgForm.customerRoutes) {
-            const response = await MmCreateOrgForm.session.fetch(route);
+        for (const route of MmCreateProjectForm.customerRoutes) {
+            const response = await MmCreateProjectForm.session.fetch(route);
             if (response.status === 200) {
                 const json = await response.json();
                 return json.items || [];
@@ -49,11 +49,11 @@ export default class MmCreateOrgForm extends HTMLElement {
 
     onSettled = () => {};
 
-    #submitCreateOrg = async (event) => {
+    #submitCreateProject = async (event) => {
         event.preventDefault();
 
         const formData = new FormData(event.target);
-        const currentUserId = MmCreateOrgForm.session.getCachedUserID();
+        const currentUserId = MmCreateProjectForm.session.getCachedUserID();
 
         const variables = {
             name: formData.get("name"),
@@ -71,22 +71,22 @@ export default class MmCreateOrgForm extends HTMLElement {
         } else {
             variables.description = ""
         }
-        const response = await MmCreateOrgForm.createOrg(variables);
+        const response = await MmCreateProjectForm.createProject(variables);
 
         this.onSettled(variables, response);
     };
 
-    static createOrg = async (orgObj) => {
-        for (const route of MmCreateOrgForm.orgRoutes) {
+    static createProject = async (projectObj) => {
+        for (const route of MmCreateProjectForm.projectRoutes) {
             const payloadCustomerId = {
-                ...orgObj,
-                customerId: orgObj.customerId,
+                ...projectObj,
+                customerId: projectObj.customerId,
             };
             const payloadCustomer = {
-                ...orgObj,
-                customer: orgObj.customerId,
+                ...projectObj,
+                customer: projectObj.customerId,
             };
-            const payloadNoCustomer = { ...orgObj };
+            const payloadNoCustomer = { ...projectObj };
             delete payloadNoCustomer.customerId;
             delete payloadNoCustomer.customer;
 
@@ -101,13 +101,13 @@ export default class MmCreateOrgForm extends HTMLElement {
                 },
                 {
                     url: `${route}?customerId=${encodeURIComponent(
-                        orgObj.customerId || ""
+                        projectObj.customerId || ""
                     )}`,
                     payload: payloadNoCustomer,
                 },
                 {
                     url: `${route}?customer=${encodeURIComponent(
-                        orgObj.customerId || ""
+                        projectObj.customerId || ""
                     )}`,
                     payload: payloadNoCustomer,
                 },
@@ -115,7 +115,7 @@ export default class MmCreateOrgForm extends HTMLElement {
 
             let lastResponse = null;
             for (const attempt of attempts) {
-                const response = await MmCreateOrgForm.session.fetch(
+                const response = await MmCreateProjectForm.session.fetch(
                     attempt.url,
                     {
                         method: "POST",
@@ -136,7 +136,7 @@ export default class MmCreateOrgForm extends HTMLElement {
         }
         return new Response(null, {
             status: 404,
-            statusText: "Organization create endpoint not found",
+            statusText: "Project create endpoint not found",
         });
     };
 
@@ -151,9 +151,9 @@ export default class MmCreateOrgForm extends HTMLElement {
     };
 
     #populateCustomers = async () => {
-        const customers = await MmCreateOrgForm.fetchCustomers().catch(
+        const customers = await MmCreateProjectForm.fetchCustomers().catch(
             async (response) => {
-                await MmCreateOrgForm.handleError(response);
+                await MmCreateProjectForm.handleError(response);
                 return [];
             }
         );
@@ -272,7 +272,7 @@ export default class MmCreateOrgForm extends HTMLElement {
             bdoc.ele(
                 "form",
                 bdoc.class("form"),
-                bdoc.eventListener("submit", this.#submitCreateOrg),
+                bdoc.eventListener("submit", this.#submitCreateProject),
                 formGroupsContainer,
                 bdoc.ele("slot", bdoc.attr("name", "form-footer"))
             )
@@ -282,4 +282,4 @@ export default class MmCreateOrgForm extends HTMLElement {
     }
 }
 
-customElements.define("mm-create-org-form", MmCreateOrgForm);
+customElements.define("mm-create-project-form", MmCreateProjectForm);

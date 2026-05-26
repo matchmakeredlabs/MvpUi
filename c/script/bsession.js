@@ -81,16 +81,16 @@ export default class bsession {
         const originIndex = cachedPerms.indexOf("&o=");
         if (originIndex < 0) return null;
 
-        // Delete the part after the orgs
+        // Delete the origin and signature values after the ACL scopes.
         cachedPerms = cachedPerms.substring(0, originIndex);
 
         for (const line of cachedPerms.split(";")) {
             if (line.substring(0, 4) === "acl=") {
                 continue;
             }
-            const [org, permsBitFlag] = line.split(":");
-            if (!org || !permsBitFlag) continue;
-            perms[org] = parseInt(`0x${permsBitFlag}`);
+            const [scope, permsBitFlag] = line.split(":");
+            if (!scope || !permsBitFlag) continue;
+            perms[scope] = parseInt(`0x${permsBitFlag}`);
         }
 
         return perms;
@@ -124,11 +124,11 @@ export default class bsession {
         if (!cachedPerms) return null;
 
         const perms = {};
-        for (const [org, permsBitFlag] of Object.entries(cachedPerms)) {
+        for (const [scope, permsBitFlag] of Object.entries(cachedPerms)) {
             for (const [key, value] of Object.entries(bsession.privileges)) {
                 if (permsBitFlag & value) {
-                    if (!perms[org]) perms[org] = [];
-                    perms[org].push(key);
+                    if (!perms[scope]) perms[scope] = [];
+                    perms[scope].push(key);
                 }
             }
         }

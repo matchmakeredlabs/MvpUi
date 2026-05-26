@@ -1,6 +1,6 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
-import MmOrganizations from "./mm-organizations.js";
+import MmProjects from "./mm-projects.js";
 import config from "/config.js";
 
 export default class MmCreateElementForm extends HTMLElement {
@@ -118,7 +118,7 @@ export default class MmCreateElementForm extends HTMLElement {
             variables.mainEntityId = this.#parentElement.mainEntityId;
             variables.isPartOf = this.#parentElement.url;
         } else {
-            variables._orgId = formData.get("org");
+            variables._orgId = formData.get("project");
             variables.mainEntity = variables.url;
         }
 
@@ -132,7 +132,7 @@ export default class MmCreateElementForm extends HTMLElement {
 
     static createElement = async (
         element,
-        orgId,
+        projectId,
         contentType = "application/json"
     ) => {
         let body;
@@ -145,7 +145,7 @@ export default class MmCreateElementForm extends HTMLElement {
         }
 
         return await MmCreateElementForm.session.fetch(
-            `/api/descriptors?verbose${orgId ? "&orgid=" + orgId : ""}`,
+            `/api/descriptors?verbose${projectId ? "&orgid=" + projectId : ""}`,
             {
                 method: "POST",
                 headers: {
@@ -166,16 +166,16 @@ export default class MmCreateElementForm extends HTMLElement {
         );
     };
 
-    #fetchOrgs = async () => {
+    #fetchProjects = async () => {
         const cachedAcl = MmCreateElementForm.session.getCachedAcl();
         if ("admin" in cachedAcl) {
-            return await MmOrganizations.fetchOrganizations();
+            return await MmProjects.fetchProjects();
         }
-        const orgs = Object.keys(cachedAcl).filter((key) =>
+        const projects = Object.keys(cachedAcl).filter((key) =>
             cachedAcl[key].includes("WriteDescriptor")
         );
 
-        return orgs.map((orgId) => ({ id: orgId, name: orgId }));
+        return projects.map((projectId) => ({ id: projectId, name: projectId }));
     };
 
     #getTooltipButton = (tooltipText) => {
@@ -274,7 +274,7 @@ export default class MmCreateElementForm extends HTMLElement {
                       bdoc.class("form-group"),
                       bdoc.ele(
                           "label",
-                          bdoc.attr("for", "org"),
+                          bdoc.attr("for", "project"),
                           "Project",
                           bdoc.ele(
                               "span",
@@ -285,8 +285,8 @@ export default class MmCreateElementForm extends HTMLElement {
                       bdoc.attr("style", "flex: 1"),
                       bdoc.ele(
                           "select",
-                          bdoc.attr("id", "org"),
-                          bdoc.attr("name", "org"),
+                          bdoc.attr("id", "project"),
+                          bdoc.attr("name", "project"),
                           bdoc.attr("required", "true")
                       )
                   ),
@@ -384,12 +384,12 @@ export default class MmCreateElementForm extends HTMLElement {
         );
 
         if (!this.#parentElement) {
-            this.#fetchOrgs().then((orgs) => {
-                const orgSelect = this.shadowRoot.querySelector("#org");
-                orgs.forEach((org) => {
+            this.#fetchProjects().then((projects) => {
+                const projectSelect = this.shadowRoot.querySelector("#project");
+                projects.forEach((project) => {
                     bdoc.append(
-                        orgSelect,
-                        bdoc.ele("option", bdoc.attr("value", org.id), org.name)
+                        projectSelect,
+                        bdoc.ele("option", bdoc.attr("value", project.id), project.name)
                     );
                 });
             });

@@ -1,6 +1,5 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
-import MmOrganizations from "./mm-organizations.js";
 import config from "/config.js";
 
 export default class MmCreateCommentForm extends HTMLElement {

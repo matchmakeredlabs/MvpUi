@@ -3,7 +3,7 @@ import config from "/config.js";
 import bsession from "./bsession.js";
 import MmCustomers from "./mm-customers.js";
 
-export default class MmOrganizations extends HTMLElement {
+export default class MmProjects extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     static getCustomerLabel = (customerMap, customerId) => {
@@ -17,8 +17,8 @@ export default class MmOrganizations extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    static canCreateOrganizations = () => {
-        const acl = MmOrganizations.session.getCachedAcl();
+    static canCreateProjects = () => {
+        const acl = MmProjects.session.getCachedAcl();
         if (!acl) return false;
         if ("admin" in acl) return true;
 
@@ -28,24 +28,24 @@ export default class MmOrganizations extends HTMLElement {
         );
     };
 
-    static canWriteOrganization = (orgId) => {
-        const acl = MmOrganizations.session.getCachedAcl();
+    static canWriteProject = (projectId) => {
+        const acl = MmProjects.session.getCachedAcl();
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl[orgId]?.includes("WriteOrg") || false;
+        return acl[projectId]?.includes("WriteOrg") || false;
     };
 
     static canWriteCustomer = (customerId) => {
-        const acl = MmOrganizations.session.getCachedAcl();
+        const acl = MmProjects.session.getCachedAcl();
         if (!acl) return false;
         if ("admin" in acl) return true;
 
         return acl[customerId]?.includes("WriteCustomer") || false;
     };
 
-    static fetchOrganizations = async () => {
-        const response = await MmOrganizations.session.fetch("/api/orgs");
+    static fetchProjects = async () => {
+        const response = await MmProjects.session.fetch("/api/orgs");
         return (await response.json()).items;
     };
 
@@ -68,7 +68,7 @@ export default class MmOrganizations extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-organizations.css")
+                bdoc.attr("href", "/c/res/mm-projects.css")
             ),
             bdoc.ele(
                 "div",
@@ -78,17 +78,17 @@ export default class MmOrganizations extends HTMLElement {
                     "Projects",
                     bdoc.attr("style", "margin-left: 1.5em")
                 ),
-                MmOrganizations.canCreateOrganizations()
+                MmProjects.canCreateProjects()
                     ? bdoc.ele(
                           "button",
-                          bdoc.attr("id", "create-org-button"),
+                          bdoc.attr("id", "create-project-button"),
                           bdoc.class("header-button add-entity-button2"),
                           "✐  Create New Project"
                       )
                     : null
             ),
             bdoc.ele(
-                "mm-create-org-modal"
+                "mm-create-project-modal"
             ),
             bdoc.ele(
                 "div",
@@ -105,17 +105,17 @@ export default class MmOrganizations extends HTMLElement {
                 bdoc.ele(
                     "script",
                     bdoc.attr("type", "module"),
-                    bdoc.attr("src", "/c/script/mm-create-org-modal.js")
+                    bdoc.attr("src", "/c/script/mm-create-project-modal.js")
                 )
             )
         );
-        this.#renderOrganizations();
+        this.#renderProjects();
     }
 
-    #renderOrganizations = async () => {
-        const [organizations, customers] = await Promise.all([
-            MmOrganizations.fetchOrganizations(),
-            MmOrganizations.fetchCustomers(),
+    #renderProjects = async () => {
+        const [projects, customers] = await Promise.all([
+            MmProjects.fetchProjects(),
+            MmProjects.fetchCustomers(),
         ]);
         const customerMap = Object.fromEntries(
             customers.map((customer) => [customer.id, customer])
@@ -124,22 +124,22 @@ export default class MmOrganizations extends HTMLElement {
         customElements.whenDefined("mm-filter-table").then(() => {
             const table = this.shadowRoot.querySelector("mm-filter-table");
             table.generateCols = () => ({
-                name: (org) => {
-                    if (!MmOrganizations.canWriteOrganization(org.id)) {
-                        return org.name;
+                name: (project) => {
+                    if (!MmProjects.canWriteProject(project.id)) {
+                        return project.name;
                     }
 
                     return bdoc.ele(
                         "a",
-                        bdoc.attr("href", `/c/Project?id=${org.id}`),
-                        org.name
+                        bdoc.attr("href", `/c/Project?id=${project.id}`),
+                        project.name
                     );
                 },
-                Customer: (org) => {
-                    const customerId = org.customerId || org.customer || "";
+                Customer: (project) => {
+                    const customerId = project.customerId || project.customer || "";
                     if (!customerId) return "";
-                    const label = MmOrganizations.getCustomerLabel(customerMap, customerId);
-                    if (!MmOrganizations.canWriteCustomer(customerId)) {
+                    const label = MmProjects.getCustomerLabel(customerMap, customerId);
+                    if (!MmProjects.canWriteCustomer(customerId)) {
                         return label;
                     }
 
@@ -149,16 +149,16 @@ export default class MmOrganizations extends HTMLElement {
                         label
                     );
                 },
-                description: (org) => org.description,
+                description: (project) => project.description,
             });
             table.customSorts = {
                 name: (a, b) => a.name.localeCompare(b.name),
                 Customer: (a, b) =>
-                    MmOrganizations.getCustomerLabel(
+                    MmProjects.getCustomerLabel(
                         customerMap,
                         a.customerId || a.customer || ""
                     ).localeCompare(
-                        MmOrganizations.getCustomerLabel(
+                        MmProjects.getCustomerLabel(
                             customerMap,
                             b.customerId || b.customer || ""
                         )
@@ -167,11 +167,11 @@ export default class MmOrganizations extends HTMLElement {
                     (a.description || "").localeCompare(b.description || ""),
             };
             table.loadData(
-                organizations.map((org) => {
-                    const customerId = org.customerId || org.customer || "";
+                projects.map((project) => {
+                    const customerId = project.customerId || project.customer || "";
                     return {
-                        ...org,
-                        Customer: MmOrganizations.getCustomerLabel(
+                        ...project,
+                        Customer: MmProjects.getCustomerLabel(
                             customerMap,
                             customerId
                         ),
@@ -179,25 +179,25 @@ export default class MmOrganizations extends HTMLElement {
                 })
             );
 
-            const createOrgButton = this.shadowRoot.getElementById(
-                "create-org-button"
+            const createProjectButton = this.shadowRoot.getElementById(
+                "create-project-button"
             );
-            if (!createOrgButton) return;
+            if (!createProjectButton) return;
 
-            customElements.whenDefined("mm-create-org-modal").then(() => {
-                const createOrgModal = this.shadowRoot.querySelector(
-                    "mm-create-org-modal"
+            customElements.whenDefined("mm-create-project-modal").then(() => {
+                const createProjectModal = this.shadowRoot.querySelector(
+                    "mm-create-project-modal"
                 );
-                if (createOrgModal) {
-                    createOrgModal.onSuccess = async () => {
-                        await this.#renderOrganizations();
+                if (createProjectModal) {
+                    createProjectModal.onSuccess = async () => {
+                        await this.#renderProjects();
                     };
-                    createOrgButton.onclick = () => {
-                        createOrgModal.show();
+                    createProjectButton.onclick = () => {
+                        createProjectModal.show();
                     };
                 }
             });
         });
     };
 }
-customElements.define("mm-organizations", MmOrganizations);
+customElements.define("mm-projects", MmProjects);

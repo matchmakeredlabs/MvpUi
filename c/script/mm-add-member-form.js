@@ -2,7 +2,7 @@ import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
 import MmCustomers from "./mm-customers.js";
-import MmOrganizations from "./mm-organizations.js";
+import MmProjects from "./mm-projects.js";
 
 export default class MmAddMemberForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -13,7 +13,7 @@ export default class MmAddMemberForm extends HTMLElement {
     #memberType;
     #cachedCustomers = [];
     #cachedGroups = [];
-    #cachedOrganizations = [];
+    #cachedProjects = [];
     #groupChoicesPreloadPromise;
 
     constructor() {
@@ -31,13 +31,13 @@ export default class MmAddMemberForm extends HTMLElement {
         }
     }
 
-    static fetchOrganization = async (orgId) => {
+    static fetchProject = async (projectId) => {
         const response = await MmAddMemberForm.session.fetch(
-            "/api/orgs/" + orgId
+            "/api/orgs/" + projectId
         );
 
         return await response.json();
-        // what happens when user does not have perms for org?
+        // what happens when user does not have perms for this project?
     };
 
     static fetchGroup = async (groupId) => {
@@ -90,11 +90,11 @@ export default class MmAddMemberForm extends HTMLElement {
             this.#groupChoicesPreloadPromise = Promise.all([
                 MmAddMemberForm.fetchGroups().catch(() => []),
                 MmCustomers.fetchCustomers().catch(() => []),
-                MmOrganizations.fetchOrganizations().catch(() => []),
-            ]).then(([groups, customers, organizations]) => {
+                MmProjects.fetchProjects().catch(() => []),
+            ]).then(([groups, customers, projects]) => {
                 this.#cachedGroups = groups || [];
                 this.#cachedCustomers = customers || [];
-                this.#cachedOrganizations = organizations || [];
+                this.#cachedProjects = projects || [];
             });
         }
 
@@ -109,8 +109,8 @@ export default class MmAddMemberForm extends HTMLElement {
             return customer?.name || customer?.id || ownerId;
         }
 
-        const org = this.#cachedOrganizations.find((org) => org.id === ownerId);
-        return org?.name || org?.id || ownerId;
+        const project = this.#cachedProjects.find((project) => project.id === ownerId);
+        return project?.name || project?.id || ownerId;
     };
 
     #getGroupsForSelectedOwner = () => {
@@ -309,13 +309,13 @@ export default class MmAddMemberForm extends HTMLElement {
         this.onSettled(variables, response);
     };
 
-    static updateOrg = async (orgId, orgObj) => {
-        return await MmAddMemberForm.session.fetch("/api/orgs/" + orgId, {
+    static updateProject = async (projectId, projectObj) => {
+        return await MmAddMemberForm.session.fetch("/api/orgs/" + projectId, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(orgObj),
+            body: JSON.stringify(projectObj),
         });
     };
 
@@ -350,7 +350,7 @@ export default class MmAddMemberForm extends HTMLElement {
     ) => {
         let currentParent;
         if (parentType === "org") {
-            currentParent = await MmAddMemberForm.fetchOrganization(parentId);
+            currentParent = await MmAddMemberForm.fetchProject(parentId);
         } else if (parentType === "group") {
             currentParent = await MmAddMemberForm.fetchGroup(parentId);
         } else if (parentType === "customer") {
@@ -364,10 +364,10 @@ export default class MmAddMemberForm extends HTMLElement {
 
         const parameters = {
             org: {
-                existsTextParentText: "organization",
+                existsTextParentText: "project",
                 checkId: (member) => member.id === memberObj.id,
                 addMember: () => currentParent.members.push(memberObj),
-                update: MmAddMemberForm.updateOrg,
+                update: MmAddMemberForm.updateProject,
             },
             group: {
                 existsTextParentText: "group",

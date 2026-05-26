@@ -84,14 +84,14 @@ export default class MmGroup extends HTMLElement {
         return await response.json();
     };
 
-    static renderLinkIfCachedPermsOnOrg = (orgId, cachedAcl) => {
-        return orgId in cachedAcl || "admin" in cachedAcl
+    static renderLinkIfCachedPermsOnProject = (projectId, cachedAcl) => {
+        return projectId in cachedAcl || "admin" in cachedAcl
             ? bdoc.ele(
                   "a",
-                  bdoc.attr("href", `/c/Project?id=${orgId}`),
-                  orgId
+                  bdoc.attr("href", `/c/Project?id=${projectId}`),
+                  projectId
               )
-            : orgId;
+            : projectId;
     };
 
     static renderOwnedBy = (group, cachedAcl, customerMap) => {
@@ -150,7 +150,7 @@ export default class MmGroup extends HTMLElement {
         return bdoc.ele(
             "span",
             `${scopeType}: `,
-            MmGroup.renderLinkIfCachedPermsOnOrg(scopeId, cachedAcl)
+            MmGroup.renderLinkIfCachedPermsOnProject(scopeId, cachedAcl)
         );
     };
 
@@ -254,10 +254,10 @@ export default class MmGroup extends HTMLElement {
         if (!group.members) return { users, groups };
         for (let memberId of group.members) {
             if (memberId.includes(":")) {
-                const [org, groupId] = memberId.split(":");
+                const [projectId, groupId] = memberId.split(":");
                 groups.push({
                     id: memberId,
-                    org,
+                    org: projectId,
                     groupId,
                 });
             } else {
@@ -487,10 +487,10 @@ export default class MmGroup extends HTMLElement {
                     ["add-button-text"]: "+ Add Group to Group",
                     ["dropdown"]: groupsDropdown,
                     ["get-obj"]: (group) => {
-                        const [org, groupId] = group.id.split(":");
+                        const [projectId, groupId] = group.id.split(":");
                         return {
                             id: group.id,
-                            org,
+                            org: projectId,
                             customerId: group.customerId,
                             groupId,
                         };
@@ -730,7 +730,7 @@ export default class MmGroup extends HTMLElement {
                     rolesDropdown,
                     bdoc.ele(
                         "p",
-                        "This group has no roles on any organization or customer.",
+                        "This group has no roles on any project or customer.",
                         bdoc.attr("slot", "dropdown-body"),
                         bdoc.attr("style", "margin: 1em;")
                     )

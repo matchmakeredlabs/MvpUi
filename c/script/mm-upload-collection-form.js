@@ -1,7 +1,7 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import MmCreateElementForm from "./mm-create-element-form.js";
-import MmOrganizations from "./mm-organizations.js";
+import MmProjects from "./mm-projects.js";
 import config from "/config.js";
 
 export default class MmUploadCollectionForm extends HTMLElement {
@@ -68,7 +68,7 @@ export default class MmUploadCollectionForm extends HTMLElement {
 
         const formData = new FormData(event.target);
 
-        const organizationId = formData.get("org");
+        const projectId = formData.get("project");
         const file = formData.get("file");
         const fileType = file.name.split(".").pop();
         const fileTypeToMIMEType = {
@@ -77,14 +77,14 @@ export default class MmUploadCollectionForm extends HTMLElement {
         };
 
         const variables = {
-            organizationId,
+            projectId,
             file,
             fileType,
         };
 
         const response = await MmCreateElementForm.createElement(
             file,
-            organizationId,
+            projectId,
             fileTypeToMIMEType[fileType]
         );
 
@@ -101,10 +101,10 @@ export default class MmUploadCollectionForm extends HTMLElement {
         );
     };
 
-    #fetchOrgs = async () => {
+    #fetchProjects = async () => {
         const cachedAcl = MmUploadCollectionForm.session.getCachedAcl();
         if ("admin" in cachedAcl) {
-            return await MmOrganizations.fetchOrganizations();
+            return await MmProjects.fetchProjects();
         }
         return Object.keys(cachedAcl)
             .filter((key) => cachedAcl[key].includes("WriteDescriptor"))
@@ -161,26 +161,26 @@ export default class MmUploadCollectionForm extends HTMLElement {
                 bdoc.class("form-group"),
                 bdoc.ele(
                     "label",
-                    bdoc.attr("for", "org"),
+                    bdoc.attr("for", "project"),
                     "Project",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.attr("style", "flex: 1"),
                 bdoc.ele(
                     "select",
-                    bdoc.attr("id", "org"),
-                    bdoc.attr("name", "org"),
+                    bdoc.attr("id", "project"),
+                    bdoc.attr("name", "project"),
                     bdoc.attr("required", "true")
                 )
             )
         );
 
-        this.#fetchOrgs().then((orgs) => {
-            const orgSelect = this.shadowRoot.querySelector("#org");
-            orgs.forEach((org) => {
+        this.#fetchProjects().then((projects) => {
+            const projectSelect = this.shadowRoot.querySelector("#project");
+            projects.forEach((project) => {
                 bdoc.append(
-                    orgSelect,
-                    bdoc.ele("option", bdoc.attr("value", org.id), org.name)
+                    projectSelect,
+                    bdoc.ele("option", bdoc.attr("value", project.id), project.name)
                 );
             });
         });

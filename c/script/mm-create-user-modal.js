@@ -47,7 +47,7 @@ class MmCreateUserModal extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-create-org-modal.css")
+                bdoc.attr("href", "/c/res/mm-create-project-modal.css")
             ),
             bdoc.ele("mm-modal"),
             bdoc.script("mm-modal.js"),

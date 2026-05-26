@@ -7,7 +7,7 @@ class MmCreateGroupModal extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     static observedAttributes = [
-        "org-id",
+        "project-id",
         "owner-id",
         "owner-type",
         "parent-id",
@@ -15,7 +15,7 @@ class MmCreateGroupModal extends HTMLElement {
         "add-self",
     ];
 
-    #orgId;
+    #projectId;
     #ownerId;
     #ownerType;
     #parentId;
@@ -23,8 +23,8 @@ class MmCreateGroupModal extends HTMLElement {
     #addSelf;
 
     attributeChangedCallback(name, oldValue, newValue) {
-        if (name === "org-id") {
-            this.#orgId = newValue;
+        if (name === "project-id") {
+            this.#projectId = newValue;
         } else if (name === "owner-id") {
             this.#ownerId = newValue;
         } else if (name === "owner-type") {
@@ -115,7 +115,7 @@ class MmCreateGroupModal extends HTMLElement {
                                 createGroupForm
                                     .getInnerForm()
                                     .querySelector("#owner").value !==
-                                    this.#orgId)
+                                    this.#projectId)
                         ) {
                             const body = await response.json();
                             const newVariables = {
@@ -149,7 +149,7 @@ class MmCreateGroupModal extends HTMLElement {
                         createGroupForm
                             .getInnerForm()
                             .querySelector("#owner").value ===
-                            this.#orgId
+                            this.#projectId
                     ) {
                         const body = await response.json();
                         onSuccess(
@@ -171,7 +171,7 @@ class MmCreateGroupModal extends HTMLElement {
 
             const parameters = {
                 org: {
-                    fullText: "organization",
+                    fullText: "project",
                 },
                 group: {
                     fullText: "group",
@@ -207,7 +207,7 @@ class MmCreateGroupModal extends HTMLElement {
                                             "div",
                                             bdoc.class("select-group"),
                                             bdoc.id("role-select-group"),
-                                            "Role (Current Organization)",
+                                            "Role (Current Project)",
                                             bdoc.ele(
                                                 "select",
                                                 bdoc.attr("id", "role-select"),
@@ -249,7 +249,7 @@ class MmCreateGroupModal extends HTMLElement {
 
             const createGroupForm = bdoc.ele(
                 "mm-create-group-form",
-                this.#orgId ? bdoc.attr("org-id", this.#orgId) : null,
+                this.#projectId ? bdoc.attr("project-id", this.#projectId) : null,
                 this.#ownerId
                     ? bdoc.attr("owner-id", this.#ownerId)
                     : null,
@@ -341,7 +341,7 @@ class MmCreateGroupModal extends HTMLElement {
                 bdoc.append(
                     ownerInput,
                     bdoc.eventListener("ownerchange", ({ target }) => {
-                        if (target.value === this.#orgId) {
+                        if (target.value === this.#projectId) {
                             addToParent.style.display = "none";
                         } else {
                             addToParent.style.display = "flex";

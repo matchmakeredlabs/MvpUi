@@ -192,11 +192,11 @@ const templates = [
         },
     },
     {
-        name: "Organizations/Projects",
+        name: "Projects",
         verb: "GET",
         url: "/api/orgs",
         body: {
-            name: "OrgName",
+            name: "ProjectName",
             description: "display name / description",
             members: [{ id: "MemberId", role: "owner" }],
         },

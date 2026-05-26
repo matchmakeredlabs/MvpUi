@@ -73,7 +73,7 @@ export default class MmCustomers extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-organizations.css")
+                bdoc.attr("href", "/c/res/mm-projects.css")
             ),
             bdoc.ele(
                 "div",

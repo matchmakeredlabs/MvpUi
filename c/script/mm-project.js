@@ -4,13 +4,13 @@ import bsession from "./bsession.js";
 import MmCustomer from "./mm-customer.js";
 import MmAddMemberForm from "./mm-add-member-form.js";
 
-export default class MmOrganization extends HTMLElement {
+export default class MmProject extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     groups = [];
     users = [];
 
-    #org;
+    #project;
 
     #permissions = new Set();
 
@@ -19,9 +19,9 @@ export default class MmOrganization extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    static fetchOrganization = async (orgId) => {
-        const response = await MmOrganization.session.fetch(
-            "/api/orgs/" + orgId
+    static fetchProject = async (projectId) => {
+        const response = await MmProject.session.fetch(
+            "/api/orgs/" + projectId
         );
         if (response.status !== 200) {
             return Promise.reject(response);
@@ -29,7 +29,7 @@ export default class MmOrganization extends HTMLElement {
 
         return await response.json();
 
-        // what happens when user does not have perms for org?
+        // what happens when user does not have perms for this project?
     };
 
     static renderCustomerLink = (customerId, customer) => {
@@ -55,14 +55,14 @@ export default class MmOrganization extends HTMLElement {
         "";
 
     static getGroupOwnedByLabel = (group) => {
-        const ownerType = MmOrganization.getGroupOwnerType(group);
-        const ownerId = MmOrganization.getGroupOwnerId(group);
+        const ownerType = MmProject.getGroupOwnerType(group);
+        const ownerId = MmProject.getGroupOwnerId(group);
         return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
     };
 
     static renderGroupOwnedBy = (group, cachedAcl) => {
-        const ownerType = MmOrganization.getGroupOwnerType(group);
-        const ownerId = MmOrganization.getGroupOwnerId(group);
+        const ownerType = MmProject.getGroupOwnerType(group);
+        const ownerId = MmProject.getGroupOwnerId(group);
 
         if (!ownerId) return ownerType;
 
@@ -91,64 +91,64 @@ export default class MmOrganization extends HTMLElement {
         );
     };
 
-    static updateOrg = async (orgId, orgObj) => {
-        const response = await MmOrganization.session.fetch(
-            "/api/orgs/" + orgId,
+    static updateProject = async (projectId, projectObj) => {
+        const response = await MmProject.session.fetch(
+            "/api/orgs/" + projectId,
             {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(orgObj),
+                body: JSON.stringify(projectObj),
             }
         );
 
         if (response.status !== 200) {
-            MmOrganization.handleError(response);
+            MmProject.handleError(response);
             return Promise.reject();
         }
 
         return await response.json();
     };
 
-    static removeEntityFromOrg = async (orgId, entityId) => {
-        const currentOrg = await MmOrganization.fetchOrganization(orgId);
-        const newMembers = currentOrg.members.filter(
+    static removeEntityFromProject = async (projectId, entityId) => {
+        const currentProject = await MmProject.fetchProject(projectId);
+        const newMembers = currentProject.members.filter(
             (member) => member.id !== entityId
         );
-        if (newMembers.length === currentOrg.members.length) {
-            alert(`${entityId} not found in project ${orgId}`);
+        if (newMembers.length === currentProject.members.length) {
+            alert(`${entityId} not found in project ${projectId}`);
             return Promise.reject();
         }
 
-        return await MmOrganization.updateOrg(orgId, {
-            ...currentOrg,
+        return await MmProject.updateProject(projectId, {
+            ...currentProject,
             members: newMembers,
         });
     };
 
     static deleteGroup = async (groupId) => {
-        const response = await MmOrganization.session.fetch(
+        const response = await MmProject.session.fetch(
             "/api/groups/" + groupId,
             {
                 method: "DELETE",
             }
         );
         if (response.status !== 200) {
-            MmOrganization.handleError(response);
+            MmProject.handleError(response);
             return Promise.reject();
         }
         return await response.json();
     };
 
-    static updateEntityRoleInOrg = async (orgId, entityId, newRole) => {
-        const currentOrg = await MmOrganization.fetchOrganization(orgId);
-        const newMembers = currentOrg.members.map((member) =>
+    static updateEntityRoleInProject = async (projectId, entityId, newRole) => {
+        const currentProject = await MmProject.fetchProject(projectId);
+        const newMembers = currentProject.members.map((member) =>
             member.id === entityId ? { ...member, role: newRole } : member
         );
 
-        return await MmOrganization.updateOrg(orgId, {
-            ...currentOrg,
+        return await MmProject.updateProject(projectId, {
+            ...currentProject,
             members: newMembers,
         });
     };
@@ -164,7 +164,7 @@ export default class MmOrganization extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-organization.css")
+                bdoc.attr("href", "/c/res/mm-project.css")
             ),
             bdoc.ele(
                 "div",
@@ -201,7 +201,7 @@ export default class MmOrganization extends HTMLElement {
             bdoc.script("mm-create-group-modal.js"),
             bdoc.script("mm-add-member-modal.js")
         );
-        this.#renderOrganization();
+        this.#renderProject();
     }
 
     static handleError = async (response) => {
@@ -213,10 +213,10 @@ export default class MmOrganization extends HTMLElement {
             alert("An error occurred");
         }
     };
-    static splitUsersAndGroups = (organization) => {
+    static splitUsersAndGroups = (project) => {
         const users = [];
         const groups = [];
-        for (let member of organization.members) {
+        for (let member of project.members) {
             if (member.id.includes(":")) {
                 const [ownerId, ...groupIdParts] = member.id.split(":");
                 const groupId = groupIdParts.join(":");
@@ -230,7 +230,7 @@ export default class MmOrganization extends HTMLElement {
                         member.customer ||
                         (ownerType === "customer" ? ownerId : ""),
                     ownerType,
-                    ownedByLabel: MmOrganization.getGroupOwnedByLabel({
+                    ownedByLabel: MmProject.getGroupOwnedByLabel({
                         ...member,
                         org: member.org || (ownerType === "org" ? ownerId : ""),
                         customerId:
@@ -248,42 +248,42 @@ export default class MmOrganization extends HTMLElement {
         return { users, groups };
     };
 
-    #renderOrganization = async () => {
-        const orgId = new URLSearchParams(window.location.search).get("id");
+    #renderProject = async () => {
+        const projectId = new URLSearchParams(window.location.search).get("id");
 
-        if (!orgId) {
+        if (!projectId) {
             window.location.href = "/c/Projects";
         }
 
-        const organization = await MmOrganization.fetchOrganization(
-            orgId
+        const project = await MmProject.fetchProject(
+            projectId
         ).catch(() => {
             window.location.href = "/c/Projects";
         });
 
-        const customer = organization.customerId
-            ? await MmCustomer.fetchCustomer(organization.customerId).catch(
+        const customer = project.customerId
+            ? await MmCustomer.fetchCustomer(project.customerId).catch(
                   () => null
               )
             : null;
-        const customerId = organization.customerId || organization.customer;
+        const customerId = project.customerId || project.customer;
 
-        if (organization._canUpdate) {
+        if (project._canUpdate) {
             this.#permissions.add("update");
         }
 
-        if (organization._canWriteGroups) {
+        if (project._canWriteGroups) {
             this.#permissions.add("writeGroups");
         }
 
         const { users, groups } =
-            MmOrganization.splitUsersAndGroups(organization);
+            MmProject.splitUsersAndGroups(project);
         this.groups = groups;
         this.users = users;
 
-        this.#org = organization;
+        this.#project = project;
 
-        const cachedAcl = MmOrganization.session.getCachedAcl();
+        const cachedAcl = MmProject.session.getCachedAcl();
 
         const headerContainer =
             this.shadowRoot.querySelector(".headers-container");
@@ -299,7 +299,7 @@ export default class MmOrganization extends HTMLElement {
                 ? bdoc.ele(
                       "p",
                       "Customer: ",
-                      MmOrganization.renderCustomerLink(
+                      MmProject.renderCustomerLink(
                           customerId,
                           customer
                       )
@@ -312,7 +312,7 @@ export default class MmOrganization extends HTMLElement {
             headerContainer,
             bdoc.ele(
                 "h3",
-                `${organization.name}`,
+                `${project.name}`,
                 bdoc.attr("style", "color: black;")
             ),
             infoContainer
@@ -327,18 +327,18 @@ export default class MmOrganization extends HTMLElement {
                 bdoc.eventListener("click", async () => {
                     const description =
                         this.shadowRoot.getElementById("description").innerText;
-                    const currentOrg = await MmOrganization.fetchOrganization(
-                        orgId
+                    const currentProject = await MmProject.fetchProject(
+                        projectId
                     );
-                    if (description.trim() === currentOrg.description.trim())
+                    if (description.trim() === currentProject.description.trim())
                         return;
-                    MmOrganization.updateOrg(orgId, {
-                        ...currentOrg,
+                    MmProject.updateProject(projectId, {
+                        ...currentProject,
                         description,
                     }).then(() => {
                         alert("Description updated successfully");
                         descriptionEditButtons.style.display = "none";
-                        this.#org.description = description;
+                        this.#project.description = description;
                     });
                 })
             ),
@@ -349,7 +349,7 @@ export default class MmOrganization extends HTMLElement {
                     descriptionContainer.innerHTML = "";
                     bdoc.append(
                         descriptionContainer,
-                        generateDescription(this.#org.description)
+                        generateDescription(this.#project.description)
                     );
                     bdoc.append(descriptionContainer, descriptionEditButtons);
                     descriptionEditButtons.style.display = "none";
@@ -376,10 +376,10 @@ export default class MmOrganization extends HTMLElement {
             return descEle;
         };
 
-        if (organization.description && organization.description.length > 0) {
+        if (project.description && project.description.length > 0) {
             bdoc.append(
                 descriptionContainer,
-                generateDescription(organization.description)
+                generateDescription(project.description)
             );
         } else {
             if (this.#permissions.has("update")) {
@@ -410,14 +410,14 @@ export default class MmOrganization extends HTMLElement {
             bdoc.attr("id", "add-user-modal"),
             bdoc.attr("parent-type", "org"),
             bdoc.attr("member-type", "user"),
-            bdoc.attr("parent-id", orgId)
+            bdoc.attr("parent-id", projectId)
         );
         const addGroupModal = bdoc.ele(
             "mm-add-member-modal",
             bdoc.attr("id", "add-group-modal"),
             bdoc.attr("parent-type", "org"),
             bdoc.attr("member-type", "group"),
-            bdoc.attr("parent-id", orgId)
+            bdoc.attr("parent-id", projectId)
         );
         bdoc.append(this.shadowRoot, addUserModal, addGroupModal);
 
@@ -448,7 +448,7 @@ export default class MmOrganization extends HTMLElement {
                             ),
                         role: (group) => group.role || "",
                         ["Owned by"]: (group) =>
-                            MmOrganization.renderGroupOwnedBy(group, cachedAcl),
+                            MmProject.renderGroupOwnedBy(group, cachedAcl),
                     },
                     ["identifier"]: "groupId",
                     ["button-group"]: null,
@@ -472,7 +472,7 @@ export default class MmOrganization extends HTMLElement {
                                 group.customer ||
                                 (ownerType === "customer" ? ownerId : ""),
                             ownerType,
-                            ownedByLabel: MmOrganization.getGroupOwnedByLabel({
+                            ownedByLabel: MmProject.getGroupOwnedByLabel({
                                 ...group,
                                 org:
                                     group.org ||
@@ -561,7 +561,7 @@ export default class MmOrganization extends HTMLElement {
                         return bdoc.ele(
                             "select",
                             bdoc.class("role-select"),
-                            ...(type === "group" && member.org === orgId
+                            ...(type === "group" && member.org === projectId
                                 ? ownedBySameOrgRoles
                                 : MmAddMemberForm.roles
                             ).map((role) => {
@@ -599,8 +599,8 @@ export default class MmOrganization extends HTMLElement {
 
                                 if (newRole === "none") {
                                     promise =
-                                        MmOrganization.removeEntityFromOrg(
-                                            orgId,
+                                        MmProject.removeEntityFromProject(
+                                            projectId,
                                             member.id
                                         );
                                 } else if (
@@ -608,14 +608,14 @@ export default class MmOrganization extends HTMLElement {
                                     member.role !== "none"
                                 ) {
                                     promise =
-                                        MmOrganization.updateEntityRoleInOrg(
-                                            orgId,
+                                        MmProject.updateEntityRoleInProject(
+                                            projectId,
                                             member.id,
                                             newRole
                                         );
                                 } else {
                                     promise = MmAddMemberForm.addMemberToEntity(
-                                        orgId,
+                                        projectId,
                                         { id: member.id, role: newRole },
                                         type,
                                         "org"
@@ -646,13 +646,13 @@ export default class MmOrganization extends HTMLElement {
                     filterTableCols["Actions"] = (entity) => {
                         if (
                             type === "group" &&
-                            entity.org === orgId &&
+                            entity.org === projectId &&
                             !this.#permissions.has("writeGroups")
                         ) {
                             return "";
                         }
 
-                        return type === "group" && entity.org === orgId
+                        return type === "group" && entity.org === projectId
                             ? bdoc.ele(
                                   "td",
                                   bdoc.attr(
@@ -678,7 +678,7 @@ export default class MmOrganization extends HTMLElement {
                                               }? Deleting this group may impact the permissions of its members, which may include groups and users. This action cannot be undone.`
                                           );
                                           if (confirmRemove) {
-                                              MmOrganization.deleteGroup(
+                                              MmProject.deleteGroup(
                                                   entity.id
                                               ).then(() => {
                                                   this[`${type}s`] = this[
@@ -738,8 +738,8 @@ export default class MmOrganization extends HTMLElement {
                                               } from the project?`
                                           );
                                           if (confirmRemove) {
-                                              MmOrganization.removeEntityFromOrg(
-                                                  orgId,
+                                              MmProject.removeEntityFromProject(
+                                                  projectId,
                                                   entity.id
                                               ).then(() => {
                                                   this[`${type}s`] = this[
@@ -791,8 +791,8 @@ export default class MmOrganization extends HTMLElement {
                     ID: (a, b) => (a.id < b.id ? -1 : 1),
                     name: (a, b) => (a.groupId < b.groupId ? -1 : 1),
                     ["Owned by"]: (a, b) =>
-                        MmOrganization.getGroupOwnedByLabel(a).localeCompare(
-                            MmOrganization.getGroupOwnedByLabel(b)
+                        MmProject.getGroupOwnedByLabel(a).localeCompare(
+                            MmProject.getGroupOwnedByLabel(b)
                         ),
                 };
                 filterTable.customColStyles = {
@@ -830,8 +830,8 @@ export default class MmOrganization extends HTMLElement {
                     if (type === "group") {
                         const createGroupModal = bdoc.ele(
                             "mm-create-group-modal",
-                            bdoc.attr("org-id", organization.id),
-                            bdoc.attr("parent-id", organization.id),
+                            bdoc.attr("project-id", project.id),
+                            bdoc.attr("parent-id", project.id),
                             bdoc.attr("parent-type", "org")
                         );
 
@@ -907,4 +907,4 @@ export default class MmOrganization extends HTMLElement {
         });
     };
 }
-customElements.define("mm-organization", MmOrganization);
+customElements.define("mm-project", MmProject);

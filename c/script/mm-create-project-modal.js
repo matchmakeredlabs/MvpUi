@@ -2,7 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 
-class MmCreateOrgModal extends HTMLElement {
+class MmCreateProjectModal extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
     onSuccess = () => {};
@@ -51,20 +51,20 @@ class MmCreateOrgModal extends HTMLElement {
             bdoc.ele(
                 "link",
                 bdoc.attr("rel", "stylesheet"),
-                bdoc.attr("href", "/c/res/mm-create-org-modal.css")
+                bdoc.attr("href", "/c/res/mm-create-project-modal.css")
             ),
 
             bdoc.ele("mm-modal"),
 
             bdoc.script("mm-modal.js"),
-            bdoc.script("mm-create-org-form.js")
+            bdoc.script("mm-create-project-form.js")
         );
 
         Promise.all([
             customElements.whenDefined("mm-modal"),
-            customElements.whenDefined("mm-create-org-form"),
+            customElements.whenDefined("mm-create-project-form"),
         ]).then(() => {
-            const createOrgModal = this.shadowRoot.querySelector("mm-modal");
+            const createProjectModal = this.shadowRoot.querySelector("mm-modal");
 
             const onSettled = (onSuccess) => async (variables, response) => {
                 if (response) {
@@ -77,8 +77,8 @@ class MmCreateOrgModal extends HTMLElement {
                 }
             };
 
-            const createOrgForm = bdoc.ele(
-                "mm-create-org-form",
+            const createProjectForm = bdoc.ele(
+                "mm-create-project-form",
                 bdoc.ele(
                     "div",
 
@@ -93,7 +93,7 @@ class MmCreateOrgModal extends HTMLElement {
                             bdoc.class("header-button cancel-button"),
                             "Cancel",
                             bdoc.eventListener("click", () => {
-                                createOrgModal.hide();
+                                createProjectModal.hide();
                             })
                         ),
 
@@ -102,17 +102,17 @@ class MmCreateOrgModal extends HTMLElement {
                             bdoc.class("header-button add-entity-button2"),
                             "Create Project",
                             bdoc.eventListener("click", () => {
-                                createOrgForm.onSettled = onSettled(
+                                createProjectForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
                                         this.onSuccess(
                                             variables,
                                             response,
                                             addedGroup
                                         );
-                                        createOrgModal.hide();
+                                        createProjectModal.hide();
                                     }
                                 );
-                                createOrgForm.submit();
+                                createProjectForm.submit();
                             })
                         ),
                         bdoc.ele(
@@ -120,7 +120,7 @@ class MmCreateOrgModal extends HTMLElement {
                             bdoc.class("header-button add-entity-button"),
                             "Create and View Project",
                             bdoc.eventListener("click", () => {
-                                createOrgForm.onSettled = onSettled(
+                                createProjectForm.onSettled = onSettled(
                                     async (variables, response, addedGroup) => {
                                         this.onSuccess(
                                             variables,
@@ -131,7 +131,7 @@ class MmCreateOrgModal extends HTMLElement {
                                         window.location.href = `/c/Project?id=${response.id}`;
                                     }
                                 );
-                                createOrgForm.submit();
+                                createProjectForm.submit();
                             })
                         )
                     ),
@@ -140,16 +140,16 @@ class MmCreateOrgModal extends HTMLElement {
             );
 
             bdoc.append(
-                createOrgModal,
+                createProjectModal,
 
                 bdoc.ele(
                     "h2",
                     "Create Project",
                     bdoc.attr("style", "margin-left: 18px;")
                 ),
-                createOrgForm
+                createProjectForm
             );
         });
     }
 }
-customElements.define("mm-create-org-modal", MmCreateOrgModal);
+customElements.define("mm-create-project-modal", MmCreateProjectModal);

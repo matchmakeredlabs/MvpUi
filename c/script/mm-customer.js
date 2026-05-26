@@ -10,7 +10,7 @@ export default class MmCustomer extends HTMLElement {
         "/customers",
         "/customer",
     ];
-    static orgRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+    static projectRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
     static userRoutes = ["/api/users", "/api/user", "/users", "/user"];
 
     static principalTypeFromId = (principalId) =>
@@ -36,7 +36,7 @@ export default class MmCustomer extends HTMLElement {
     static getUserLabel = (user) => user?.fullName || user?.name || user?.id || "";
 
     #customer;
-    #orgs = [];
+    #projects = [];
     #users = [];
 
     constructor() {
@@ -60,8 +60,8 @@ export default class MmCustomer extends HTMLElement {
         );
     };
 
-    static fetchOrgs = async () => {
-        for (const route of MmCustomer.orgRoutes) {
+    static fetchProjects = async () => {
+        for (const route of MmCustomer.projectRoutes) {
             const response = await MmCustomer.session.fetch(route);
             if (response.status === 200) {
                 const json = await response.json();
@@ -72,7 +72,7 @@ export default class MmCustomer extends HTMLElement {
         return Promise.reject(
             new Response(null, {
                 status: 404,
-                statusText: "Organizations endpoint not found",
+                statusText: "Projects endpoint not found",
             })
         );
     };
@@ -168,7 +168,7 @@ export default class MmCustomer extends HTMLElement {
                 ),
                 bdoc.ele(
                     "mm-dropdown",
-                    bdoc.attr("id", "organizations-dropdown"),
+                    bdoc.attr("id", "projects-dropdown"),
                     bdoc.ele(
                         "h3",
                         "Projects",
@@ -223,22 +223,22 @@ export default class MmCustomer extends HTMLElement {
 
         if (!customer) return;
 
-        const [orgs, users] = await Promise.all([
-            MmCustomer.fetchOrgs().catch(() => []),
+        const [projects, users] = await Promise.all([
+            MmCustomer.fetchProjects().catch(() => []),
             MmCustomer.fetchUsers().catch(() => []),
         ]);
         this.#customer = customer;
         this.#users = users;
 
-        const orgsFromList = orgs.filter((o) => o.customerId === customerId);
-        const orgIdsFromCustomer = Array.isArray(customer._orgs)
+        const projectsFromList = projects.filter((project) => project.customerId === customerId);
+        const projectIdsFromCustomer = Array.isArray(customer._orgs)
             ? customer._orgs
             : [];
 
-        this.#orgs =
-            orgsFromList.length > 0
-                ? orgsFromList
-                : orgIdsFromCustomer.map((id) => ({ id }));
+        this.#projects =
+            projectsFromList.length > 0
+                ? projectsFromList
+                : projectIdsFromCustomer.map((id) => ({ id }));
 
         this.shadowRoot.querySelector("#customer-name-title").textContent =
             customer.name || customer.id;
@@ -249,20 +249,20 @@ export default class MmCustomer extends HTMLElement {
 
         const settingsDropdown = this.shadowRoot.getElementById("settings-dropdown");
         const usersDropdown = this.shadowRoot.getElementById("users-dropdown");
-        const organizationsDropdown = this.shadowRoot.getElementById("organizations-dropdown");
+        const projectsDropdown = this.shadowRoot.getElementById("projects-dropdown");
 
-        if (settingsDropdown && usersDropdown && organizationsDropdown) {
+        if (settingsDropdown && usersDropdown && projectsDropdown) {
             settingsDropdown.classList.add("show");
             usersDropdown.classList.add("show");
-            organizationsDropdown.classList.add("show");
+            projectsDropdown.classList.add("show");
 
             const settingsChevron = settingsDropdown.shadowRoot?.getElementById("chevron");
             const usersChevron = usersDropdown.shadowRoot?.getElementById("chevron");
-            const organizationsChevron = organizationsDropdown.shadowRoot?.getElementById("chevron");
+            const projectsChevron = projectsDropdown.shadowRoot?.getElementById("chevron");
 
             settingsChevron?.classList.add("down");
             usersChevron?.classList.add("down");
-            organizationsChevron?.classList.add("down");
+            projectsChevron?.classList.add("down");
         }
     }
 
@@ -598,34 +598,34 @@ export default class MmCustomer extends HTMLElement {
         container.innerHTML = "";
 
         const projectIds =
-            this.#orgs.length > 0
-                ? this.#orgs.map((org) => org.id || org)
+            this.#projects.length > 0
+                ? this.#projects.map((project) => project.id || project)
                 : Array.isArray(this.#customer._orgs)
                   ? this.#customer._orgs
                   : [];
 
         if (!projectIds.length) {
-            bdoc.append(container, bdoc.ele("p", "No organizations."));
+            bdoc.append(container, bdoc.ele("p", "No projects."));
             return;
         }
 
-        const organizations = projectIds.map((projectId) => ({
+        const projects = projectIds.map((projectId) => ({
             id: projectId,
         }));
 
         const filterTable = bdoc.ele(
             "mm-filter-table",
-            bdoc.attr("id", "organizations-filter-table"),
+            bdoc.attr("id", "projects-filter-table"),
             bdoc.attr("sort-properties", "ID"),
             bdoc.attr("first-col-width", "inherit")
         );
 
         filterTable.generateCols = () => ({
-            ID: (org) =>
+            ID: (project) =>
                 bdoc.ele(
                     "a",
-                    bdoc.attr("href", `/c/Project?id=${org.id}`),
-                    org.id
+                    bdoc.attr("href", `/c/Project?id=${project.id}`),
+                    project.id
                 ),
         });
 
@@ -634,7 +634,7 @@ export default class MmCustomer extends HTMLElement {
         };
 
         bdoc.append(container, filterTable);
-        filterTable.loadData(organizations);
+        filterTable.loadData(projects);
     }
 }
 
