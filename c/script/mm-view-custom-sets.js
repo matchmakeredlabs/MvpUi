@@ -276,11 +276,11 @@ export default class MmViewCustomSets extends HTMLElement {
             } else {
                 const filterTable = bdoc.ele(
                     "mm-filter-table",
-                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr("filter-properties", "subject,publisher,_projectId"),
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Project",
+                            ["_projectId"]: "Project",
                         })
                     ),
                     bdoc.attr(
@@ -324,7 +324,7 @@ export default class MmViewCustomSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    Project: (collection) => collection._orgId || "Null",
+                    Project: (collection) => collection._projectId || "Null",
 
                     ["Described"]: (customSet) =>
                         bdoc.ele(
@@ -338,7 +338,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
                     },
-                    Project: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                    Project: (a, b) => (a._projectId < b._projectId ? -1 : 1),
                 };
 
                 filterTable.loadData(Object.values(displayCustomSets));

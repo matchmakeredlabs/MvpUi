@@ -33,7 +33,7 @@ export default class MmProjects extends HTMLElement {
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl[projectId]?.includes("WriteOrg") || false;
+        return acl[projectId]?.includes("WriteProject") || false;
     };
 
     static canWriteCustomer = (customerId) => {
@@ -45,7 +45,7 @@ export default class MmProjects extends HTMLElement {
     };
 
     static fetchProjects = async () => {
-        const response = await MmProjects.session.fetch("/api/orgs");
+        const response = await MmProjects.session.fetch("/api/projects");
         return (await response.json()).items;
     };
 

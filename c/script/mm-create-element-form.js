@@ -118,7 +118,7 @@ export default class MmCreateElementForm extends HTMLElement {
             variables.mainEntityId = this.#parentElement.mainEntityId;
             variables.isPartOf = this.#parentElement.url;
         } else {
-            variables._orgId = formData.get("project");
+            variables._projectId = formData.get("project");
             variables.mainEntity = variables.url;
         }
 
@@ -145,7 +145,7 @@ export default class MmCreateElementForm extends HTMLElement {
         }
 
         return await MmCreateElementForm.session.fetch(
-            `/api/descriptors?verbose${projectId ? "&orgid=" + projectId : ""}`,
+            `/api/descriptors?verbose${projectId ? "&projectid=" + projectId : ""}`,
             {
                 method: "POST",
                 headers: {

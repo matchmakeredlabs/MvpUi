@@ -15,7 +15,7 @@ export default class MmGroups extends HTMLElement {
     };
 
     static getOwnedById = (group) => {
-        return group.customerId || group.customer || group.org || group.orgId || "";
+        return group.customerId || group.customer || group.project || group.projectId || "";
     };
 
     static getCustomerLabel = (customerMap, customerId) => {
@@ -118,7 +118,7 @@ export default class MmGroups extends HTMLElement {
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl[group.org]?.includes("WriteGroup") || false;
+        return acl[group.project]?.includes("WriteGroup") || false;
     };
 
     static canWriteCustomer = (customerId) => {
@@ -134,7 +134,7 @@ export default class MmGroups extends HTMLElement {
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl[projectId]?.includes("WriteOrg") || false;
+        return acl[projectId]?.includes("WriteProject") || false;
     };
 
     #renderShell() {

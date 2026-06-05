@@ -186,7 +186,7 @@ const templates = [
         url: "/api/groups",
         body: {
             name: "GroupName",
-            org: "OrgId",
+            project: "ProjectId",
             description: "display name / description",
             members: ["memberId"],
         },
@@ -194,7 +194,7 @@ const templates = [
     {
         name: "Projects",
         verb: "GET",
-        url: "/api/orgs",
+        url: "/api/projects",
         body: {
             name: "ProjectName",
             description: "display name / description",
@@ -291,7 +291,7 @@ const templates = [
                 _isLeaf: true,
                 _leafCount: 1,
                 _leafWithKeyCount: 1,
-                _orgId: "testorg",
+                _projectId: "testproject",
                 _public: false,
                 creator: "",
                 datePublished: "",

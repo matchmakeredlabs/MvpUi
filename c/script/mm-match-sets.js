@@ -498,11 +498,11 @@ class MmMatchSets extends HTMLElement {
                 const collectionsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("collections-table"),
-                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr("filter-properties", "subject,publisher,_projectId"),
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Project",
+                            ["_projectId"]: "Project",
                         })
                     ),
                     bdoc.attr(
@@ -573,7 +573,7 @@ class MmMatchSets extends HTMLElement {
                         return acc;
                     }, {}),
                     ["Project"]: (collection) =>
-                        collection._orgId || "Null",
+                        collection._projectId || "Null",
                     ["Described"]: (collection) =>
                         bdoc.ele(
                             "td",
@@ -628,7 +628,7 @@ class MmMatchSets extends HTMLElement {
                         return a.percentDescribed - b.percentDescribed;
                     },
                     ["Project"]: (a, b) => {
-                        return a._orgId < b._orgId ? -1 : 1;
+                        return a._projectId < b._projectId ? -1 : 1;
                     },
                     ["Anchored"]: (a, b) => {
                         return this.#sets.anchored.collections.find(
@@ -689,11 +689,11 @@ class MmMatchSets extends HTMLElement {
                 const customSetsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("custom-sets-table"),
-                    bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                    bdoc.attr("filter-properties", "subject,publisher,_projectId"),
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
-                            ["_orgId"]: "Project",
+                            ["_projectId"]: "Project",
                         })
                     ),
                     bdoc.attr(
@@ -745,7 +745,7 @@ class MmMatchSets extends HTMLElement {
                         };
                         return acc;
                     }, {}),
-                    Project: (customSet) => customSet._orgId || "Null",
+                    Project: (customSet) => customSet._projectId || "Null",
                     ["Described"]: (customSet) =>
                         bdoc.ele(
                             "td",
@@ -791,7 +791,7 @@ class MmMatchSets extends HTMLElement {
                         return a.publisher > b.publisher ? 1 : -1;
                     },
                     Project: (a, b) => {
-                        return a._orgId < b._orgId ? -1 : 1;
+                        return a._projectId < b._projectId ? -1 : 1;
                     },
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;

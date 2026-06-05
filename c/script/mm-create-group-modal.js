@@ -111,7 +111,7 @@ class MmCreateGroupModal extends HTMLElement {
                             this.shadowRoot.getElementById(
                                 "add-to-parent-checkbox"
                             ).checked &&
-                            (this.#parentType !== "org" ||
+                            (this.#parentType !== "project" ||
                                 createGroupForm
                                     .getInnerForm()
                                     .querySelector("#owner").value !==
@@ -121,7 +121,7 @@ class MmCreateGroupModal extends HTMLElement {
                             const newVariables = {
                                 id: body.id,
                             };
-                            if (this.#parentType === "org") {
+                            if (this.#parentType === "project") {
                                 newVariables.role =
                                     this.shadowRoot.getElementById(
                                         "role-select"
@@ -145,7 +145,7 @@ class MmCreateGroupModal extends HTMLElement {
                     }
 
                     if (
-                        this.#parentType === "org" &&
+                        this.#parentType === "project" &&
                         createGroupForm
                             .getInnerForm()
                             .querySelector("#owner").value ===
@@ -170,7 +170,7 @@ class MmCreateGroupModal extends HTMLElement {
             };
 
             const parameters = {
-                org: {
+                project: {
                     fullText: "project",
                 },
                 group: {
@@ -196,7 +196,7 @@ class MmCreateGroupModal extends HTMLElement {
                       `Add as member of current ${
                           parameters[this.#parentType].fullText
                       } ${displayId}`,
-                      this.#parentType === "org"
+                      this.#parentType === "project"
                           ? bdoc.eventListener("change", ({ target }) => {
                                 if (target.checked) {
                                     bdoc.append(
@@ -330,14 +330,14 @@ class MmCreateGroupModal extends HTMLElement {
                 createGroupForm
             );
 
-            if (this.#parentType === "org") {
+            if (this.#parentType === "project") {
                 addToParent.style.display = "none";
             }
 
             const ownerInput = createGroupForm
                 .getInnerForm()
                 .querySelector("#owner");
-            if (this.#parentType === "org") {
+            if (this.#parentType === "project") {
                 bdoc.append(
                     ownerInput,
                     bdoc.eventListener("ownerchange", ({ target }) => {

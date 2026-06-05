@@ -12,7 +12,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         "/customer",
     ];
 
-    static projectRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+    static projectRoutes = ["/api/projects", "/api/project", "/projects", "/project"];
 
     static fetchCustomers = async () => {
         for (const route of MmCreateProjectForm.customerRoutes) {
@@ -163,7 +163,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         customerSelect.innerHTML = "";
 
         const eligibleCustomers = customers.filter(
-            (customer) => customer._canCreateOrgs !== false
+            (customer) => customer._canCreateProjects !== false
         );
 
         bdoc.append(

@@ -33,7 +33,7 @@ export default class MmAddMemberForm extends HTMLElement {
 
     static fetchProject = async (projectId) => {
         const response = await MmAddMemberForm.session.fetch(
-            "/api/orgs/" + projectId
+            "/api/projects/" + projectId
         );
 
         return await response.json();
@@ -68,13 +68,13 @@ export default class MmAddMemberForm extends HTMLElement {
     static getGroupOwnerType = (group) =>
         group.customerId || group.customer || group.ownerType === "customer"
             ? "customer"
-            : "org";
+            : "project";
 
     static getGroupOwnerId = (group) =>
         group.customerId ||
         group.customer ||
-        group.org ||
-        group.orgId ||
+        group.project ||
+        group.projectId ||
         group.id?.split(":")[0] ||
         "";
 
@@ -118,7 +118,7 @@ export default class MmAddMemberForm extends HTMLElement {
             "#group-owner-type"
         );
         const ownerSelect = this.shadowRoot.querySelector("#group-owner");
-        const ownerType = ownerTypeSelect?.value || "org";
+        const ownerType = ownerTypeSelect?.value || "project";
         const ownerId = ownerSelect?.value || "";
 
         if (!ownerId) return [];
@@ -174,7 +174,7 @@ export default class MmAddMemberForm extends HTMLElement {
 
         await this.#preloadGroupChoices();
 
-        const ownerType = ownerTypeSelect.value || "org";
+        const ownerType = ownerTypeSelect.value || "project";
         const ownerIds = Array.from(
             new Set(
                 this.#cachedGroups
@@ -265,7 +265,7 @@ export default class MmAddMemberForm extends HTMLElement {
                     if (ownerType === "customer") {
                         variables.customerId = ownerId;
                     } else {
-                        variables.org = ownerId;
+                        variables.project = ownerId;
                     }
 
                     return variables;
@@ -274,7 +274,7 @@ export default class MmAddMemberForm extends HTMLElement {
         };
 
         const parentParams = {
-            org: {
+            project: {
                 getVariables: () => {
                     const role = formData.get("role");
                     // in case we want to make sure the user looks at the role selection
@@ -310,7 +310,7 @@ export default class MmAddMemberForm extends HTMLElement {
     };
 
     static updateProject = async (projectId, projectObj) => {
-        return await MmAddMemberForm.session.fetch("/api/orgs/" + projectId, {
+        return await MmAddMemberForm.session.fetch("/api/projects/" + projectId, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -349,7 +349,7 @@ export default class MmAddMemberForm extends HTMLElement {
         parentType
     ) => {
         let currentParent;
-        if (parentType === "org") {
+        if (parentType === "project") {
             currentParent = await MmAddMemberForm.fetchProject(parentId);
         } else if (parentType === "group") {
             currentParent = await MmAddMemberForm.fetchGroup(parentId);
@@ -363,7 +363,7 @@ export default class MmAddMemberForm extends HTMLElement {
         };
 
         const parameters = {
-            org: {
+            project: {
                 existsTextParentText: "project",
                 checkId: (member) => member.id === memberObj.id,
                 addMember: () => currentParent.members.push(memberObj),
@@ -451,7 +451,7 @@ export default class MmAddMemberForm extends HTMLElement {
                         bdoc.attr("name", "group-owner-type"),
                         bdoc.ele(
                             "option",
-                            bdoc.attr("value", "org"),
+                            bdoc.attr("value", "project"),
                             "Project"
                         ),
                         bdoc.ele(
@@ -501,7 +501,7 @@ export default class MmAddMemberForm extends HTMLElement {
             ...formFields[this.#memberType]
         );
 
-        if (this.#parentType === "org" || this.#parentType === "customer") {
+        if (this.#parentType === "project" || this.#parentType === "customer") {
             bdoc.append(
                 formGroupsContainer,
                 bdoc.ele(

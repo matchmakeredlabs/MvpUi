@@ -21,7 +21,7 @@ export default class MmProject extends HTMLElement {
 
     static fetchProject = async (projectId) => {
         const response = await MmProject.session.fetch(
-            "/api/orgs/" + projectId
+            "/api/projects/" + projectId
         );
         if (response.status !== 200) {
             return Promise.reject(response);
@@ -49,8 +49,8 @@ export default class MmProject extends HTMLElement {
     static getGroupOwnerId = (group) =>
         group.customerId ||
         group.customer ||
-        group.org ||
-        group.orgId ||
+        group.project ||
+        group.projectId ||
         group.id?.split(":")[0] ||
         "";
 
@@ -93,7 +93,7 @@ export default class MmProject extends HTMLElement {
 
     static updateProject = async (projectId, projectObj) => {
         const response = await MmProject.session.fetch(
-            "/api/orgs/" + projectId,
+            "/api/projects/" + projectId,
             {
                 method: "PUT",
                 headers: {
@@ -221,10 +221,10 @@ export default class MmProject extends HTMLElement {
                 const [ownerId, ...groupIdParts] = member.id.split(":");
                 const groupId = groupIdParts.join(":");
                 const ownerType =
-                    member.customerId || member.customer ? "customer" : "org";
+                    member.customerId || member.customer ? "customer" : "project";
                 groups.push({
                     ...member,
-                    org: member.org || (ownerType === "org" ? ownerId : ""),
+                    project: member.project || (ownerType === "project" ? ownerId : ""),
                     customerId:
                         member.customerId ||
                         member.customer ||
@@ -232,7 +232,7 @@ export default class MmProject extends HTMLElement {
                     ownerType,
                     ownedByLabel: MmProject.getGroupOwnedByLabel({
                         ...member,
-                        org: member.org || (ownerType === "org" ? ownerId : ""),
+                        project: member.project || (ownerType === "project" ? ownerId : ""),
                         customerId:
                             member.customerId ||
                             member.customer ||
@@ -408,14 +408,14 @@ export default class MmProject extends HTMLElement {
         const addUserModal = bdoc.ele(
             "mm-add-member-modal",
             bdoc.attr("id", "add-user-modal"),
-            bdoc.attr("parent-type", "org"),
+            bdoc.attr("parent-type", "project"),
             bdoc.attr("member-type", "user"),
             bdoc.attr("parent-id", projectId)
         );
         const addGroupModal = bdoc.ele(
             "mm-add-member-modal",
             bdoc.attr("id", "add-group-modal"),
-            bdoc.attr("parent-type", "org"),
+            bdoc.attr("parent-type", "project"),
             bdoc.attr("member-type", "group"),
             bdoc.attr("parent-id", projectId)
         );
@@ -460,13 +460,13 @@ export default class MmProject extends HTMLElement {
                         const ownerType =
                             group.customerId || group.customer
                                 ? "customer"
-                                : "org";
+                                : "project";
                         return {
                             ...group,
                             id: group.id,
-                            org:
-                                group.org ||
-                                (ownerType === "org" ? ownerId : ""),
+                            project:
+                                group.project ||
+                                (ownerType === "project" ? ownerId : ""),
                             customerId:
                                 group.customerId ||
                                 group.customer ||
@@ -474,9 +474,9 @@ export default class MmProject extends HTMLElement {
                             ownerType,
                             ownedByLabel: MmProject.getGroupOwnedByLabel({
                                 ...group,
-                                org:
-                                    group.org ||
-                                    (ownerType === "org" ? ownerId : ""),
+                                project:
+                                    group.project ||
+                                    (ownerType === "project" ? ownerId : ""),
                                 customerId:
                                     group.customerId ||
                                     group.customer ||
@@ -553,7 +553,7 @@ export default class MmProject extends HTMLElement {
                 const filterTableCols = properties[type]["cols"];
 
                 if (this.#permissions.has("update")) {
-                    const ownedBySameOrgRoles = [
+                    const ownedBySameProjectRoles = [
                         "none",
                         ...MmAddMemberForm.roles,
                     ];
@@ -561,8 +561,8 @@ export default class MmProject extends HTMLElement {
                         return bdoc.ele(
                             "select",
                             bdoc.class("role-select"),
-                            ...(type === "group" && member.org === projectId
-                                ? ownedBySameOrgRoles
+                            ...(type === "group" && member.project === projectId
+                                ? ownedBySameProjectRoles
                                 : MmAddMemberForm.roles
                             ).map((role) => {
                                 if (
@@ -618,7 +618,7 @@ export default class MmProject extends HTMLElement {
                                         projectId,
                                         { id: member.id, role: newRole },
                                         type,
-                                        "org"
+                                        "project"
                                     );
                                 }
 
@@ -646,13 +646,13 @@ export default class MmProject extends HTMLElement {
                     filterTableCols["Actions"] = (entity) => {
                         if (
                             type === "group" &&
-                            entity.org === projectId &&
+                            entity.project === projectId &&
                             !this.#permissions.has("writeGroups")
                         ) {
                             return "";
                         }
 
-                        return type === "group" && entity.org === projectId
+                        return type === "group" && entity.project === projectId
                             ? bdoc.ele(
                                   "td",
                                   bdoc.attr(
@@ -832,7 +832,7 @@ export default class MmProject extends HTMLElement {
                             "mm-create-group-modal",
                             bdoc.attr("project-id", project.id),
                             bdoc.attr("parent-id", project.id),
-                            bdoc.attr("parent-type", "org")
+                            bdoc.attr("parent-type", "project")
                         );
 
                         createGroupModal.onSuccess = (

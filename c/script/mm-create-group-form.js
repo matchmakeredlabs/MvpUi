@@ -12,7 +12,7 @@ export default class MmCreateGroupForm extends HTMLElement {
 
     #projectId;
     #ownerId;
-    #ownerType = "org";
+    #ownerType = "project";
     #addSelf;
     #cachedCustomers;
     #cachedProjects;
@@ -22,11 +22,11 @@ export default class MmCreateGroupForm extends HTMLElement {
         if (name === "project-id") {
             this.#projectId = newValue;
             this.#ownerId = newValue;
-            this.#ownerType = "org";
+            this.#ownerType = "project";
         } else if (name === "owner-id") {
             this.#ownerId = newValue;
         } else if (name === "owner-type") {
-            this.#ownerType = newValue || "org";
+            this.#ownerType = newValue || "project";
         } else if (name === "add-self") {
             this.#addSelf = true;
         }
@@ -69,7 +69,7 @@ export default class MmCreateGroupForm extends HTMLElement {
             members.push(currUserId);
         }
 
-        const ownerType = (formData.get("owner-type") || "org").toString();
+        const ownerType = (formData.get("owner-type") || "project").toString();
         const ownerId = formData.get("owner");
         const variables = {
             name: formData.get("name"),
@@ -80,7 +80,7 @@ export default class MmCreateGroupForm extends HTMLElement {
         if (ownerType === "customer") {
             variables.customerId = ownerId;
         } else {
-            variables.org = ownerId;
+            variables.project = ownerId;
         }
 
         const description = formData.get("description");
@@ -100,14 +100,14 @@ export default class MmCreateGroupForm extends HTMLElement {
 
     static createGroup = async (groupObj) => {
         const groupRole = groupObj.role;
-        const groupOwnerType = groupObj.customerId ? "customer" : "org";
-        const groupOwnerId = groupObj.customerId || groupObj.org;
+        const groupOwnerType = groupObj.customerId ? "customer" : "project";
+        const groupOwnerId = groupObj.customerId || groupObj.project;
         delete groupObj.role;
 
         const createGroupUrl =
             groupOwnerType === "customer"
                 ? `/api/groups/customers/${encodeURIComponent(groupOwnerId)}`
-                : `/api/groups/orgs/${encodeURIComponent(groupOwnerId)}`;
+                : `/api/groups/projects/${encodeURIComponent(groupOwnerId)}`;
 
         const createGroupResponse = await MmCreateGroupForm.session.fetch(
             createGroupUrl,
@@ -159,7 +159,7 @@ export default class MmCreateGroupForm extends HTMLElement {
         const ownerSelect = this.shadowRoot.querySelector("#owner");
         if (!ownerTypeSelect || !ownerSelect) return;
 
-        const ownerType = ownerTypeSelect.value || this.#ownerType || "org";
+        const ownerType = ownerTypeSelect.value || this.#ownerType || "project";
         ownerSelect.innerHTML = "";
 
         if (ownerType === "customer") {
@@ -287,7 +287,7 @@ export default class MmCreateGroupForm extends HTMLElement {
                     "select",
                     bdoc.attr("id", "owner-type"),
                     bdoc.attr("name", "owner-type"),
-                    bdoc.ele("option", bdoc.attr("value", "org"), "Project"),
+                    bdoc.ele("option", bdoc.attr("value", "project"), "Project"),
                     bdoc.ele("option", bdoc.attr("value", "customer"), "Customer")
                 )
             ),
@@ -380,7 +380,7 @@ export default class MmCreateGroupForm extends HTMLElement {
             );
         };
 
-        ownerTypeSelect.value = this.#ownerType || "org";
+        ownerTypeSelect.value = this.#ownerType || "project";
         bdoc.append(
             ownerTypeSelect,
             bdoc.eventListener("change", async () => {

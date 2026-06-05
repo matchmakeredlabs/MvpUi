@@ -38,11 +38,11 @@ export default class ManageCollections extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,publisher,_orgId"),
+                bdoc.attr("filter-properties", "subject,publisher,_projectId"),
                 bdoc.attr(
                     "filter-display-names",
                     JSON.stringify({
-                        ["_orgId"]: "Project",
+                        ["_projectId"]: "Project",
                     })
                 ),
                 bdoc.attr(
@@ -131,7 +131,7 @@ export default class ManageCollections extends HTMLElement {
                 publisher: (collection) => collection.publisher || "Null",
                 // ["Creation Date"]: (collection) => collection.datePublished,
 
-                Project: (collection) => collection._orgId || "Null",
+                Project: (collection) => collection._projectId || "Null",
                 ["% Described"]: (collection) => {
                     const percent = collection.percentDescribed;
                     return `${percent}%`;
@@ -144,7 +144,7 @@ export default class ManageCollections extends HTMLElement {
                 ["% Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },
-                Project: (a, b) => (a._orgId < b._orgId ? -1 : 1),
+                Project: (a, b) => (a._projectId < b._projectId ? -1 : 1),
             };
 
             for (const collection of editableCollections) {

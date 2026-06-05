@@ -13,7 +13,7 @@ export default class MmGroup extends HTMLElement {
     };
 
     static getOwnedById = (group) => {
-        return group.customerId || group.customer || group.org || group.orgId || "";
+        return group.customerId || group.customer || group.project || group.projectId || "";
     };
 
     static getOwnedByLabel = (group) => {
@@ -41,7 +41,7 @@ export default class MmGroup extends HTMLElement {
     };
 
     static getRoleScopeId = (role) => {
-        return role.customerId || role.customer || role.orgId || role.org || "";
+        return role.customerId || role.customer || role.projectId || role.project || "";
     };
 
     groups = [];
@@ -257,7 +257,7 @@ export default class MmGroup extends HTMLElement {
                 const [projectId, groupId] = memberId.split(":");
                 groups.push({
                     id: memberId,
-                    org: projectId,
+                    project: projectId,
                     groupId,
                 });
             } else {
@@ -490,7 +490,7 @@ export default class MmGroup extends HTMLElement {
                         const [projectId, groupId] = group.id.split(":");
                         return {
                             id: group.id,
-                            org: projectId,
+                            project: projectId,
                             customerId: group.customerId,
                             groupId,
                         };
@@ -651,7 +651,7 @@ export default class MmGroup extends HTMLElement {
                         const ownerType =
                             MmGroup.getOwnedByType(group) === "Customer"
                                 ? "customer"
-                                : "org";
+                                : "project";
                         const createGroupModal = bdoc.ele(
                             "mm-create-group-modal",
                             bdoc.attr("owner-id", MmGroup.getOwnedById(group)),

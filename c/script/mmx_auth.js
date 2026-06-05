@@ -6,7 +6,7 @@ export default class mmxAuth {
     static loginUrl = "/c/Login";
     static privileges = {
         ReadGroup: 0x0010,
-        ReadOrg: 0x0040,
+        ReadProject: 0x0040,
         ReadCustomer: 0x0100,
         WriteCustomer: 0x0200,
     };
@@ -139,7 +139,7 @@ export default class mmxAuth {
         ) {
             addLink("Customers", "/c/Customers");
         }
-        if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadOrg)) {
+        if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadProject)) {
             addLink("Projects", "/c/Projects");
         }
         if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadGroup)) {

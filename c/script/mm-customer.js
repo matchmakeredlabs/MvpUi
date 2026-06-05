@@ -10,7 +10,7 @@ export default class MmCustomer extends HTMLElement {
         "/customers",
         "/customer",
     ];
-    static projectRoutes = ["/api/orgs", "/api/org", "/orgs", "/org"];
+    static projectRoutes = ["/api/projects", "/api/project", "/projects", "/project"];
     static userRoutes = ["/api/users", "/api/user", "/users", "/user"];
 
     static principalTypeFromId = (principalId) =>
@@ -199,10 +199,10 @@ export default class MmCustomer extends HTMLElement {
 
     #cleanForSave(customer) {
         const cleaned = { ...customer };
-        delete cleaned._canCreateOrgs;
+        delete cleaned._canCreateProjects;
         delete cleaned._canWriteCustomer;
         delete cleaned._roles;
-        delete cleaned._orgs;
+        delete cleaned._projects;
         delete cleaned.members;
         return cleaned;
     }
@@ -231,8 +231,8 @@ export default class MmCustomer extends HTMLElement {
         this.#users = users;
 
         const projectsFromList = projects.filter((project) => project.customerId === customerId);
-        const projectIdsFromCustomer = Array.isArray(customer._orgs)
-            ? customer._orgs
+        const projectIdsFromCustomer = Array.isArray(customer._projects)
+            ? customer._projects
             : [];
 
         this.#projects =
@@ -600,8 +600,8 @@ export default class MmCustomer extends HTMLElement {
         const projectIds =
             this.#projects.length > 0
                 ? this.#projects.map((project) => project.id || project)
-                : Array.isArray(this.#customer._orgs)
-                  ? this.#customer._orgs
+                : Array.isArray(this.#customer._projects)
+                  ? this.#customer._projects
                   : [];
 
         if (!projectIds.length) {

@@ -105,8 +105,8 @@ class MmHome extends HTMLElement {
 
         let writeDescriptor = false;
         if (userAcl) {
-            for (const orgPerms of Object.values(userAcl)) {
-                if (orgPerms.includes("WriteDescriptor")) {
+            for (const projectPerms of Object.values(userAcl)) {
+                if (projectPerms.includes("WriteDescriptor")) {
                     writeDescriptor = true;
                 }
             }
