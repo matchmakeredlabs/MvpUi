@@ -5,14 +5,16 @@ autht: "anonymous"
 
 <div class="auth-page">
     <form class="mmc_form auth-card" id="login_form">
-        <h2>Sign In</h2>
+        <h2>Login</h2>
+                <p class="auth-toggle">
+            Don't have an account?
+            <button type="button" id="show_register" class="link-button">Create account</button>
         <div id="form_msg" class="message" aria-live="polite" style="visibility: hidden;"></div>
         <p><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" /></p>
         <p><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" /></p>
         <p class="auth-form-actions"><input style="cursor: pointer;" type="submit" value="Login"/></p>
         <p class="auth-toggle">
-            Need an account?
-            <button type="button" id="show_register" class="link-button">Create account</button>
+            <button type="button" id="show_register" class="link-button">Forgot your password?</button>
         </p>
     </form>
 
