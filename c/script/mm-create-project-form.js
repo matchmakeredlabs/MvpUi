@@ -26,7 +26,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         return Promise.reject(
             new Response(null, {
                 status: 404,
-                statusText: "Customers endpoint not found",
+                statusText: "Customers/Organizations endpoint not found",
             })
         );
     };
@@ -174,8 +174,8 @@ export default class MmCreateProjectForm extends HTMLElement {
                 bdoc.attr("disabled", "true"),
                 bdoc.attr("selected", "true"),
                 eligibleCustomers.length
-                    ? "Select a customer"
-                    : "No customers available"
+                    ? "Select an organization"
+                    : "No organizations available"
             )
         );
 
@@ -228,7 +228,7 @@ export default class MmCreateProjectForm extends HTMLElement {
                     bdoc.ele(
                         "label",
                         bdoc.attr("for", "customer"),
-                        "Customer Name",
+                        "Organization Name",
                         bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                     ),
                     bdoc.ele(

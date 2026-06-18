@@ -8,7 +8,7 @@ export default class MmGroup extends HTMLElement {
 
     static getOwnedByType = (group) => {
         return group.customerId || group.customer || group.ownerType === "customer"
-            ? "Customer"
+            ? "Organization"
             : "Project";
     };
 
@@ -37,7 +37,7 @@ export default class MmGroup extends HTMLElement {
     };
 
     static getRoleScopeType = (role) => {
-        return role.customerId || role.customer ? "Customer" : "Project";
+        return role.customerId || role.customer ? "Organization" : "Project";
     };
 
     static getRoleScopeId = (role) => {
@@ -102,7 +102,7 @@ export default class MmGroup extends HTMLElement {
             return ownerType;
         }
 
-        if (ownerType === "Customer") {
+        if (ownerType === "Organization") {
             return bdoc.ele(
                 "span",
                 `${ownerType}: `,
@@ -135,7 +135,7 @@ export default class MmGroup extends HTMLElement {
             return scopeType;
         }
 
-        if (scopeType === "Customer") {
+        if (scopeType === "Organization") {
             return bdoc.ele(
                 "span",
                 `${scopeType}: `,
@@ -476,7 +476,7 @@ export default class MmGroup extends HTMLElement {
                             const ownerType = MmGroup.getOwnedByType(group);
                             const ownerId = MmGroup.getOwnedById(group);
                             if (!ownerId) return ownerType;
-                            if (ownerType === "Customer") {
+                            if (ownerType === "Organization") {
                                 return `${ownerType}: ${MmGroup.getCustomerLabel(customerMap, ownerId)}`;
                             }
                             return `${ownerType}: ${ownerId}`;
@@ -649,7 +649,7 @@ export default class MmGroup extends HTMLElement {
 
                     if (type === "group") {
                         const ownerType =
-                            MmGroup.getOwnedByType(group) === "Customer"
+                            MmGroup.getOwnedByType(group) === "Organization"
                                 ? "customer"
                                 : "project";
                         const createGroupModal = bdoc.ele(

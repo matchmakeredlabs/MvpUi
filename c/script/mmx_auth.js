@@ -137,7 +137,7 @@ export default class mmxAuth {
                 mmxAuth.privileges.WriteCustomer
             )
         ) {
-            addLink("Customers", "/c/Customers");
+            addLink("Organizations", "/c/Customers");
         }
         if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadProject)) {
             addLink("Projects", "/c/Projects");

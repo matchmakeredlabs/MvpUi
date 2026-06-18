@@ -138,7 +138,7 @@ class MmCreateCustomerModal extends HTMLElement {
                         bdoc.ele(
                             "button",
                             bdoc.class("header-button add-entity-button2"),
-                            "Create Customer",
+                            "Create Organization",
                             bdoc.eventListener("click", () => {
                                 form.onSettled = onSettled(
                                     async (variables, response) => {
@@ -172,7 +172,7 @@ class MmCreateCustomerModal extends HTMLElement {
                 modal,
                 bdoc.ele(
                     "h2",
-                    "Create Customer",
+                    "Create Organization",
                     bdoc.attr("style", "margin-left: 18px;")
                 ),
                 form

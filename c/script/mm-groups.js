@@ -10,7 +10,7 @@ export default class MmGroups extends HTMLElement {
 
     static getOwnedByType = (group) => {
         return group.customerId || group.customer || group.ownerType === "customer"
-            ? "Customer"
+            ? "Organization"
             : "Project";
     };
 
@@ -29,7 +29,7 @@ export default class MmGroups extends HTMLElement {
         const ownerId = MmGroups.getOwnedById(group);
         if (!ownerId) return ownerType;
 
-        if (ownerType === "Customer") {
+        if (ownerType === "Organization") {
             return `${ownerType}: ${MmGroups.getCustomerLabel(customerMap, ownerId)}`;
         }
 
@@ -44,7 +44,7 @@ export default class MmGroups extends HTMLElement {
             return ownerType;
         }
 
-        if (ownerType === "Customer") {
+        if (ownerType === "Organization") {
             const label = MmGroups.getCustomerLabel(customerMap, ownerId);
             if (!MmGroups.canWriteCustomer(ownerId)) {
                 return `${ownerType}: ${label}`;

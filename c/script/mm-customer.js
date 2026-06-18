@@ -55,7 +55,7 @@ export default class MmCustomer extends HTMLElement {
         return Promise.reject(
             new Response(null, {
                 status: 404,
-                statusText: "Customer endpoint not found",
+                statusText: "Customers/Organizations endpoint not found",
             })
         );
     };
@@ -94,7 +94,7 @@ export default class MmCustomer extends HTMLElement {
         return Promise.reject(
             new Response(null, {
                 status: 404,
-                statusText: "Customer update endpoint not found",
+                statusText: "Customers/Organizations update endpoint not found",
             })
         );
     };
@@ -126,7 +126,7 @@ export default class MmCustomer extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("headers-container"),
-                bdoc.ele("h2", "Customer"),
+                bdoc.ele("h2", "Organization"),
                 bdoc.ele(
                     "h3",
                     bdoc.attr("id", "customer-name-title"),
@@ -141,7 +141,7 @@ export default class MmCustomer extends HTMLElement {
                     bdoc.attr("id", "settings-dropdown"),
                     bdoc.ele(
                         "h3",
-                        "Customer Settings",
+                        "Organization Settings",
                         bdoc.attr("style", "margin: 0;"),
                         bdoc.attr("slot", "button-text")
                     ),
@@ -407,7 +407,7 @@ export default class MmCustomer extends HTMLElement {
 
                 if (!response) return;
                 this.#customer = { ...updated };
-                alert("Customer updated.");
+                alert("Organization updated.");
                 this.#loadCustomer();
             })
         );

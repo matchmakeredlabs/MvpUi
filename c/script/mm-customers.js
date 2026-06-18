@@ -80,7 +80,7 @@ export default class MmCustomers extends HTMLElement {
                 bdoc.class("header-container"),
                 bdoc.ele(
                     "h2",
-                    "Customers",
+                    "Organizations",
                     bdoc.attr("style", "margin-left: 1.5em")
                 ),
                 MmCustomers.canCreateCustomers()
@@ -88,7 +88,7 @@ export default class MmCustomers extends HTMLElement {
                           "button",
                           bdoc.attr("id", "create-customer-button"),
                           bdoc.class("header-button add-entity-button2"),
-                          "✐  Create New Customer"
+                          "✐  Create New Organization"
                       )
                     : null
             ),

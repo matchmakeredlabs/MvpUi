@@ -177,8 +177,8 @@ export default class MmCreateGroupForm extends HTMLElement {
                     bdoc.attr("disabled", "true"),
                     bdoc.attr("selected", "true"),
                     eligibleCustomers.length
-                        ? "Select a customer"
-                        : "No customers available"
+                        ? "Select an organization"
+                        : "No organizations available"
                 )
             );
 
@@ -288,7 +288,7 @@ export default class MmCreateGroupForm extends HTMLElement {
                     bdoc.attr("id", "owner-type"),
                     bdoc.attr("name", "owner-type"),
                     bdoc.ele("option", bdoc.attr("value", "project"), "Project"),
-                    bdoc.ele("option", bdoc.attr("value", "customer"), "Customer")
+                    bdoc.ele("option", bdoc.attr("value", "customer"), "Organziation")
                 )
             ),
             bdoc.ele(
@@ -373,7 +373,7 @@ export default class MmCreateGroupForm extends HTMLElement {
         const updateRoleLabel = () => {
             roleLabel.textContent =
                 ownerTypeSelect.value === "customer"
-                    ? "Role in Parent Customer"
+                    ? "Role in Parent Organization"
                     : "Role in Parent Project";
             roleLabel.appendChild(
                 bdoc.ele("span", bdoc.class("mmc_form_required"), " *")

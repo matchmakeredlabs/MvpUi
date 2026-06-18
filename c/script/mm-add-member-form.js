@@ -457,7 +457,7 @@ export default class MmAddMemberForm extends HTMLElement {
                         bdoc.ele(
                             "option",
                             bdoc.attr("value", "customer"),
-                            "Customer"
+                            "Organization"
                         )
                     )
                 ),

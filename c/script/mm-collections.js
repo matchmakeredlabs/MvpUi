@@ -12,7 +12,68 @@ export default class MmCollections extends HTMLElement {
 
     static fetchCollections = async () => {
         const response = await MmCollections.session.fetch("/api/collections");
-        return (await response.json()).collections;
+        const collections = (await response.json()).collections || [];
+        return MmCollections.normalizeProjectIds(collections);
+    };
+
+    static getProjectValues = (item) => {
+        const projectFields = [
+            "_projectId",
+            "projectId",
+            "project",
+            "_orgId",
+            "orgId",
+            "organizationId",
+            "organization",
+        ];
+        const values = [];
+
+        for (const field of projectFields) {
+            const value = item?.[field];
+            const fieldValues =
+                value instanceof Set
+                    ? Array.from(value)
+                    : Array.isArray(value)
+                      ? value
+                      : [value];
+
+            for (const fieldValue of fieldValues) {
+                if (
+                    fieldValue !== null &&
+                    fieldValue !== "" &&
+                    fieldValue !== undefined &&
+                    !values.includes(fieldValue)
+                ) {
+                    values.push(fieldValue);
+                }
+            }
+        }
+
+        return values;
+    };
+
+    static getProjectId = (item) => MmCollections.getProjectValues(item)[0] || "";
+
+    static normalizeProjectId = (item) => {
+        if (!item) return item;
+
+        item._projectId = MmCollections.getProjectId(item);
+        return item;
+    };
+
+    static normalizeProjectIds = (items) => {
+        items.forEach(MmCollections.normalizeProjectId);
+        return items;
+    };
+
+    static normalizeProjectIdSet = (item) => {
+        if (!item) return item;
+
+        const values = MmCollections.getProjectValues(item);
+        if (values.length > 0) {
+            item._projectId = new Set(values);
+        }
+        return item;
     };
 
     connectedCallback() {

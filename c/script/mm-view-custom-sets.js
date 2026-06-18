@@ -1,5 +1,6 @@
 import bdoc from "./bdoc.js";
 import MmMatchProfileSelect from "./mm-match-profile-select.js";
+import MmCollections from "./mm-collections.js";
 
 export default class MmViewCustomSets extends HTMLElement {
     constructor() {
@@ -115,6 +116,7 @@ export default class MmViewCustomSets extends HTMLElement {
                 });
             });
 
+            MmCollections.normalizeProjectIdSet(summarizedCustomSet);
             summarizedCustomSets.push(summarizedCustomSet);
         });
 

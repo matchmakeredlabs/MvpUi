@@ -93,7 +93,7 @@ export default class MmCreateCustomerForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "name"),
-                    "Customer Name",
+                    "Organization Name",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(

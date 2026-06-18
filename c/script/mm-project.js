@@ -43,7 +43,7 @@ export default class MmProject extends HTMLElement {
 
     static getGroupOwnerType = (group) =>
         group.customerId || group.customer || group.ownerType === "customer"
-            ? "Customer"
+            ? "Organization"
             : "Project";
 
     static getGroupOwnerId = (group) =>
@@ -66,7 +66,7 @@ export default class MmProject extends HTMLElement {
 
         if (!ownerId) return ownerType;
 
-        if (ownerType === "Customer") {
+        if (ownerType === "Organization") {
             return bdoc.ele(
                 "span",
                 `${ownerType}: `,
@@ -298,7 +298,7 @@ export default class MmProject extends HTMLElement {
             customerId
                 ? bdoc.ele(
                       "p",
-                      "Customer: ",
+                      "Organization: ",
                       MmProject.renderCustomerLink(
                           customerId,
                           customer

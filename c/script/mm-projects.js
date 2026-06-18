@@ -135,7 +135,7 @@ export default class MmProjects extends HTMLElement {
                         project.name
                     );
                 },
-                Customer: (project) => {
+                Organization: (project) => {
                     const customerId = project.customerId || project.customer || "";
                     if (!customerId) return "";
                     const label = MmProjects.getCustomerLabel(customerMap, customerId);

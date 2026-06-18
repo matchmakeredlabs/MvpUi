@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmCollections from "./mm-collections.js";
 
 export default class ManageCollections extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -11,10 +12,7 @@ export default class ManageCollections extends HTMLElement {
     }
 
     static fetchCollections = async () => {
-        const response = await ManageCollections.session.fetch(
-            "/api/collections"
-        );
-        return (await response.json()).collections;
+        return await MmCollections.fetchCollections();
     };
 
     connectedCallback() {
@@ -80,6 +78,7 @@ export default class ManageCollections extends HTMLElement {
             );
             const onCreationSuccess = (variables, response) => {
                 const collection = response.descriptors[0];
+                MmCollections.normalizeProjectId(collection);
                 collection.percentDescribed = 0; // default to 0% described
                 filterTable.loadData([collection, ...editableCollections]);
             };
