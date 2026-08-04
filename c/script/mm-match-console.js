@@ -3,6 +3,9 @@ import bsession from "./bsession.js";
 import config from "../../config.js";
 import MmMatchProfileModal from "./mm-match-profile-modal.js";
 import MmMatchProfileSelect from "./mm-match-profile-select.js";
+import "./mm-prompt-modal.js";
+import { showMessage } from "./mm-message-modal.js";
+import "./mm-loading.js";
 
 export default class MmMatchConsole extends HTMLElement {
     matchProfiles = null;
@@ -54,8 +57,8 @@ export default class MmMatchConsole extends HTMLElement {
         );
 
         const profileSelect = bdoc.ele("mm-match-profile-select");
-        profileSelect.onSelectAction = (profileName) => {
-            this.updateWeightsVisual(this.matchProfiles[profileName]);
+        profileSelect.onSelectAction = (profileName, matchWeights) => {
+            this.updateWeightsVisual(matchWeights);
         };
         bdoc.append(profileSelectWrapper, profileSelect);
         bdoc.append(header, profileSelectWrapper);
@@ -209,6 +212,7 @@ export default class MmMatchConsole extends HTMLElement {
             },
             { name: "Process", weight: "alg-w-p", threshold: "alg-t-p" },
             { name: "Pedagogy", weight: "alg-w-d", threshold: "alg-t-d" },
+            { name: "Time and Location", weight: "alg-w-tl", threshold: "alg-t-tl" },
         ];
 
         statementTypes.forEach(({ name, weight, threshold }) => {
@@ -372,7 +376,13 @@ export default class MmMatchConsole extends HTMLElement {
         );
         bdoc.append(container, bdoc.ele("div", bdoc.attr("id", "matchResult")));
 
-        bdoc.append(this.shadowRoot, container, bdoc.script("mm-range.js"));
+        bdoc.append(
+            this.shadowRoot,
+            container,
+            bdoc.ele("mm-prompt-modal"),
+            bdoc.ele("mm-loading", bdoc.attr("overlay"), bdoc.attr("hidden")),
+            bdoc.script("mm-range.js")
+        );
 
         this.onLoad();
     }
@@ -382,8 +392,15 @@ export default class MmMatchConsole extends HTMLElement {
 
         this.matchProfiles = await MmMatchProfileSelect.getMatchProfiles();
 
-        const matchWeightsObj = MmMatchProfileModal.getMatchWeights();
-        // console.log(matchWeightsObj);
+        let currentMatchProfileName =
+            MmMatchProfileSelect.getCurrentMatchProfileName();
+        let matchWeightsObj = this.matchProfiles[currentMatchProfileName];
+        if (matchWeightsObj) {
+            MmMatchProfileModal.setMatchWeights(matchWeightsObj);
+        } else {
+            MmMatchProfileSelect.removeCurrentMatchProfileName();
+            matchWeightsObj = MmMatchProfileModal.getMatchWeights();
+        }
         this.updateWeightsVisual(matchWeightsObj);
 
         const searchParams = new URLSearchParams(window.location.search);
@@ -563,85 +580,130 @@ export default class MmMatchConsole extends HTMLElement {
     }
 
     updateWeightsVisual(weightsObject) {
-        console.log(weightsObject);
+        const normalizedWeightsObject =
+            MmMatchProfileModal.normalizeMatchWeights(weightsObject);
         const mmRanges = this.shadowRoot.querySelectorAll("mm-range");
         mmRanges.forEach((mmRange) => {
             const name = mmRange.getAttribute("name");
-            mmRange.updateValue(weightsObject[name]);
+            mmRange.updateValue(normalizedWeightsObject[name]);
         });
     }
 
-    updateMatchProfile() {
+    async updateMatchProfile() {
         const currentMatchProfileName =
             MmMatchProfileSelect.getCurrentMatchProfileName();
         if (currentMatchProfileName === "MM Default") {
-            alert("Cannot update MM Default Match Profile.");
-        } else if (currentMatchProfileName === "--") {
-            alert("No match profile selected.");
+            await showMessage({
+                title: "Match Profile",
+                message: "Cannot update MM Default Match Profile.",
+            });
+        } else if (!currentMatchProfileName) {
+            await showMessage({
+                title: "Match Profile",
+                message: "No match profile selected.",
+            });
         } else {
             const weightsObject = this.getFormMatchWeights()[0];
-
-            MmMatchProfileSelect.updateMatchProfile(
-                currentMatchProfileName,
-                weightsObject
-            );
+            const loading = this.shadowRoot.querySelector("mm-loading");
+            loading.show("Updating match profile...");
+            try {
+                await MmMatchProfileSelect.updateMatchProfile(
+                    currentMatchProfileName,
+                    weightsObject
+                );
+                loading.hide();
+                await showMessage({
+                    title: "Match Profile Updated",
+                    message: `${currentMatchProfileName} has been updated.`,
+                });
+            } catch (error) {
+            } finally {
+                loading.hide();
+            }
         }
     }
 
-    addMatchProfile() {
+    async addMatchProfile() {
         const matchProfileSelect = this.shadowRoot.querySelector(
             "mm-match-profile-select"
         );
 
         const weightsObject = this.getFormMatchWeights()[0];
 
-        const profileName = prompt(
-            "Please provide a name for this match profile:"
-        );
-        if (profileName !== null && profileName !== "") {
+        const profileName = await this.shadowRoot
+            .querySelector("mm-prompt-modal")
+            .ask({
+                title: "Add Match Profile",
+                message: "Please provide a name for this match profile.",
+                label: "Match profile name",
+                confirmText: "Add",
+            });
+        if (profileName !== null) {
             const oldMatchProfileName =
                 MmMatchProfileSelect.getCurrentMatchProfileName();
 
             MmMatchProfileSelect.setCurrentMatchProfileName(profileName);
-
-            matchProfileSelect
-                .addNewMatchProfile(profileName, weightsObject)
-                .then(
-                    () => {},
-                    () => {
-                        MmMatchProfileSelect.setCurrentMatchProfileName(
-                            oldMatchProfileName
-                        );
-                    }
+            const loading = this.shadowRoot.querySelector("mm-loading");
+            loading.show("Saving match profile...");
+            try {
+                await matchProfileSelect.addNewMatchProfile(
+                    profileName,
+                    weightsObject
                 );
+                loading.hide();
+                await showMessage({
+                    title: "Match Profile Saved",
+                    message: `${profileName} has been saved.`,
+                });
+            } catch (error) {
+                MmMatchProfileSelect.setCurrentMatchProfileName(
+                    oldMatchProfileName
+                );
+            } finally {
+                loading.hide();
+            }
         }
     }
 
     selectMatchProfile(event) {
         const selected = event.target.value;
-        if (selected !== "--") {
-            const matchProfiles = JSON.parse(
-                localStorage.getItem("matchProfiles")
-            );
-            this.updateWeightsVisual(matchProfiles[selected]);
-        }
+        const matchWeights = this.matchProfiles?.[selected];
+        if (matchWeights) this.updateWeightsVisual(matchWeights);
     }
 
-    deleteMatchProfile() {
+    async deleteMatchProfile() {
         const profileToDelete =
             MmMatchProfileSelect.getCurrentMatchProfileName();
 
-        if (profileToDelete === "--") {
-            alert("No match profile selected.");
+        if (!profileToDelete) {
+            await showMessage({
+                title: "Match Profile",
+                message: "No match profile selected.",
+            });
             return;
         }
         if (profileToDelete === "MM Default") {
-            alert("Cannot delete MM Default Match Profile");
+            await showMessage({
+                title: "Match Profile",
+                message: "Cannot delete MM Default Match Profile.",
+            });
         } else {
             const matchProfileSelect = this.shadowRoot.querySelector(
                 "mm-match-profile-select"
             );
-            matchProfileSelect.deleteMatchProfile(profileToDelete);
+            const loading = this.shadowRoot.querySelector("mm-loading");
+            loading.show("Deleting match profile...");
+            try {
+                await matchProfileSelect.deleteMatchProfile(profileToDelete);
+                loading.hide();
+                await showMessage({
+                    title: "Match Profile Deleted",
+                    message: `${profileToDelete} has been deleted.`,
+                });
+            } catch (error) {
+            } finally {
+                loading.hide();
+            }
         }
     }
 

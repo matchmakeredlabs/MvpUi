@@ -5,11 +5,17 @@ import bsession from "./bsession.js";
 class MmAddMemberModal extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
-    static observedAttributes = ["parent-id", "parent-type", "member-type"];
+    static observedAttributes = [
+        "parent-id",
+        "parent-type",
+        "member-type",
+        "allowed-roles",
+    ];
 
     #parentId;
     #parentType;
     #memberType;
+    #allowedRoles;
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "parent-id") {
@@ -18,6 +24,8 @@ class MmAddMemberModal extends HTMLElement {
             this.#parentType = newValue;
         } else if (name === "member-type") {
             this.#memberType = newValue;
+        } else if (name === "allowed-roles") {
+            this.#allowedRoles = newValue;
         }
     }
 
@@ -92,6 +100,9 @@ class MmAddMemberModal extends HTMLElement {
                 bdoc.attr("parent-id", this.#parentId),
                 bdoc.attr("parent-type", this.#parentType),
                 bdoc.attr("member-type", this.#memberType),
+                this.#allowedRoles
+                    ? bdoc.attr("allowed-roles", this.#allowedRoles)
+                    : null,
                 bdoc.ele(
                     "div",
                     bdoc.class("modal-footer"),

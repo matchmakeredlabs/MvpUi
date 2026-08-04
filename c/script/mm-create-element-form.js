@@ -12,6 +12,8 @@ export default class MmCreateElementForm extends HTMLElement {
 
     #formGroupsContainer;
 
+    #isSubmitting = false;
+
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "parent-element") {
             this.#parentElement = JSON.parse(newValue);
@@ -87,12 +89,18 @@ export default class MmCreateElementForm extends HTMLElement {
     #submitCreateElement = async (event) => {
         event.preventDefault();
 
+        if (this.#isSubmitting) {
+            return;
+        }
+
         // checkValidity() returns false if any required fields are missing
         if (!event.target.checkValidity()) {
             // reportValidity() will output "Please fill out this field" on the first required field with empty input
             event.target.reportValidity();
             return;
         }
+
+        this.#isSubmitting = true;
 
         const formData = new FormData(event.target);
 
@@ -102,6 +110,12 @@ export default class MmCreateElementForm extends HTMLElement {
             url: formData.get("url"),
             eleType: formData.get("type"),
         };
+
+        if (!variables.eleType) {
+            this.#isSubmitting = false;
+            event.target.reportValidity();
+            return;
+        }
 
         if (variables.url === "" || !variables.url) {
             // replace spaces with dashes in name and URI encode otherwise
@@ -122,9 +136,13 @@ export default class MmCreateElementForm extends HTMLElement {
             variables.mainEntity = variables.url;
         }
 
-        const response = await MmCreateElementForm.createElement(variables);
+        try {
+            const response = await MmCreateElementForm.createElement(variables);
 
-        this.onSettled(variables, response);
+            await this.onSettled(variables, response);
+        } finally {
+            this.#isSubmitting = false;
+        }
 
         // TODO: What do we want to do about this?
         //window.location.reload();
@@ -252,7 +270,7 @@ export default class MmCreateElementForm extends HTMLElement {
                     bdoc.attr("name", "type"),
                     bdoc.attr("required", "true"),
                     ...[
-                        { label: "--", value: "--" },
+                        { label: "--", value: "" },
                         ...MmCreateElementForm.elementTypes,
                     ].map((eleType) =>
                         bdoc.ele(
@@ -298,13 +316,6 @@ export default class MmCreateElementForm extends HTMLElement {
                     "label",
                     bdoc.attr("for", "url"),
                     "URL / Location ",
-                    this.#parentElement
-                        ? bdoc.ele(
-                              "span",
-                              bdoc.class("mmc_form_required"),
-                              "* "
-                          )
-                        : null,
                     this.#getTooltipButton(
                         "Must be unique within a collection."
                     )
@@ -320,7 +331,6 @@ export default class MmCreateElementForm extends HTMLElement {
                             ? "mm:algebra1/the-language-of/distributive"
                             : "mm:algebra1"
                     ),
-                    this.#parentElement ? bdoc.attr("required", "true") : null,
                     this.#parentElement
                         ? bdoc.attr(
                               "value",

@@ -20,11 +20,15 @@ class MmCreateCollectionModal extends HTMLElement {
                 alert(body.log[0].message);
             } else if (body.error) {
                 alert(body.error);
+            } else if (body.message) {
+                alert(body.message);
             } else {
-                alert("An error occurred");
+                alert(
+                    `An error occurred: ${response.status} ${response.statusText}`
+                );
             }
         } catch (e) {
-            alert("An error occurred");
+            alert(`An error occurred: ${response.status} ${response.statusText}`);
         }
     };
 
@@ -91,6 +95,7 @@ class MmCreateCollectionModal extends HTMLElement {
 
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button cancel-button"),
                             "Cancel",
                             bdoc.eventListener("click", () => {
@@ -100,6 +105,7 @@ class MmCreateCollectionModal extends HTMLElement {
 
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button add-entity-button2"),
                             "Create Collection",
                             bdoc.eventListener("click", () => {
@@ -118,6 +124,7 @@ class MmCreateCollectionModal extends HTMLElement {
                         ),
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button add-entity-button"),
                             "Create and Edit Collection",
                             bdoc.eventListener("click", () => {

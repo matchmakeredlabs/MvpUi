@@ -47,7 +47,7 @@ class MmHome extends HTMLElement {
             bdoc.ele(
                 "div",
                 bdoc.class("big-button big-button3"),
-                bdoc.ele("div", bdoc.class("button-text"), "Create"),
+                bdoc.ele("div", bdoc.class("button-text"), "Create & Manage"),
                 bdoc.ele(
                     "div",
                     bdoc.class("button-description"),

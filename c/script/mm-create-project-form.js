@@ -12,8 +12,6 @@ export default class MmCreateProjectForm extends HTMLElement {
         "/customer",
     ];
 
-    static projectRoutes = ["/api/projects", "/api/project", "/projects", "/project"];
-
     static fetchCustomers = async () => {
         for (const route of MmCreateProjectForm.customerRoutes) {
             const response = await MmCreateProjectForm.session.fetch(route);
@@ -77,67 +75,21 @@ export default class MmCreateProjectForm extends HTMLElement {
     };
 
     static createProject = async (projectObj) => {
-        for (const route of MmCreateProjectForm.projectRoutes) {
-            const payloadCustomerId = {
-                ...projectObj,
-                customerId: projectObj.customerId,
-            };
-            const payloadCustomer = {
-                ...projectObj,
-                customer: projectObj.customerId,
-            };
-            const payloadNoCustomer = { ...projectObj };
-            delete payloadNoCustomer.customerId;
-            delete payloadNoCustomer.customer;
+        const customerId = projectObj.customerId || "";
+        const payload = { ...projectObj };
+        delete payload.customerId;
+        delete payload.customer;
 
-            const attempts = [
-                {
-                    url: route,
-                    payload: payloadCustomerId,
+        return await MmCreateProjectForm.session.fetch(
+            `/api/projects?customerId=${encodeURIComponent(customerId)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-                {
-                    url: route,
-                    payload: payloadCustomer,
-                },
-                {
-                    url: `${route}?customerId=${encodeURIComponent(
-                        projectObj.customerId || ""
-                    )}`,
-                    payload: payloadNoCustomer,
-                },
-                {
-                    url: `${route}?customer=${encodeURIComponent(
-                        projectObj.customerId || ""
-                    )}`,
-                    payload: payloadNoCustomer,
-                },
-            ];
-
-            let lastResponse = null;
-            for (const attempt of attempts) {
-                const response = await MmCreateProjectForm.session.fetch(
-                    attempt.url,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(attempt.payload),
-                    }
-                );
-
-                if (response.status === 200) return response;
-                if (response.status !== 404) {
-                    lastResponse = response;
-                }
+                body: JSON.stringify(payload),
             }
-
-            if (lastResponse) return lastResponse;
-        }
-        return new Response(null, {
-            status: 404,
-            statusText: "Project create endpoint not found",
-        });
+        );
     };
 
     getInnerForm = () => {
@@ -163,7 +115,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         customerSelect.innerHTML = "";
 
         const eligibleCustomers = customers.filter(
-            (customer) => customer._canCreateProjects !== false
+            (customer) => customer._canCreateProjects === true
         );
 
         bdoc.append(

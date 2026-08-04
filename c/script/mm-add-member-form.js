@@ -6,11 +6,17 @@ import MmProjects from "./mm-projects.js";
 
 export default class MmAddMemberForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
-    static observedAttributes = ["parent-id", "parent-type", "member-type"];
+    static observedAttributes = [
+        "parent-id",
+        "parent-type",
+        "member-type",
+        "allowed-roles",
+    ];
 
     #parentId;
     #parentType;
     #memberType;
+    #allowedRoles;
     #cachedCustomers = [];
     #cachedGroups = [];
     #cachedProjects = [];
@@ -28,6 +34,8 @@ export default class MmAddMemberForm extends HTMLElement {
             this.#parentType = newValue;
         } else if (name === "member-type") {
             this.#memberType = newValue;
+        } else if (name === "allowed-roles") {
+            this.#allowedRoles = newValue;
         }
     }
 
@@ -42,7 +50,7 @@ export default class MmAddMemberForm extends HTMLElement {
 
     static fetchGroup = async (groupId) => {
         const response = await MmAddMemberForm.session.fetch(
-            "/api/groups/" + groupId
+            MmAddMemberForm.getGroupRoute(groupId)
         );
 
         return await response.json();
@@ -64,6 +72,19 @@ export default class MmAddMemberForm extends HTMLElement {
     onSettled = () => {};
 
     static roles = ["reader", "editor", "owner"];
+    static roleRanks = {
+        none: 0,
+        reader: 1,
+        editor: 2,
+        owner: 3,
+    };
+
+    static rolesForMax = (maxRole) => {
+        const maxRank = MmAddMemberForm.roleRanks[maxRole] || 0;
+        return MmAddMemberForm.roles.filter(
+            (role) => MmAddMemberForm.roleRanks[role] <= maxRank
+        );
+    };
 
     static getGroupOwnerType = (group) =>
         group.customerId || group.customer || group.ownerType === "customer"
@@ -75,8 +96,23 @@ export default class MmAddMemberForm extends HTMLElement {
         group.customer ||
         group.project ||
         group.projectId ||
+        group.org ||
         group.id?.split(":")[0] ||
         "";
+
+    static getGroupRoute = (groupId, group = null) => {
+        if (group) {
+            const ownerType = MmAddMemberForm.getGroupOwnerType(group);
+            const ownerId = MmAddMemberForm.getGroupOwnerId(group);
+            if (ownerId) {
+                const ownerSegment =
+                    ownerType === "customer" ? "customers" : "projects";
+                return `/api/groups/${ownerSegment}/${encodeURIComponent(ownerId)}/${encodeURIComponent(groupId)}`;
+            }
+        }
+
+        return `/api/groups/${encodeURIComponent(groupId)}`;
+    };
 
     static getGroupName = (group) => {
         if (group.name) return group.name;
@@ -320,13 +356,16 @@ export default class MmAddMemberForm extends HTMLElement {
     };
 
     static updateGroup = async (groupId, groupObj) => {
-        return await MmAddMemberForm.session.fetch("/api/groups/" + groupId, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(groupObj),
-        });
+        return await MmAddMemberForm.session.fetch(
+            MmAddMemberForm.getGroupRoute(groupId, groupObj),
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(groupObj),
+            }
+        );
     };
 
     static updateCustomer = async (customerId, customerObj) => {
@@ -412,6 +451,15 @@ export default class MmAddMemberForm extends HTMLElement {
         this.getInnerForm().dispatchEvent(
             new Event("submit", { cancelable: true })
         );
+    };
+
+    #roles = () => {
+        const roles = `${this.#allowedRoles || ""}`
+            .split(",")
+            .map((role) => role.trim())
+            .filter((role) => MmAddMemberForm.roles.includes(role));
+
+        return roles.length ? roles : MmAddMemberForm.roles;
     };
 
     connectedCallback() {
@@ -518,7 +566,7 @@ export default class MmAddMemberForm extends HTMLElement {
                         "select",
                         bdoc.attr("id", "role"),
                         bdoc.attr("name", "role"),
-                        ...MmAddMemberForm.roles.map((role) =>
+                        ...this.#roles().map((role) =>
                             bdoc.ele("option", bdoc.attr("value", role), role)
                         )
                     )

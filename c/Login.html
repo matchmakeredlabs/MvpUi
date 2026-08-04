@@ -6,19 +6,24 @@ autht: "anonymous"
 <div class="auth-page">
     <form class="mmc_form auth-card" id="login_form">
         <h2>Login</h2>
-                <p class="auth-toggle">
+        <p class="auth-toggle">
             Don't have an account?
             <button type="button" id="show_register" class="link-button">Create account</button>
+        </p>
         <div id="form_msg" class="message" aria-live="polite" style="visibility: hidden;"></div>
-        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" /></p>
-        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" /></p>
-        <p class="auth-form-actions"><input style="cursor: pointer;" type="submit" value="Login"/></p>
+        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" required /></p>
+        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" required /></p>
+        <p class="auth-form-actions">
+            <button id="login_submit" style="cursor: pointer;" type="submit">Login</button>
+            <mm-loading id="login_loading" message="Signing in..." hidden style="margin-left: 0.75rem;"></mm-loading>
+        </p>
         <p class="auth-toggle">
-            <button type="button" id="show_register" class="link-button">Forgot your password?</button>
+            <button type="button" id="show_forgot_password" class="link-button">Forgot your password?</button>
         </p>
     </form>
 
     <mm-self-register-form id="register_form" hidden></mm-self-register-form>
+    <mm-forgot-password-form id="forgot_password_form" hidden></mm-forgot-password-form>
 </div>
 
 <script type="module">
@@ -26,59 +31,141 @@ autht: "anonymous"
 import config from '/config.js';
 import bsession from '/c/script/bsession.js';
 import '/c/script/mm-self-register-form.js';
+import '/c/script/mm-forgot-password-form.js';
+import '/c/script/mm-loading.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 async function login(un, pw) {
-
     const payload = {
         username: un,
         password: pw
     };
 
-    let response = await session.fetch("/api/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-    if (response.ok) {
-        window.location.replace("/c/index");
+    return await session.fetch("/api/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    }, {
+        redirectOnUnauthorized: false
+    });
+}
+
+async function getLoginError(response) {
+    let body = null;
+    try {
+        body = await response.json();
+    } catch {
+        // Status-specific messages below cover empty or non-JSON responses.
     }
-    else {
-        let json = await response.json();
-        let msgEle = document.getElementById("form_msg");
-        msgEle.textContent = json.errors[0].detail;
-        msgEle.style.color = "darkred";
-        msgEle.style.visibility = "visible";
+
+    const backendMessage =
+        body?.errors?.[0]?.detail ||
+        body?.message ||
+        body?.detail ||
+        body?.error;
+
+    switch (response.status) {
+        case 400:
+            return backendMessage || "Enter a valid username and password.";
+        case 401:
+            return "The username or password is incorrect.";
+        case 403:
+            return backendMessage || "This account is not permitted to sign in.";
+        case 429:
+            return "Too many sign-in attempts. Wait a moment and try again.";
+        default:
+            if (response.status >= 500) {
+                return "The sign-in service is currently unavailable. Try again shortly.";
+            }
+            return backendMessage || `Sign in failed (${response.status}).`;
     }
 }
 
-function submitLogin(event) {
+function setLoginMessage(message, isError = true) {
+    const msgEle = document.getElementById("form_msg");
+    msgEle.textContent = message;
+    msgEle.style.color = isError ? "darkred" : "#5D9732";
+    msgEle.style.visibility = message ? "visible" : "hidden";
+}
+
+function setLoginBusy(isBusy) {
+    const form = document.getElementById("login_form");
+    const submit = document.getElementById("login_submit");
+    const loading = document.getElementById("login_loading");
+
+    form.setAttribute("aria-busy", isBusy ? "true" : "false");
+    submit.disabled = isBusy;
+    if (isBusy) {
+        loading.show();
+    } else {
+        loading.hide();
+    }
+}
+
+async function submitLogin(event) {
     event.preventDefault();
-    console.log("submitLogin");
-    let formData = new FormData(event.target);
-    login(formData.get("username"), formData.get("password"));
+    const formData = new FormData(event.target);
+    const username = formData.get("username")?.toString().trim() ?? "";
+    const password = formData.get("password")?.toString() ?? "";
+    let isRedirecting = false;
+
+    setLoginMessage("");
+    setLoginBusy(true);
+    try {
+        const response = await login(username, password);
+        if (!response.ok) {
+            setLoginMessage(await getLoginError(response));
+            return;
+        }
+
+        isRedirecting = true;
+        window.location.replace("/c/index");
+    } catch {
+        setLoginMessage(
+            "Could not reach the sign-in service. Check your connection and try again."
+        );
+    } finally {
+        if (!isRedirecting) {
+            setLoginBusy(false);
+        }
+    }
+}
+
+function showPanel(panelId) {
+    document.getElementById("login_form").hidden = panelId !== "login_form";
+    document.getElementById("register_form").hidden = panelId !== "register_form";
+    document.getElementById("forgot_password_form").hidden = panelId !== "forgot_password_form";
+}
+
+const query = new URLSearchParams(window.location.search);
+const username = query.get("username");
+if (username) {
+    document.getElementById("username").value = username;
 }
 
 document.getElementById("login_form").addEventListener("submit", submitLogin);
 document.getElementById("show_register").addEventListener("click", () => {
-    document.getElementById("login_form").hidden = true;
-    document.getElementById("register_form").hidden = false;
+    showPanel("register_form");
+});
+document.getElementById("show_forgot_password").addEventListener("click", () => {
+    showPanel("forgot_password_form");
 });
 document.getElementById("register_form").addEventListener("show-login", () => {
-    document.getElementById("register_form").hidden = true;
-    document.getElementById("login_form").hidden = false;
+    showPanel("login_form");
+});
+document.getElementById("forgot_password_form").addEventListener("show-login", () => {
+    showPanel("login_form");
 });
 document.getElementById("register_form").addEventListener("registered", (event) => {
-    document.getElementById("register_form").hidden = true;
-    document.getElementById("login_form").hidden = false;
+    if (event.detail.confirmationRequired) {
+        return;
+    }
+
+    showPanel("login_form");
     document.getElementById("username").value = event.detail.email;
-    const msgEle = document.getElementById("form_msg");
-    msgEle.textContent = "Account created. Sign in to continue.";
-    msgEle.style.color = "#5D9732";
-    msgEle.style.visibility = "visible";
+    setLoginMessage("Account created. Sign in to continue.", false);
 });
-console.log("addEventListener complete")
 
 </script>

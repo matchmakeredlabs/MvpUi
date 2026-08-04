@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import "./mm-loading.js";
 
 class MmStatementGeneration extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -135,7 +136,21 @@ class MmStatementGeneration extends HTMLElement {
                             bdoc.class("header-button add-entity-button"),
                             "Generate",
                             bdoc.eventListener("click", () => {
-                                this.resultBox.innerHTML = "Loading...";
+                                this.resultBox.innerHTML = "";
+                                bdoc.append(
+                                    this.resultBox,
+                                    bdoc.ele(
+                                        "mm-loading",
+                                        bdoc.attr(
+                                            "message",
+                                            "Generating statements..."
+                                        ),
+                                        bdoc.attr(
+                                            "style",
+                                            "display: flex; margin: 2em auto;"
+                                        )
+                                    )
+                                );
                                 statementGenerationForm.onSettled = onSettled(
                                     async (variables, response) => {
                                         this.onSuccess(variables, response);

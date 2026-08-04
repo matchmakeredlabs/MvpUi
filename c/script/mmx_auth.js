@@ -33,7 +33,7 @@ export default class mmxAuth {
         if (!token) return false;
 
         // Having found the token, parse it and check its expiration
-        const tokenParts = new URLSearchParams(decodeURIComponent(token));
+        const tokenParts = new URLSearchParams(token);
         const expiration = tokenParts.get("x");
         if (expiration && mmxAuth.dateParse(expiration) > Date.now())
             return true;
@@ -46,7 +46,7 @@ export default class mmxAuth {
         if (!token) return false;
 
         // Having found the cookie, parse it and return the userid
-        const tokenParts = new URLSearchParams(decodeURIComponent(token));
+        const tokenParts = new URLSearchParams(token);
         return tokenParts.get("un") || tokenParts.get("uid");
     }
 
@@ -139,7 +139,12 @@ export default class mmxAuth {
         ) {
             addLink("Organizations", "/c/Customers");
         }
-        if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadProject)) {
+        if (
+            mmxAuth.hasAnyPrivilege(
+                mmxAuth.privileges.ReadProject,
+                mmxAuth.privileges.WriteCustomer
+            )
+        ) {
             addLink("Projects", "/c/Projects");
         }
         if (mmxAuth.hasAnyPrivilege(mmxAuth.privileges.ReadGroup)) {

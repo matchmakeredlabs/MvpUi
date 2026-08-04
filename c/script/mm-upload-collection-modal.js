@@ -91,6 +91,7 @@ class MmUploadCollectionModal extends HTMLElement {
 
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button cancel-button"),
                             "Cancel",
                             bdoc.eventListener("click", () => {
@@ -99,6 +100,7 @@ class MmUploadCollectionModal extends HTMLElement {
                         ),
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button add-entity-button2"),
                             "Import Collection",
                             bdoc.eventListener("click", () => {
@@ -117,6 +119,7 @@ class MmUploadCollectionModal extends HTMLElement {
                         ),
                         bdoc.ele(
                             "button",
+                            bdoc.attr("type", "button"),
                             bdoc.class("header-button add-entity-button"),
                             "Import and Edit Collection",
                             bdoc.eventListener("click", () => {

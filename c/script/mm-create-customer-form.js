@@ -125,7 +125,7 @@ export default class MmCreateCustomerForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "allowedProjects"),
-                    "Allowed Projects",
+                    "Max Allowed Projects",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(
@@ -149,7 +149,7 @@ export default class MmCreateCustomerForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "usersPerProject"),
-                    "Users Per Project",
+                    "Max Users Per Project",
                     bdoc.ele("span", bdoc.class("mmc_form_required"), " *")
                 ),
                 bdoc.ele(

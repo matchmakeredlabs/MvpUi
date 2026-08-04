@@ -3,6 +3,7 @@ import config from "/config.js";
 import bsession from "./bsession.js";
 import MmCustomer from "./mm-customer.js";
 import MmAddMemberForm from "./mm-add-member-form.js";
+import "./mm-loading.js";
 
 export default class MmProject extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -13,6 +14,8 @@ export default class MmProject extends HTMLElement {
     #project;
 
     #permissions = new Set();
+
+    loadingElement;
 
     constructor() {
         super();
@@ -51,6 +54,7 @@ export default class MmProject extends HTMLElement {
         group.customer ||
         group.project ||
         group.projectId ||
+        group.org ||
         group.id?.split(":")[0] ||
         "";
 
@@ -154,6 +158,12 @@ export default class MmProject extends HTMLElement {
     };
 
     connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading project..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -171,9 +181,11 @@ export default class MmProject extends HTMLElement {
                 bdoc.class("headers-container"),
                 bdoc.ele("h2", `Project`)
             ),
+            this.loadingElement,
             bdoc.ele(
                 "div",
                 bdoc.class("dropdowns-container"),
+                bdoc.attr("style", "display: none;"),
                 bdoc.ele(
                     "mm-dropdown",
                     bdoc.attr("id", "users-dropdown"),
@@ -253,13 +265,16 @@ export default class MmProject extends HTMLElement {
 
         if (!projectId) {
             window.location.href = "/c/Projects";
+            return;
         }
 
         const project = await MmProject.fetchProject(
             projectId
         ).catch(() => {
             window.location.href = "/c/Projects";
+            return null;
         });
+        if (!project) return;
 
         const customer = project.customerId
             ? await MmCustomer.fetchCustomer(project.customerId).catch(
@@ -284,6 +299,15 @@ export default class MmProject extends HTMLElement {
         this.#project = project;
 
         const cachedAcl = MmProject.session.getCachedAcl();
+        const maxAssignableRole = project._maxAssignableRole || "reader";
+        const maxAssignableRank =
+            MmAddMemberForm.roleRanks[maxAssignableRole] ||
+            MmAddMemberForm.roleRanks.reader;
+        const assignableRoles = MmAddMemberForm.rolesForMax(maxAssignableRole);
+        const canModifyRole = (member) => {
+            const roleRank = MmAddMemberForm.roleRanks[member?.role] || 0;
+            return roleRank <= maxAssignableRank;
+        };
 
         const headerContainer =
             this.shadowRoot.querySelector(".headers-container");
@@ -317,6 +341,9 @@ export default class MmProject extends HTMLElement {
             ),
             infoContainer
         );
+
+        this.loadingElement.hide();
+        this.shadowRoot.querySelector(".dropdowns-container").style.display = "";
 
         const descriptionEditButtons = bdoc.ele(
             "div",
@@ -410,14 +437,22 @@ export default class MmProject extends HTMLElement {
             bdoc.attr("id", "add-user-modal"),
             bdoc.attr("parent-type", "project"),
             bdoc.attr("member-type", "user"),
-            bdoc.attr("parent-id", projectId)
+            bdoc.attr("parent-id", projectId),
+            bdoc.attr(
+                "allowed-roles",
+                assignableRoles.join(",")
+            )
         );
         const addGroupModal = bdoc.ele(
             "mm-add-member-modal",
             bdoc.attr("id", "add-group-modal"),
             bdoc.attr("parent-type", "project"),
             bdoc.attr("member-type", "group"),
-            bdoc.attr("parent-id", projectId)
+            bdoc.attr("parent-id", projectId),
+            bdoc.attr(
+                "allowed-roles",
+                assignableRoles.join(",")
+            )
         );
         bdoc.append(this.shadowRoot, addUserModal, addGroupModal);
 
@@ -466,6 +501,8 @@ export default class MmProject extends HTMLElement {
                             id: group.id,
                             project:
                                 group.project ||
+                                group.projectId ||
+                                group.org ||
                                 (ownerType === "project" ? ownerId : ""),
                             customerId:
                                 group.customerId ||
@@ -476,6 +513,8 @@ export default class MmProject extends HTMLElement {
                                 ...group,
                                 project:
                                     group.project ||
+                                    group.projectId ||
+                                    group.org ||
                                     (ownerType === "project" ? ownerId : ""),
                                 customerId:
                                     group.customerId ||
@@ -555,15 +594,19 @@ export default class MmProject extends HTMLElement {
                 if (this.#permissions.has("update")) {
                     const ownedBySameProjectRoles = [
                         "none",
-                        ...MmAddMemberForm.roles,
+                        ...assignableRoles,
                     ];
                     filterTableCols["role"] = (member) => {
+                        if (!canModifyRole(member)) {
+                            return member.role || "";
+                        }
+
                         return bdoc.ele(
                             "select",
                             bdoc.class("role-select"),
                             ...(type === "group" && member.project === projectId
                                 ? ownedBySameProjectRoles
-                                : MmAddMemberForm.roles
+                                : assignableRoles
                             ).map((role) => {
                                 if (
                                     role === member.role ||
@@ -644,6 +687,10 @@ export default class MmProject extends HTMLElement {
                     };
 
                     filterTableCols["Actions"] = (entity) => {
+                        if (!canModifyRole(entity)) {
+                            return "";
+                        }
+
                         if (
                             type === "group" &&
                             entity.project === projectId &&
@@ -801,90 +848,92 @@ export default class MmProject extends HTMLElement {
                 filterTable.loadData(this[`${type}s`]);
             };
 
-            if (this.#permissions.has("update")) {
-                const createButtonGroup = (type) => {
-                    const addEntityModal = this.shadowRoot.getElementById(
-                        `add-${type}-modal`
-                    );
-
-                    addEntityModal.onSuccess = (variables) => {
-                        this[`${type}s`].push(
-                            properties[`${type}`]["get-obj"](variables)
-                        );
-                        if (this[`${type}s`].length === 1) {
-                            generateTable(type);
-                        }
-                        const filterTable = this.shadowRoot.getElementById(
-                            `${type}s-filter-table`
-                        );
-                        filterTable.loadData(this[`${type}s`]);
-                        addEntityModal.hide();
-                    };
-
+            const ensureButtonGroup = (type) => {
+                if (!properties[type]["button-group"]) {
                     properties[type]["button-group"] = bdoc.ele(
                         "div",
                         bdoc.class("button-group"),
                         bdoc.attr("slot", "header")
                     );
+                }
+                return properties[type]["button-group"];
+            };
 
-                    if (type === "group") {
-                        const createGroupModal = bdoc.ele(
-                            "mm-create-group-modal",
-                            bdoc.attr("project-id", project.id),
-                            bdoc.attr("parent-id", project.id),
-                            bdoc.attr("parent-type", "project")
-                        );
+            const addCreateGroupButton = () => {
+                const createGroupModal = bdoc.ele(
+                    "mm-create-group-modal",
+                    bdoc.attr("project-id", project.id),
+                    bdoc.attr("parent-id", project.id),
+                    bdoc.attr("parent-type", "project")
+                );
 
-                        createGroupModal.onSuccess = (
-                            variables,
-                            response,
-                            addedGroup
-                        ) => {
-                            if (addedGroup) {
-                                this[`${type}s`].push(
-                                    properties[`${type}`]["get-obj"](variables)
-                                );
-                                if (this[`${type}s`].length === 1) {
-                                    generateTable(type);
-                                }
-                                const filterTable =
-                                    this.shadowRoot.getElementById(
-                                        `${type}s-filter-table`
-                                    );
-                                filterTable.loadData(this[`${type}s`]);
-                            }
-                        };
-                        bdoc.append(this.shadowRoot, createGroupModal);
-                        bdoc.append(
-                            properties.group["button-group"],
-                            bdoc.ele(
-                                "button",
-                                bdoc.attr("id", "create-group-button"),
-                                bdoc.class("header-button add-entity-button2"),
-                                "✐  Create New Group",
-                                bdoc.eventListener("click", () => {
-                                    createGroupModal.show();
-                                })
-                            )
+                createGroupModal.onSuccess = (variables, response, addedGroup) => {
+                    if (addedGroup) {
+                        this.groups.push(properties.group["get-obj"](variables));
+                        if (this.groups.length === 1) {
+                            generateTable("group");
+                        }
+                        const filterTable = this.shadowRoot.getElementById(
+                            "groups-filter-table"
                         );
+                        filterTable.loadData(this.groups);
                     }
+                };
+                bdoc.append(this.shadowRoot, createGroupModal);
+                bdoc.append(
+                    ensureButtonGroup("group"),
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("id", "create-group-button"),
+                        bdoc.class("header-button add-entity-button2"),
+                        "✐  Create New Group",
+                        bdoc.eventListener("click", () => {
+                            createGroupModal.show();
+                        })
+                    )
+                );
+            };
 
-                    bdoc.append(
-                        properties[type]["button-group"],
-                        bdoc.ele(
-                            "button",
-                            bdoc.attr("id", `add-${type}-button`),
-                            bdoc.class("header-button add-entity-button"),
-                            properties[type]["add-button-text"],
-                            bdoc.eventListener("click", () => {
-                                addEntityModal.show();
-                            })
-                        )
+            const addEntityButton = (type) => {
+                const addEntityModal = this.shadowRoot.getElementById(
+                    `add-${type}-modal`
+                );
+
+                addEntityModal.onSuccess = (variables) => {
+                    this[`${type}s`].push(
+                        properties[`${type}`]["get-obj"](variables)
                     );
+                    if (this[`${type}s`].length === 1) {
+                        generateTable(type);
+                    }
+                    const filterTable = this.shadowRoot.getElementById(
+                        `${type}s-filter-table`
+                    );
+                    filterTable.loadData(this[`${type}s`]);
+                    addEntityModal.hide();
                 };
 
-                createButtonGroup("user");
-                createButtonGroup("group");
+                bdoc.append(
+                    ensureButtonGroup(type),
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("id", `add-${type}-button`),
+                        bdoc.class("header-button add-entity-button"),
+                        properties[type]["add-button-text"],
+                        bdoc.eventListener("click", () => {
+                            addEntityModal.show();
+                        })
+                    )
+                );
+            };
+
+            if (this.#permissions.has("writeGroups")) {
+                addCreateGroupButton();
+            }
+
+            if (this.#permissions.has("update")) {
+                addEntityButton("user");
+                addEntityButton("group");
             }
 
             if (this.users.length > 0) {

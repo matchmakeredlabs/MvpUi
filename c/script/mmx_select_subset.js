@@ -418,10 +418,11 @@ export default class MmCollection {
 
     if (!desc.id) return; // No edit description or view descriptor on preview
 
-    if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key) {
+    const canEditDescription = desc._canUpdate !== false;
+    if ((canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) || desc.key) {
       detail.appendChild(bdoc.ele("h3", "Links"));
     }
-    if (desc.intHasPart && desc.intHasPart.length === 0) {
+    if (canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) {
       detail.appendChild(
         bdoc.ele(
           "div",
@@ -441,7 +442,13 @@ export default class MmCollection {
           "div",
           bdoc.ele(
             "a",
-            bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
+            bdoc.attr(
+              "href",
+              "/c/Match?stmtId=" +
+                encodeURIComponent(desc.id) +
+                "&key=" +
+                encodeURIComponent(desc.key)
+            ),
             "View descriptor and matches"
           )
         )

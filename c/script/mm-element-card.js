@@ -3,7 +3,12 @@ import config from "/config.js";
 import bsession from "./bsession.js";
 
 export default class MmElementCard extends HTMLElement {
-    static observedAttributes = ["value", "editable", "show-describe-links"];
+    static observedAttributes = [
+        "value",
+        "editable",
+        "show-describe-links",
+        "suppress-description-edit",
+    ];
 
     static session = new bsession(config.backEndUrl, config.sessionTag);
 
@@ -31,6 +36,8 @@ export default class MmElementCard extends HTMLElement {
 
     #showDescribeLinks = false;
 
+    #suppressDescriptionEdit = false;
+
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "value") {
             const elementObj = JSON.parse(newValue);
@@ -41,6 +48,8 @@ export default class MmElementCard extends HTMLElement {
         } else if (name === "show-describe-links") {
             console.log("showDescribeLinks");
             this.#showDescribeLinks = true;
+        } else if (name === "suppress-description-edit") {
+            this.#suppressDescriptionEdit = true;
         }
     }
 
@@ -105,7 +114,8 @@ export default class MmElementCard extends HTMLElement {
         eleContainer,
         cornerButton,
         editOptions,
-        showDescribeLinks
+        showDescribeLinks,
+        suppressDescriptionEdit = false
     ) => {
         const editable = editOptions && editOptions.editable;
         const saveFunction = editOptions && editOptions.saveFunction;
@@ -309,8 +319,12 @@ export default class MmElementCard extends HTMLElement {
         eleContainer.appendChild(dl);
 
         if (showDescribeLinks) {
-            if (val.intHasPart && val.intHasPart.length === 0) {
+            const canEditDescription =
+                !suppressDescriptionEdit && val._canUpdate !== false;
+            if ((canEditDescription && val.intHasPart && val.intHasPart.length === 0) || val.key) {
                 eleContainer.appendChild(bdoc.ele("h3", "Links"));
+            }
+            if (canEditDescription && val.intHasPart && val.intHasPart.length === 0) {
                 eleContainer.appendChild(
                     bdoc.ele(
                         "div",
@@ -325,22 +339,26 @@ export default class MmElementCard extends HTMLElement {
                         )
                     )
                 );
-                if (val.key) {
-                    eleContainer.appendChild(
+            }
+            if (val.key) {
+                eleContainer.appendChild(
+                    bdoc.ele(
+                        "div",
                         bdoc.ele(
-                            "div",
-                            bdoc.ele(
-                                "a",
-                                bdoc.attr(
-                                    "href",
-                                    "/c/Match?stmtId=" +
-                                        encodeURIComponent(val.id)
-                                ),
-                                "View descriptor and matches"
-                            )
+                            "a",
+                            bdoc.attr(
+                                "href",
+                                "/c/Match?stmtId=" +
+                                    encodeURIComponent(val.id) +
+                                    "&key=" +
+                                    encodeURIComponent(
+                                        MmElementCard.StripKeyPrefix(val.key)
+                                    )
+                            ),
+                            "View descriptor and matches"
                         )
-                    );
-                }
+                    )
+                );
             }
         }
     };
@@ -427,7 +445,8 @@ export default class MmElementCard extends HTMLElement {
                         )
                     ),
                 },
-                this.#showDescribeLinks
+                this.#showDescribeLinks,
+                this.#suppressDescriptionEdit
             );
         } else {
             MmElementCard.renderElement(
@@ -435,7 +454,8 @@ export default class MmElementCard extends HTMLElement {
                 eleContainer,
                 null,
                 null,
-                this.#showDescribeLinks
+                this.#showDescribeLinks,
+                this.#suppressDescriptionEdit
             );
         }
     };

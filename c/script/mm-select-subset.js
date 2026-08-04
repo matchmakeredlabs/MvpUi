@@ -1,4 +1,5 @@
 import bdoc from "./bdoc.js";
+import "./mm-loading.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 
@@ -137,7 +138,11 @@ export default class MmSelectSubset extends HTMLElement {
     };
 
     connectedCallback() {
-        this.loadingElement = bdoc.ele("h2", "Loading...");
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading collection..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
 
         bdoc.append(
             this.shadowRoot,
@@ -216,7 +221,7 @@ export default class MmSelectSubset extends HTMLElement {
             window.location.href = "/c/Collections";
         });
 
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 

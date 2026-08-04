@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import "./mm-loading.js";
 
 export default class MmCustomer extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -10,11 +11,23 @@ export default class MmCustomer extends HTMLElement {
         "/customers",
         "/customer",
     ];
-    static projectRoutes = ["/api/projects", "/api/project", "/projects", "/project"];
     static userRoutes = ["/api/users", "/api/user", "/users", "/user"];
 
     static principalTypeFromId = (principalId) =>
         `${principalId || ""}`.includes(":") ? "Group" : "User";
+
+    static roleRanks = {
+        reader: 1,
+        editor: 2,
+        owner: 3,
+    };
+
+    static rolesForMax = (maxRole) => {
+        const maxRank = MmCustomer.roleRanks[maxRole] || 0;
+        return ["reader", "editor", "owner"].filter(
+            (role) => MmCustomer.roleRanks[role] <= maxRank
+        );
+    };
 
     static fetchUsers = async () => {
         for (const route of MmCustomer.userRoutes) {
@@ -38,6 +51,7 @@ export default class MmCustomer extends HTMLElement {
     #customer;
     #projects = [];
     #users = [];
+    loadingElement;
 
     constructor() {
         super();
@@ -56,23 +70,6 @@ export default class MmCustomer extends HTMLElement {
             new Response(null, {
                 status: 404,
                 statusText: "Customers/Organizations endpoint not found",
-            })
-        );
-    };
-
-    static fetchProjects = async () => {
-        for (const route of MmCustomer.projectRoutes) {
-            const response = await MmCustomer.session.fetch(route);
-            if (response.status === 200) {
-                const json = await response.json();
-                return json.items || [];
-            }
-            if (response.status !== 404) return Promise.reject(response);
-        }
-        return Promise.reject(
-            new Response(null, {
-                status: 404,
-                statusText: "Projects endpoint not found",
             })
         );
     };
@@ -111,6 +108,12 @@ export default class MmCustomer extends HTMLElement {
     };
 
     connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading organization..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -133,9 +136,11 @@ export default class MmCustomer extends HTMLElement {
                     bdoc.attr("style", "color: black; margin: 0;")
                 )
             ),
+            this.loadingElement,
             bdoc.ele(
                 "div",
                 bdoc.class("dropdowns-container"),
+                bdoc.attr("style", "display: none;"),
                 bdoc.ele(
                     "mm-dropdown",
                     bdoc.attr("id", "settings-dropdown"),
@@ -201,10 +206,49 @@ export default class MmCustomer extends HTMLElement {
         const cleaned = { ...customer };
         delete cleaned._canCreateProjects;
         delete cleaned._canWriteCustomer;
+        delete cleaned._canManageCustomerSettings;
         delete cleaned._roles;
         delete cleaned._projects;
         delete cleaned.members;
         return cleaned;
+    }
+
+    #isPersonalCustomer() {
+        return this.#customer?.customerKind === "personal";
+    }
+
+    #isLockedPersonalRole(entry) {
+        if (!this.#isPersonalCustomer()) return false;
+
+        const entryId = `${entry?.id || ""}`.toLowerCase();
+        const personalOwnerId = `${this.#customer?.personalOwnerId || ""}`.toLowerCase();
+        const currentUserId = `${MmCustomer.session.getCachedUserID() || ""}`.toLowerCase();
+
+        return (
+            !!entryId &&
+            (entryId === personalOwnerId || entryId === currentUserId)
+        );
+    }
+
+    #maxAssignableRole() {
+        const acl = MmCustomer.session.getCachedAcl();
+        if (acl && ("admin" in acl || acl.admincustomer?.includes("WriteCustomer"))) {
+            return "owner";
+        }
+
+        if (this.#customer?._maxAssignableRole) {
+            return this.#customer._maxAssignableRole;
+        }
+
+        return this.#customer?._canWriteCustomer ? "editor" : "reader";
+    }
+
+    #canModifyRole(entry) {
+        const maxRank =
+            MmCustomer.roleRanks[this.#maxAssignableRole()] ||
+            MmCustomer.roleRanks.reader;
+        const entryRank = MmCustomer.roleRanks[entry?.role] || 0;
+        return entryRank <= maxRank;
     }
 
     async #loadCustomer() {
@@ -221,24 +265,19 @@ export default class MmCustomer extends HTMLElement {
             }
         );
 
-        if (!customer) return;
+        if (!customer) {
+            this.loadingElement.hide();
+            return;
+        }
 
-        const [projects, users] = await Promise.all([
-            MmCustomer.fetchProjects().catch(() => []),
-            MmCustomer.fetchUsers().catch(() => []),
-        ]);
         this.#customer = customer;
-        this.#users = users;
+        this.#users = [];
 
-        const projectsFromList = projects.filter((project) => project.customerId === customerId);
         const projectIdsFromCustomer = Array.isArray(customer._projects)
             ? customer._projects
             : [];
 
-        this.#projects =
-            projectsFromList.length > 0
-                ? projectsFromList
-                : projectIdsFromCustomer.map((id) => ({ id }));
+        this.#projects = projectIdsFromCustomer.map((id) => ({ id }));
 
         this.shadowRoot.querySelector("#customer-name-title").textContent =
             customer.name || customer.id;
@@ -246,6 +285,9 @@ export default class MmCustomer extends HTMLElement {
         this.#renderCustomerForm();
         this.#renderRoles();
         this.#renderMembers();
+
+        this.loadingElement.hide();
+        this.shadowRoot.querySelector(".dropdowns-container").style.display = "";
 
         const settingsDropdown = this.shadowRoot.getElementById("settings-dropdown");
         const usersDropdown = this.shadowRoot.getElementById("users-dropdown");
@@ -291,6 +333,7 @@ export default class MmCustomer extends HTMLElement {
         container.innerHTML = "";
 
         const canWrite = !!customer._canWriteCustomer;
+        const canManageSettings = !!customer._canManageCustomerSettings;
         const digitsOnlyNumber = (value) => {
             const digits = `${value ?? ""}`.replace(/\D+/g, "");
             return digits === "" ? 0 : Number(digits);
@@ -342,7 +385,7 @@ export default class MmCustomer extends HTMLElement {
             bdoc.attr("value", customer.allowedProjects ?? 0),
             bdoc.eventListener("keydown", blockNonDigitInput),
             bdoc.eventListener("input", sanitizeDigitsOnlyInput),
-            canWrite ? null : bdoc.attr("disabled", "true")
+            canManageSettings ? null : bdoc.attr("disabled", "true")
         );
 
         const usersPerProject = bdoc.ele(
@@ -356,7 +399,7 @@ export default class MmCustomer extends HTMLElement {
             bdoc.attr("value", customer.usersPerProject ?? 0),
             bdoc.eventListener("keydown", blockNonDigitInput),
             bdoc.eventListener("input", sanitizeDigitsOnlyInput),
-            canWrite ? null : bdoc.attr("disabled", "true")
+            canManageSettings ? null : bdoc.attr("disabled", "true")
         );
 
         const elePerCollection = bdoc.ele(
@@ -370,15 +413,25 @@ export default class MmCustomer extends HTMLElement {
             bdoc.attr("value", customer.elePerCollection ?? 0),
             bdoc.eventListener("keydown", blockNonDigitInput),
             bdoc.eventListener("input", sanitizeDigitsOnlyInput),
-            canWrite ? null : bdoc.attr("disabled", "true")
+            canManageSettings ? null : bdoc.attr("disabled", "true")
         );
 
         const canUseApi = bdoc.ele(
-            "input",
-            bdoc.attr("type", "checkbox"),
+            "select",
             bdoc.attr("id", "customer-can-use-api"),
-            customer.canUseApi ? bdoc.attr("checked", "true") : null,
-            canWrite ? null : bdoc.attr("disabled", "true")
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", "true"),
+                customer.canUseApi ? bdoc.attr("selected", "true") : null,
+                "Yes"
+            ),
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", "false"),
+                !customer.canUseApi ? bdoc.attr("selected", "true") : null,
+                "No"
+            ),
+            canManageSettings ? null : bdoc.attr("disabled", "true")
         );
 
         const saveButton = bdoc.ele(
@@ -393,7 +446,7 @@ export default class MmCustomer extends HTMLElement {
                     allowedProjects: digitsOnlyNumber(allowedProjects.value),
                     usersPerProject: digitsOnlyNumber(usersPerProject.value),
                     elePerCollection: digitsOnlyNumber(elePerCollection.value),
-                    canUseApi: canUseApi.checked,
+                    canUseApi: canUseApi.value === "true",
                 });
 
                 const customerId = this.#getCustomerId();
@@ -424,11 +477,11 @@ export default class MmCustomer extends HTMLElement {
                 nameInput,
                 bdoc.ele("strong", "Description"),
                 descInput,
-                bdoc.ele("strong", "Allowed Projects"),
+                bdoc.ele("strong", "Max Allowed Projects"),
                 allowedProjects,
-                bdoc.ele("strong", "Users Per Project"),
+                bdoc.ele("strong", "Max Users Per Project"),
                 usersPerProject,
-                bdoc.ele("strong", "Elements Per Collection"),
+                bdoc.ele("strong", "Max Elements Per Collection"),
                 elePerCollection,
                 bdoc.ele("strong", "Can Use API"),
                 canUseApi
@@ -442,34 +495,47 @@ export default class MmCustomer extends HTMLElement {
         container.innerHTML = "";
 
         const canWrite = !!this.#customer._canWriteCustomer;
+        const rolesEditable = canWrite;
+        const assignableRoles = MmCustomer.rolesForMax(this.#maxAssignableRole());
         const roleEntries = this.#customer.roles || [];
-        const userOptions = [
-            bdoc.ele("option", bdoc.attr("value", ""), "Select a user"),
-            ...this.#users.map((user) =>
-                bdoc.ele(
-                    "option",
-                    bdoc.attr("value", user.id),
-                    MmCustomer.getUserLabel(user)
-                )
-            ),
-        ];
+        const usersLoaded = this.#users.length > 0;
+        const userOptions = usersLoaded
+            ? [
+                  bdoc.ele("option", bdoc.attr("value", ""), "Select a user"),
+                  ...this.#users.map((user) =>
+                      bdoc.ele(
+                          "option",
+                          bdoc.attr("value", user.id),
+                          MmCustomer.getUserLabel(user)
+                      )
+                  ),
+              ]
+            : [
+                  bdoc.ele(
+                      "option",
+                      bdoc.attr("value", ""),
+                      rolesEditable
+                          ? "Load users to add permissions"
+                          : "No users loaded"
+                  ),
+              ];
 
         const newPrincipalIdSelect = bdoc.ele(
             "select",
-            !canWrite ? bdoc.attr("disabled", "true") : null,
+            !rolesEditable || !usersLoaded ? bdoc.attr("disabled", "true") : null,
             ...userOptions
         );
         const newRoleSelect = bdoc.ele(
             "select",
-            !canWrite ? bdoc.attr("disabled", "true") : null,
-            bdoc.ele("option", bdoc.attr("value", "reader"), "reader"),
-            bdoc.ele("option", bdoc.attr("value", "editor"), "editor"),
-            bdoc.ele("option", bdoc.attr("value", "owner"), "owner")
+            !rolesEditable ? bdoc.attr("disabled", "true") : null,
+            ...assignableRoles.map((role) =>
+                bdoc.ele("option", bdoc.attr("value", role), role)
+            )
         );
         const addRoleButton = bdoc.ele(
             "button",
             "Add User Permission",
-            !canWrite ? bdoc.attr("disabled", "true") : null,
+            !rolesEditable || !usersLoaded ? bdoc.attr("disabled", "true") : null,
             bdoc.eventListener("click", async () => {
                 const id = newPrincipalIdSelect.value.trim();
                 if (!id) return;
@@ -483,20 +549,32 @@ export default class MmCustomer extends HTMLElement {
                 ]);
             })
         );
-
-        bdoc.append(
-            container,
-            bdoc.ele(
-                "div",
-                bdoc.attr(
-                    "style",
-                    "display:flex;gap:0.5em;align-items:center;flex-wrap:wrap;margin-bottom:0.75em"
-                ),
-                newPrincipalIdSelect,
-                newRoleSelect,
-                addRoleButton
-            )
+        const loadUsersButton = bdoc.ele(
+            "button",
+            "Load Users",
+            !rolesEditable || usersLoaded ? bdoc.attr("disabled", "true") : null,
+            bdoc.eventListener("click", async () => {
+                this.#users = await MmCustomer.fetchUsers().catch(() => []);
+                this.#renderRoles();
+            })
         );
+
+        if (rolesEditable) {
+            bdoc.append(
+                container,
+                bdoc.ele(
+                    "div",
+                    bdoc.attr(
+                        "style",
+                        "display:flex;gap:0.5em;align-items:center;flex-wrap:wrap;margin-bottom:0.75em"
+                    ),
+                    newPrincipalIdSelect,
+                    newRoleSelect,
+                    loadUsersButton,
+                    addRoleButton
+                )
+            );
+        }
 
         const filterTable = bdoc.ele(
             "mm-filter-table",
@@ -510,32 +588,25 @@ export default class MmCustomer extends HTMLElement {
             ID: (entry) => entry.id,
             Type: (entry) => MmCustomer.principalTypeFromId(entry.id),
             Role: (entry) => {
+                if (
+                    !rolesEditable ||
+                    this.#isLockedPersonalRole(entry) ||
+                    !this.#canModifyRole(entry)
+                ) {
+                    return entry.role || "";
+                }
+
                 return bdoc.ele(
                     "select",
-                    !canWrite ? bdoc.attr("disabled", "true") : null,
-                    bdoc.ele(
-                        "option",
-                        bdoc.attr("value", "reader"),
-                        entry.role === "reader"
-                            ? bdoc.attr("selected", "true")
-                            : null,
-                        "reader"
-                    ),
-                    bdoc.ele(
-                        "option",
-                        bdoc.attr("value", "editor"),
-                        entry.role === "editor"
-                            ? bdoc.attr("selected", "true")
-                            : null,
-                        "editor"
-                    ),
-                    bdoc.ele(
-                        "option",
-                        bdoc.attr("value", "owner"),
-                        entry.role === "owner"
-                            ? bdoc.attr("selected", "true")
-                            : null,
-                        "owner"
+                    ...assignableRoles.map((role) =>
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", role),
+                            entry.role === role
+                                ? bdoc.attr("selected", "true")
+                                : null,
+                            role
+                        )
                     ),
                     bdoc.eventListener("change", async (e) => {
                         const updatedRoles = roleEntries.map((r) =>
@@ -547,8 +618,16 @@ export default class MmCustomer extends HTMLElement {
                     })
                 );
             },
-            Actions: (entry) =>
-                bdoc.ele(
+            Actions: (entry) => {
+                if (
+                    !rolesEditable ||
+                    this.#isLockedPersonalRole(entry) ||
+                    !this.#canModifyRole(entry)
+                ) {
+                    return "";
+                }
+
+                return bdoc.ele(
                     "td",
                     bdoc.attr(
                         "style",
@@ -562,7 +641,6 @@ export default class MmCustomer extends HTMLElement {
                             "border-color: white; background-color: #D32F2F; border-radius: 5px; color: white; cursor: pointer;"
                         ),
                         "⨉ Remove",
-                        !canWrite ? bdoc.attr("disabled", "true") : null,
                         bdoc.eventListener("click", async () => {
                             if (!confirm(`Remove role for ${entry.id}?`)) return;
                             await this.#saveRoles(
@@ -570,7 +648,8 @@ export default class MmCustomer extends HTMLElement {
                             );
                         })
                     )
-                ),
+                );
+            },
         });
 
         filterTable.customSorts = {

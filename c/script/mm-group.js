@@ -2,6 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmCustomers from "./mm-customers.js";
+import "./mm-loading.js";
 
 export default class MmGroup extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -13,7 +14,21 @@ export default class MmGroup extends HTMLElement {
     };
 
     static getOwnedById = (group) => {
-        return group.customerId || group.customer || group.project || group.projectId || "";
+        return group.customerId || group.customer || group.project || group.projectId || group.org || "";
+    };
+
+    static getGroupRoute = (groupId, group = null) => {
+        if (group) {
+            const ownerType = MmGroup.getOwnedByType(group);
+            const ownerId = MmGroup.getOwnedById(group);
+            if (ownerId) {
+                const ownerSegment =
+                    ownerType === "Organization" ? "customers" : "projects";
+                return `/api/groups/${ownerSegment}/${encodeURIComponent(ownerId)}/${encodeURIComponent(groupId)}`;
+            }
+        }
+
+        return `/api/groups/${encodeURIComponent(groupId)}`;
     };
 
     static getOwnedByLabel = (group) => {
@@ -26,6 +41,14 @@ export default class MmGroup extends HTMLElement {
         if (!customerId) return "";
         const customer = customerMap[customerId];
         return customer?.name || customer?.id || customerId;
+    };
+
+    static truncateOneWord = (value, maxLength = 15) => {
+        if (!value) return value;
+        const text = `${value}`;
+        return text.length > maxLength && !/\s/.test(text)
+            ? `${text.slice(0, maxLength - 3)}...`
+            : text;
     };
 
     static fetchCustomers = async () => {
@@ -52,13 +75,15 @@ export default class MmGroup extends HTMLElement {
 
     #permissions = new Set();
 
+    loadingElement;
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
     }
 
     static fetchGroup = async (groupId) => {
-        const response = await MmGroup.session.fetch("/api/groups/" + groupId);
+        const response = await MmGroup.session.fetch(MmGroup.getGroupRoute(groupId));
 
         if (response.status !== 200) {
             return Promise.reject(response);
@@ -68,13 +93,16 @@ export default class MmGroup extends HTMLElement {
     };
 
     static updateGroup = async (groupId, groupObj) => {
-        const response = await MmGroup.session.fetch("/api/groups/" + groupId, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(groupObj),
-        });
+        const response = await MmGroup.session.fetch(
+            MmGroup.getGroupRoute(groupId, groupObj),
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(groupObj),
+            }
+        );
 
         if (response.status !== 200) {
             MmGroup.handleError(response);
@@ -177,6 +205,12 @@ export default class MmGroup extends HTMLElement {
     };
 
     connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading group..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
         bdoc.append(
             this.shadowRoot,
             bdoc.ele(
@@ -199,9 +233,11 @@ export default class MmGroup extends HTMLElement {
                     bdoc.ele("h2", `Group`)
                 )
             ),
+            this.loadingElement,
             bdoc.ele(
                 "div",
                 bdoc.class("dropdowns-container"),
+                bdoc.attr("style", "display: none;"),
                 bdoc.ele(
                     "mm-dropdown",
                     bdoc.attr("id", "roles-dropdown"),
@@ -272,10 +308,14 @@ export default class MmGroup extends HTMLElement {
 
         if (!groupId) {
             window.location.href = "/c/Groups";
+            return;
         }
+
         const group = await MmGroup.fetchGroup(groupId).catch(() => {
             window.location.href = "/c/Groups";
+            return null;
         });
+        if (!group) return;
 
         this.#group = group;
         this.roles = group._roles;
@@ -322,6 +362,9 @@ export default class MmGroup extends HTMLElement {
             ),
             infoContainer
         );
+
+        this.loadingElement.hide();
+        this.shadowRoot.querySelector(".dropdowns-container").style.display = "";
 
         const descriptionEditButtons = bdoc.ele(
             "div",
@@ -425,7 +468,7 @@ export default class MmGroup extends HTMLElement {
                         );
                         if (confirmDelete) {
                             MmGroup.session
-                                .fetch(`/api/groups/${groupId}`, {
+                                .fetch(MmGroup.getGroupRoute(groupId, group), {
                                     method: "DELETE",
                                 })
                                 .then(() => {
@@ -471,7 +514,7 @@ export default class MmGroup extends HTMLElement {
                     ["filter-properties"]: "Owned by",
                     ["dropdown-text"]: "Groups",
                     ["cols"]: {
-                        name: (group) => group.groupId,
+                        name: (group) => MmGroup.truncateOneWord(group.groupId),
                         ["Owned by"]: (group) => {
                             const ownerType = MmGroup.getOwnedByType(group);
                             const ownerId = MmGroup.getOwnedById(group);

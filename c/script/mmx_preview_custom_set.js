@@ -2,6 +2,8 @@ import bdoc from './bdoc.js';
 import config from '/config.js';
 import bsession from './bsession.js';
 import { convertJsonToCsv, convertJsonToCsvNoHeader } from './downloadhelper.js';
+import "./mm-prompt-modal.js";
+import { showMessage } from "./mm-message-modal.js";
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
@@ -23,8 +25,24 @@ function updateVisualStatus() {
     });
 }
 
-function saveCustomSet() {
-    let name = prompt("Provide a name for this custom set") 
+function getPromptModal() {
+    let modal = document.querySelector("mm-prompt-modal");
+    if (!modal) {
+        modal = document.createElement("mm-prompt-modal");
+        document.body.appendChild(modal);
+    }
+    return modal;
+}
+
+async function saveCustomSet() {
+    const name = await getPromptModal().ask({
+        title: "Save Custom Set",
+        message: "Provide a name for this custom set.",
+        label: "Custom set name",
+        confirmText: "Save",
+    });
+    if (name === null) return;
+
     let customSets = JSON.parse(localStorage.getItem("customSets"));
     let currentCustomSet = JSON.parse(localStorage.getItem("currentCustomSet"));
 
@@ -32,14 +50,15 @@ function saveCustomSet() {
         customSets = {}
     }
 
-    if (name !== null) {
-        customSets[name] =currentCustomSet;
+    customSets[name] =currentCustomSet;
 
-        localStorage.setItem("customSets", JSON.stringify(customSets));
+    localStorage.setItem("customSets", JSON.stringify(customSets));
 
-        alert(`Custom set ${name} has been saved!`)
-        window.location.href = "./GenerateReport"
-    }
+    await showMessage({
+        title: "Custom Set Saved",
+        message: `Custom set ${name} has been saved.`,
+    });
+    window.location.href = "./GenerateReport"
 }
 
 export default class MmCollection {
@@ -164,10 +183,11 @@ export default class MmCollection {
 
         if (!desc.id) return; // No edit description or view descriptor on preview
 
-        if ((desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
+        const canEditDescription = desc._canUpdate !== false;
+        if ((canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
             detail.appendChild(bdoc.ele("h3", "Links"));
         }
-        if (desc.intHasPart && desc.intHasPart.length === 0) {
+        if (canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
                 bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
                 bdoc.attr("target", "_blank"),
@@ -176,7 +196,13 @@ export default class MmCollection {
 
         if (desc.key) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
-                bdoc.attr("href", "/c/Match?stmtId=" + encodeURIComponent(desc.id)),
+                bdoc.attr(
+                    "href",
+                    "/c/Match?stmtId=" +
+                        encodeURIComponent(desc.id) +
+                        "&key=" +
+                        encodeURIComponent(desc.key)
+                ),
                 "View descriptor and matches")));
         }
 
@@ -389,6 +415,3 @@ export default class MmCollection {
     }
     
 }
-
-
-

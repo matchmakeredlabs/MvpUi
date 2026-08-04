@@ -11,6 +11,14 @@ export default class MmCustomers extends HTMLElement {
         "/customer",
     ];
 
+    static truncateOneWord = (value, maxLength = 15) => {
+        if (!value) return value;
+        const text = `${value}`;
+        return text.length > maxLength && !/\s/.test(text)
+            ? `${text.slice(0, maxLength - 3)}...`
+            : text;
+    };
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -95,13 +103,14 @@ export default class MmCustomers extends HTMLElement {
             bdoc.ele("mm-create-customer-modal"),
             bdoc.ele(
                 "div",
-                bdoc.attr("style", "max-height: 80%; margin: 20px"),
+                bdoc.class("list-table-container"),
                 bdoc.ele(
                     "mm-filter-table",
                     bdoc.attr(
                         "sort-properties",
                         "name,description,allowedProjects,usersPerProject"
-                    )
+                    ),
+                    bdoc.attr("first-col-width", "25%")
                 ),
                 bdoc.ele(
                     "script",
@@ -129,17 +138,16 @@ export default class MmCustomers extends HTMLElement {
             table.generateCols = () => ({
                 name: (customer) => {
                     const label = customer.name || customer.id;
-                    if (!MmCustomers.canWriteCustomer(customer.id)) {
-                        return label;
-                    }
-
+                    const displayLabel = MmCustomers.truncateOneWord(label);
                     return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Customer?id=${customer.id}`),
-                        label
+                        bdoc.attr("title", label),
+                        displayLabel
                     );
                 },
-                description: (customer) => customer.description || "",
+                description: (customer) =>
+                    MmCustomers.truncateOneWord(customer.description || ""),
                 allowedProjects: (customer) =>
                     customer.allowedProjects ?? "",
                 usersPerProject: (customer) =>

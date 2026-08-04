@@ -1,10 +1,17 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
-import MmMatchProfileModal from "./mm-match-profile-modal.js";
+import {
+    defaultMatchWeights,
+    normalizeMatchWeights,
+    getMatchWeights,
+    setMatchWeights,
+} from "./mm-match-profile-state.js";
+import { showMessage } from "./mm-message-modal.js";
 
 export default class MmMatchProfileSelect extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
+    static unselectedProfileName = "--";
 
     #matchProfiles = null;
 
@@ -23,7 +30,10 @@ export default class MmMatchProfileSelect extends HTMLElement {
                 // If settings are not found, return an empty object
                 return {};
             } else {
-                alert("Unable to load settings.");
+                await showMessage({
+                    title: "Settings Error",
+                    message: "Unable to load settings.",
+                });
                 return Promise.reject();
             }
         }
@@ -54,13 +64,34 @@ export default class MmMatchProfileSelect extends HTMLElement {
         if (!settings) {
             settings = await MmMatchProfileSelect.getSettings();
         }
-        const matchProfiles = settings.matchProfiles || {};
-        matchProfiles["MM Default"] = MmMatchProfileModal.defaultMatchWeights;
+        const matchProfiles = {
+            "MM Default": normalizeMatchWeights(defaultMatchWeights),
+        };
+
+        Object.entries(settings.matchProfiles || {}).forEach(
+            ([profileName, matchWeights]) => {
+                if (profileName === "MM Default") {
+                    return;
+                }
+                matchProfiles[profileName] =
+                    normalizeMatchWeights(matchWeights);
+            }
+        );
 
         return matchProfiles;
     }
 
+    static getStoredMatchProfiles(matchProfiles) {
+        const storedMatchProfiles = { ...matchProfiles };
+        delete storedMatchProfiles["MM Default"];
+        return storedMatchProfiles;
+    }
+
     onSelectAction = (profileName, matchWeights) => {};
+
+    onRenderAction = (profileName, matchWeights) => {};
+
+    onLoadAction = (error) => {};
 
     connectedCallback() {
         const profilesSelect = bdoc.ele(
@@ -68,31 +99,40 @@ export default class MmMatchProfileSelect extends HTMLElement {
             bdoc.attr("id", "match-profiles"),
 
             bdoc.eventListener("change", ({ target }) => {
-                if (target.value === "--") {
-                    localStorage.removeItem("currentMatchProfileName");
+                if (
+                    target.value ===
+                    MmMatchProfileSelect.unselectedProfileName
+                ) {
+                    MmMatchProfileSelect.removeCurrentMatchProfileName();
                     return;
                 }
                 let updatedWeights = this.#matchProfiles[target.value];
                 if (!updatedWeights) {
                     return;
                 }
-                localStorage.setItem(
-                    "matchWeightsObj",
-                    JSON.stringify(updatedWeights)
-                );
+                setMatchWeights(updatedWeights);
                 MmMatchProfileSelect.setCurrentMatchProfileName(target.value);
                 this.onSelectAction(target.value, updatedWeights);
             })
         );
         bdoc.append(this.shadowRoot, profilesSelect);
-        MmMatchProfileSelect.getMatchProfiles().then((matchProfiles) => {
-            this.#matchProfiles = matchProfiles;
-            this.renderMatchProfiles();
-        });
+        MmMatchProfileSelect.getMatchProfiles()
+            .then(async (matchProfiles) => {
+                this.#matchProfiles = matchProfiles;
+                await this.renderMatchProfiles();
+                this.onLoadAction();
+            })
+            .catch((error) => {
+                this.onLoadAction(error);
+            });
     }
 
     static validateProfileChange(profileName) {
-        if (profileName === "--" || profileName === "MM Default") {
+        if (
+            !profileName ||
+            profileName === MmMatchProfileSelect.unselectedProfileName ||
+            profileName === "MM Default"
+        ) {
             return false;
         }
         return true;
@@ -100,7 +140,10 @@ export default class MmMatchProfileSelect extends HTMLElement {
 
     static async updateMatchProfile(profileName, newMatchWeights) {
         if (!MmMatchProfileSelect.validateProfileChange(profileName)) {
-            alert("Invalid profile name.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Invalid profile name.",
+            });
             return Promise.reject();
         }
         const settings = await MmMatchProfileSelect.getSettings();
@@ -108,23 +151,33 @@ export default class MmMatchProfileSelect extends HTMLElement {
             settings
         );
         if (!matchProfiles[profileName]) {
-            alert("Profile does not exist.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Profile does not exist.",
+            });
             return Promise.reject();
         }
-        matchProfiles[profileName] = newMatchWeights;
+        matchProfiles[profileName] = normalizeMatchWeights(newMatchWeights);
 
         const response = await MmMatchProfileSelect.updateSettings(settings, {
-            matchProfiles: matchProfiles,
+            matchProfiles:
+                MmMatchProfileSelect.getStoredMatchProfiles(matchProfiles),
         });
         if (response.status !== 200) {
-            alert("Unable to update match profile.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Unable to update match profile.",
+            });
             return Promise.reject();
         }
     }
 
     async deleteMatchProfile(profileName) {
         if (!MmMatchProfileSelect.validateProfileChange(profileName)) {
-            alert("Invalid profile name.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Invalid profile name.",
+            });
             return Promise.reject();
         }
         const settings = await MmMatchProfileSelect.getSettings();
@@ -132,16 +185,23 @@ export default class MmMatchProfileSelect extends HTMLElement {
             settings
         );
         if (!matchProfiles[profileName]) {
-            alert("Profile does not exist.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Profile does not exist.",
+            });
             return Promise.reject();
         }
         delete matchProfiles[profileName];
 
         const response = await MmMatchProfileSelect.updateSettings(settings, {
-            matchProfiles: matchProfiles,
+            matchProfiles:
+                MmMatchProfileSelect.getStoredMatchProfiles(matchProfiles),
         });
         if (response.status !== 200) {
-            alert("Unable to delete match profile.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Unable to delete match profile.",
+            });
             return Promise.reject();
         }
 
@@ -162,19 +222,26 @@ export default class MmMatchProfileSelect extends HTMLElement {
             settings
         );
         if (matchProfiles[profileName]) {
-            alert("Profile already exists.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Profile already exists.",
+            });
             return Promise.reject();
         }
 
-        matchProfiles[profileName] = matchWeights;
+        matchProfiles[profileName] = normalizeMatchWeights(matchWeights);
 
         this.#matchProfiles = matchProfiles;
 
         const response = await MmMatchProfileSelect.updateSettings(settings, {
-            matchProfiles: matchProfiles,
+            matchProfiles:
+                MmMatchProfileSelect.getStoredMatchProfiles(matchProfiles),
         });
         if (response.status !== 200) {
-            alert("Unable to add match profile.");
+            await showMessage({
+                title: "Match Profile Error",
+                message: "Unable to add match profile.",
+            });
             return Promise.reject();
         }
 
@@ -182,6 +249,13 @@ export default class MmMatchProfileSelect extends HTMLElement {
     };
 
     static setCurrentMatchProfileName = (profileName) => {
+        if (
+            !profileName ||
+            profileName === MmMatchProfileSelect.unselectedProfileName
+        ) {
+            MmMatchProfileSelect.removeCurrentMatchProfileName();
+            return;
+        }
         localStorage.setItem("currentMatchProfileName", profileName);
     };
 
@@ -200,12 +274,18 @@ export default class MmMatchProfileSelect extends HTMLElement {
 
         const matchProfiles = this.#matchProfiles;
 
-        let matchProfileNames = Object.keys(matchProfiles);
+        const matchProfileNames = [
+            MmMatchProfileSelect.unselectedProfileName,
+            ...Object.keys(matchProfiles),
+        ];
 
-        matchProfileNames = ["--"].concat(matchProfileNames);
-
-        const currentMatchProfileName =
+        let currentMatchProfileName =
             MmMatchProfileSelect.getCurrentMatchProfileName();
+        if (!matchProfiles[currentMatchProfileName]) {
+            currentMatchProfileName =
+                MmMatchProfileSelect.unselectedProfileName;
+            MmMatchProfileSelect.removeCurrentMatchProfileName();
+        }
 
         matchProfileNames.forEach((name) => {
             bdoc.append(
@@ -221,16 +301,15 @@ export default class MmMatchProfileSelect extends HTMLElement {
             );
         });
 
-        if (
-            currentMatchProfileName !== null &&
-            currentMatchProfileName !== ""
-        ) {
-            if (matchProfiles[currentMatchProfileName]) {
-                localStorage.setItem(
-                    "matchWeightsObj",
-                    JSON.stringify(matchProfiles[currentMatchProfileName])
-                );
-            }
+        if (matchProfiles[currentMatchProfileName]) {
+            const matchWeights = matchProfiles[currentMatchProfileName];
+            setMatchWeights(matchWeights);
+            this.onRenderAction(currentMatchProfileName, matchWeights);
+        } else {
+            this.onRenderAction(
+                MmMatchProfileSelect.unselectedProfileName,
+                getMatchWeights()
+            );
         }
     };
 }

@@ -2,6 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmMatchProfileModal from "./mm-match-profile-modal.js";
+import "./mm-loading.js";
 import {
     convertJsonToCsv,
     convertJsonToCsvNoHeader,
@@ -211,7 +212,11 @@ export default class ViewCollection extends HTMLElement {
 
     connectedCallback() {
         this.isLoading = true;
-        this.loadingElement = bdoc.ele("h2", "Loading...");
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading collection..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
 
         bdoc.append(
             this.shadowRoot,
@@ -334,7 +339,7 @@ export default class ViewCollection extends HTMLElement {
             window.location.href = "/c/Collections";
         });
 
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
         this.isLoading = false;
 
         const exportBtn  = this.shadowRoot.getElementById("export-collection-button");

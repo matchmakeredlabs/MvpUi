@@ -5,6 +5,7 @@ import MmViewCustomSets from "./mm-view-custom-sets.js";
 import MmCollections from "./mm-collections.js";
 import MmMatchProfileModal from "./mm-match-profile-modal.js";
 import MmElementCard from "./mm-element-card.js";
+import "./mm-loading.js";
 
 class MmGenerateMatches extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -16,6 +17,8 @@ class MmGenerateMatches extends HTMLElement {
     #currentlySelectedElement = null;
 
     #matchesData = null;
+    #generateMatchesPromise = null;
+    #matchesGeneration = 0;
 
     #reqIds = {
         srcDescriptorIds: [],
@@ -62,9 +65,10 @@ class MmGenerateMatches extends HTMLElement {
                     bdoc.class("anchored-sets"),
                     bdoc.id("anchored-sets"),
                     bdoc.ele(
-                        "p",
-                        "Loading anchored elements...",
-                        bdoc.id("loading")
+                        "mm-loading",
+                        bdoc.id("loading"),
+                        bdoc.attr("message", "Loading anchored elements..."),
+                        bdoc.attr("style", "display: flex; margin: 2em auto;")
                     )
                 )
             ),
@@ -131,7 +135,7 @@ class MmGenerateMatches extends HTMLElement {
                                     bdoc.ele(
                                         "span",
                                         bdoc.attr("slot", "tooltip-content"),
-                                        "Export Match Report"
+                                        "Download Match Report"
                                     )
                                 )
                             )
@@ -160,8 +164,7 @@ class MmGenerateMatches extends HTMLElement {
                             "button",
                             bdoc.class("header-button match-profile"),
                             "Match Profile"
-                        ),
-                        bdoc.ele("mm-match-profile-select")
+                        )
                     )
                 ),
                 bdoc.ele(
@@ -181,17 +184,7 @@ class MmGenerateMatches extends HTMLElement {
             bdoc.ele(
                 "script",
                 bdoc.attr("type", "module"),
-                bdoc.attr("src", "/c/script/mm-dropdown.js")
-            ),
-            bdoc.ele(
-                "script",
-                bdoc.attr("type", "module"),
                 bdoc.attr("src", "/c/script/mm-match-profile-modal.js")
-            ),
-            bdoc.ele(
-                "script",
-                bdoc.attr("type", "module"),
-                bdoc.attr("src", "/c/script/mm-match-profile-select.js")
             ),
             bdoc.ele(
                 "script",
@@ -217,23 +210,27 @@ class MmGenerateMatches extends HTMLElement {
             matchProfileButton.addEventListener("click", () => {
                 matchProfileModal.show();
             });
-        });
-        customElements.whenDefined("mm-match-profile-select").then(() => {
-            const matchProfileSelect = this.shadowRoot.querySelector(
-                "mm-match-profile-select"
-            );
-
-            matchProfileSelect.onSelectAction = () => {
+            matchProfileModal.addEventListener("match-profile-change", () => {
                 this.#matchesData = null;
+                this.#generateMatchesPromise = null;
+                this.#matchesGeneration++;
                 this.#selectElement();
-            };
+            });
         });
     }
 
     #fetchSets = async () => {
-        const setIds = JSON.parse(
+        this.#reqIds = {
+            srcDescriptorIds: [],
+            dstDescriptorIds: [],
+        };
+        this.#sets = {};
+        this.#collectionElements = {};
+
+        const rawSetIds = JSON.parse(
             localStorage.getItem("currentGenerateMatchesWorkflow")
         );
+        const setIds = this.#normalizeWorkflowSetIds(rawSetIds);
 
         if (!setIds) {
             bdoc.append(
@@ -285,17 +282,22 @@ class MmGenerateMatches extends HTMLElement {
                 switch (setType) {
                     case "custom-set":
                         for (const customSet of sets) {
-                            Object.values(customSet.descriptors).forEach(
+                            Object.values(customSet?.descriptors || {}).forEach(
                                 (descriptor) => {
-                                    this.#reqIds[
-                                        categoryToTarget[setCategory]
-                                    ].push(descriptor.id);
+                                    if (descriptor?.id) {
+                                        this.#reqIds[
+                                            categoryToTarget[setCategory]
+                                        ].push(descriptor.id);
+                                    }
                                 }
                             );
                         }
                         break;
                     case "collections":
-                        for (const collection of sets) {
+                        await Promise.all(sets.map(async (collection) => {
+                            if (!collection?.id) {
+                                return;
+                            }
                             const response = await (
                                 await MmGenerateMatches.session.fetch(
                                     "/api/collections/" + collection.id
@@ -308,23 +310,83 @@ class MmGenerateMatches extends HTMLElement {
                                 this.#reqIds[
                                     categoryToTarget[setCategory]
                                 ].concat(
-                                    response.collection.map(
+                                    (response.collection || []).map(
                                         (element) => element.id
                                     )
                                 );
-                        }
+                        }));
                         break;
                 }
             }
         }
 
-        this.shadowRoot.getElementById("loading").style.display = "none";
+        this.#dedupeReqIds();
+
+        this.shadowRoot.getElementById("loading").hide();
         this.#matchDirectionsElement.style.display = "block";
 
         this.#render();
     };
 
+    #normalizeWorkflowSetIds = (setIds) => {
+        if (!setIds) {
+            return null;
+        }
+
+        if (setIds.anchored || setIds.responding) {
+            return setIds;
+        }
+
+        if (setIds.independent || setIds.dependent) {
+            return {
+                anchored: setIds.independent || {
+                    ["custom-set"]: [],
+                    collections: [],
+                },
+                responding: setIds.dependent || {
+                    ["custom-set"]: [],
+                    collections: [],
+                },
+            };
+        }
+
+        return setIds;
+    };
+
+    #dedupeReqIds = () => {
+        this.#reqIds.srcDescriptorIds = [
+            ...new Set(this.#reqIds.srcDescriptorIds.filter(Boolean)),
+        ];
+        this.#reqIds.dstDescriptorIds = [
+            ...new Set(this.#reqIds.dstDescriptorIds.filter(Boolean)),
+        ];
+    };
+
     #generateMatches = async () => {
+        if (this.#matchesData) {
+            return this.#matchesData;
+        }
+        if (this.#generateMatchesPromise) {
+            return this.#generateMatchesPromise;
+        }
+
+        const matchesGeneration = this.#matchesGeneration;
+        this.#generateMatchesPromise = this.#fetchMatches();
+        try {
+            const matchesData = await this.#generateMatchesPromise;
+            if (matchesGeneration !== this.#matchesGeneration) {
+                return null;
+            }
+            this.#matchesData = matchesData;
+            return this.#matchesData;
+        } finally {
+            if (matchesGeneration === this.#matchesGeneration) {
+                this.#generateMatchesPromise = null;
+            }
+        }
+    };
+
+    #fetchMatches = async () => {
         const matchProfile = MmMatchProfileModal.getMatchWeights();
 
         const reqMatchProfile = {};
@@ -349,9 +411,13 @@ class MmGenerateMatches extends HTMLElement {
             }
         );
 
+        if (!response.ok) {
+            throw new Error(`Unable to generate matches: ${response.status}`);
+        }
+
         const responseJson = await response.json();
 
-        this.#matchesData = responseJson;
+        return responseJson;
     };
 
     #selectElement = () => {
@@ -382,19 +448,47 @@ class MmGenerateMatches extends HTMLElement {
         this.#matchDirectionsElement.style.display = "none";
 
         if (!this.#matchesData) {
-            this.#generateMatches().then(() => {
-                this.#selectElement(selectedElement, elementObj);
+            const selectedElementId = elementObj.id;
+            this.#generateMatches().then((matchesData) => {
+                if (
+                    matchesData &&
+                    this.#currentlySelectedElement?.elementObj?.id ===
+                        selectedElementId
+                ) {
+                    this.#selectElement();
+                }
+            }).catch((err) => {
+                matchesContainer.innerHTML = "";
+                bdoc.append(
+                    matchesContainer,
+                    bdoc.ele("p", err.message || "Unable to load matches.")
+                );
             });
-            bdoc.append(matchesContainer, bdoc.ele("p", "Loading matches..."));
+            bdoc.append(
+                matchesContainer,
+                bdoc.ele(
+                    "mm-loading",
+                    bdoc.attr("message", "Loading matches..."),
+                    bdoc.attr("style", "display: flex; margin: 2em auto;")
+                )
+            );
+            return;
+        }
+
+        const elementMatches = this.#matchesData.result.find(
+            ({ item }) => item.id === elementObj.id
+        );
+
+        if (!elementMatches) {
+            bdoc.append(
+                matchesContainer,
+                bdoc.ele("p", "No match results are available for this element.")
+            );
             return;
         }
 
         const typeSelect = this.shadowRoot.getElementById("type-select");
         const selectedType = typeSelect.value;
-
-        const elementMatches = this.#matchesData.result.find(
-            ({ item }) => item.id === elementObj.id
-        );
 
         bdoc.append(
             matchesContainer,
@@ -497,7 +591,7 @@ class MmGenerateMatches extends HTMLElement {
         let seq = 0;
         const anchoredSetsContainer =
             this.shadowRoot.getElementById("anchored-sets");
-        const anchoredSets = this.#sets.anchored;
+        const anchoredSets = this.#sets.anchored || {};
 
         const generateDisplaySet = (setName, descriptors, setId, idx) => {
             const collectionDisplay = bdoc.ele("mm-collection");
@@ -586,11 +680,6 @@ class MmGenerateMatches extends HTMLElement {
         Object.keys(anchoredSets).forEach((setType) => {
             const sets = anchoredSets[setType];
             if (Object.keys(sets).length > 0) {
-                const headerName = {
-                    ["custom-set"]: "Custom Sets",
-                    ["collections"]: "Collections",
-                };
-
                 const displaySets = [];
 
                 switch (setType) {
@@ -611,7 +700,7 @@ class MmGenerateMatches extends HTMLElement {
                         for (const collection of sets) {
                             const elements =
                                 this.#collectionElements[collection.id];
-                            const idx = seq++
+                            const idx = seq++;
                             displaySets.push(
                                 generateDisplaySet(
                                     collection.name,
@@ -621,28 +710,10 @@ class MmGenerateMatches extends HTMLElement {
                                 )
                             );
                         }
-                        break
+                        break;
                 }
 
-                bdoc.append(
-                    anchoredSetsContainer,
-                    bdoc.ele(
-                        "mm-dropdown",
-                        bdoc.attr("id", setType + "-dropdown"),
-                        bdoc.ele(
-                            "h3",
-                            bdoc.attr("slot", "button-text"),
-                            bdoc.attr("style", "margin: 0;"),
-                            headerName[setType]
-                        ),
-                        bdoc.ele(
-                            "div",
-                            bdoc.attr("slot", "dropdown-body"),
-                            bdoc.class("set-collections-container"),
-                            ...displaySets
-                        )
-                    )
-                );
+                bdoc.append(anchoredSetsContainer, ...displaySets);
             }
         });
     };

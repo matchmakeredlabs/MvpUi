@@ -5,8 +5,10 @@
  */
 
 import bdoc from "./bdoc.js";
+import "./mm-loading.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import MmMatchProfileModal from "./mm-match-profile-modal.js";
 import {
     downloadJsonSingleMatch,
     downloadCsvSingleMatch,
@@ -45,20 +47,17 @@ function toggleOneElement(element) {
     }
 }
 
-function jsonToQueryString(jsonString) {
-    // Parse the JSON string into an object
-    let jsonObject = JSON.parse(jsonString);
-
-    // Create an array of key-value pairs
-    let queryParams = [];
-    for (let key in jsonObject) {
-        if (jsonObject.hasOwnProperty(key)) {
-            queryParams.push(`${key}=${jsonObject[key]}`);
+function jsonToQueryString(jsonValue) {
+    let jsonObject = jsonValue;
+    if (typeof jsonValue === "string") {
+        try {
+            jsonObject = JSON.parse(jsonValue);
+        } catch {
+            jsonObject = {};
         }
     }
 
-    // Join the array into a single string with '&' separator
-    return queryParams.join("&");
+    return new URLSearchParams(jsonObject || {}).toString();
 }
 
 function extractStmtIDs() {
@@ -117,15 +116,40 @@ export default class Mmx {
     };
 
     static LoadJsonAsync(url, callback, arg) {
-        session
+        return session
             .fetch(url)
-            .then((response) => response.json())
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(
+                        `Request failed with status ${response.status}.`
+                    );
+                }
+                return response.json();
+            })
             .then((json) => callback(json, arg));
     }
 
     static StripKeyPrefix(key) {
+        if (!key) return "";
         let slash = key.lastIndexOf("/");
         return slash >= 0 ? key.substring(slash + 1) : key;
+    }
+
+    static ShowLoading(container, message) {
+        if (!container) return;
+        container.replaceChildren(
+            bdoc.ele(
+                "mm-loading",
+                bdoc.attr("message", message),
+                bdoc.attr("style", "display: flex; margin: 2rem auto;")
+            )
+        );
+    }
+
+    static ShowLoadError(container, message, error) {
+        console.error(error);
+        if (!container) return;
+        container.replaceChildren(bdoc.ele("p", message));
     }
 
     static CopyProperties(dst, src) {
@@ -539,11 +563,8 @@ export default class Mmx {
             }
         };
 
-        const profiles = bdoc.ele("mm-match-profile-select");
-
         mmx_dict.descriptorTypeFilter = typeSelect;
         container.appendChild(typeSelect);
-        container.appendChild(profiles);
 
         // Append the flexbox container to the element
         element.appendChild(container);
@@ -880,21 +901,35 @@ export default class Mmx {
         let k = Mmx.StripKeyPrefix(key);
 
         let eleType = mmx_dict.descriptorTypeFilter.value;
-        mmx_dict.searchKey = key;
+        mmx_dict.searchKey = k;
         mmx_dict.searchEleType = eleType;
         if (suppressId !== undefined) mmx_dict.searchSuppressId = suppressId;
 
-        let matchWeights = jsonToQueryString(
-            localStorage.getItem("matchWeightsObj")
+        const matchWeights = jsonToQueryString(
+            MmMatchProfileModal.getMatchWeights()
         );
         let url = `/descriptors?searchKey=${encodeURIComponent(
-            key
+            k
         )}&eleType=${eleType}`;
         if (matchWeights) {
             url += `&${matchWeights}`;
         }
 
-        Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsByKey_Callback);
+        Mmx.ShowLoading(
+            mmx_dict.descriptorMatchResults,
+            "Loading matches..."
+        );
+        return Mmx.LoadJsonAsync(
+            url,
+            Mmx.SearchDescriptorsByKey_Callback
+        ).catch((error) => {
+            Mmx.ShowLoadError(
+                mmx_dict.descriptorMatchResults,
+                "Unable to load matches.",
+                error
+            );
+            return null;
+        });
     }
 
     static SearchDescriptorsByKey_Callback(result) {
@@ -903,7 +938,8 @@ export default class Mmx {
         Mmx.RenderDescriptorSearchResult(
             result,
             mmx_dict.descriptorMatchResults,
-            "newPage"
+            "newPage",
+            mmx_dict.searchSuppressId
         );
     }
 
@@ -933,19 +969,36 @@ export default class Mmx {
 
     static SearchDescriptorsById(stmtId) {
         let url = "/descriptors/" + encodeURIComponent(stmtId);
-        Mmx.LoadJsonAsync(url, Mmx.SearchDescriptorsById_Callback);
+        Mmx.ShowLoading(
+            mmx_dict.keywordSearchResult,
+            "Loading descriptor..."
+        );
+        return Mmx.LoadJsonAsync(
+            url,
+            Mmx.SearchDescriptorsById_Callback
+        ).catch((error) => {
+            Mmx.ShowLoadError(
+                mmx_dict.keywordSearchResult,
+                "Unable to load the descriptor.",
+                error
+            );
+            return null;
+        });
     }
 
     static SearchDescriptorsById_Callback(result) {
         if (mmx_dict.keywordSearchResult == undefined) return;
 
-        console.log("what the balls!!");
         Mmx.RenderDescriptorSearchResult(
             result,
             mmx_dict.keywordSearchResult,
-            false
+            false,
+            null
         );
-        mmx_dict.afterSearchDescriptorsById();
+        const afterSearch = mmx_dict.afterSearchDescriptorsById;
+        if (typeof afterSearch === "function") {
+            return afterSearch();
+        }
     }
 
     static RenderDescriptor(val, matchButton) {
@@ -1047,12 +1100,17 @@ export default class Mmx {
         return descriptor;
     }
 
-    static RenderDescriptorSearchResult(result, ele, matchButton) {
+    static RenderDescriptorSearchResult(
+        result,
+        ele,
+        matchButton,
+        suppressId = null
+    ) {
         ele.innerHTML = "";
 
         let count = 0;
         for (let val of result.descriptors) {
-            if (val.id != mmx_dict.searchSuppressId) {
+            if (suppressId == null || val.id != suppressId) {
                 ele.appendChild(this.RenderDescriptor(val, matchButton));
                 ++count;
             }
@@ -1072,7 +1130,6 @@ export default class Mmx {
         var form = document.getElementById("p_lrmiForm");
         form.sourceData = value;
         console.log(value.mainEntityId);
-
         for (let p in value) {
             let ele = document.getElementById("p_" + p);
             if (ele) {
@@ -1255,7 +1312,9 @@ export default class Mmx {
 
     static OnClickFindMatchesToMatchResult(event) {
         let descriptor = event.target.parentElement.parentElement;
-        window.location.href = `?stmtId=${descriptor.mmxId}`;
+        window.location.href =
+            `?stmtId=${encodeURIComponent(descriptor.mmxId)}` +
+            `&key=${encodeURIComponent(descriptor.mmxKey)}`;
     }
 
     static OnClickFindMatchesToSearchResult(event) {
@@ -1263,12 +1322,14 @@ export default class Mmx {
     }
 
     static MatchFirstSearchResult() {
-        Mmx.SelectAndMatchDescriptor(
+        return Mmx.SelectAndMatchDescriptor(
             mmx_dict.keywordSearchResult.firstElementChild
         );
     }
 
-    static SelectAndMatchDescriptor(descriptor) {
+    static SelectDescriptor(descriptor) {
+        if (!descriptor) return null;
+
         // Deselect
         if (mmx_dict.selectedDescriptor) {
             mmx_dict.selectedDescriptor.classList.remove("mm_active");
@@ -1277,10 +1338,18 @@ export default class Mmx {
         // Select new
         mmx_dict.selectedDescriptor = descriptor;
         descriptor.classList.add("mm_active");
+        return descriptor;
+    }
+
+    static SelectAndMatchDescriptor(descriptor) {
+        if (!Mmx.SelectDescriptor(descriptor)) return null;
 
         // Search
         console.log(descriptor);
-        Mmx.SearchDescriptorsByKey(descriptor.mmxKey, descriptor.mmxId);
+        return Mmx.SearchDescriptorsByKey(
+            descriptor.mmxKey,
+            descriptor.mmxId
+        );
     }
 
     static GenerateLrmiFromForm() {
@@ -1369,7 +1438,7 @@ export default class Mmx {
         let url;
         if (record.id) {
             verb = "PUT";
-            url = "/api/descriptors/" + record.id;
+            url = "/api/descriptors";
         } else {
             verb = "POST";
             url = "/api/descriptors";
@@ -1385,6 +1454,7 @@ export default class Mmx {
         if (response.ok) {
             alert("Saved!");
         } else {
+            const text = await response.text();
             alert(
                 `Save error: ${response.status} ${response.statusText}: ${text}`
             );
@@ -1449,12 +1519,11 @@ export default class Mmx {
         return "";
     }
 
-    static OnPageLoad(keyElement, rootElement) {
+    static async OnPageLoad(keyElement, rootElement) {
         let root = document;
         if (rootElement) {
             root = rootElement;
         }
-
         // Check for style override in the query string
         let query = new URLSearchParams(window.location.search);
         {
@@ -1522,12 +1591,28 @@ export default class Mmx {
         if (hasFindDescriptor) {
             let stmtId = query.get("stmtId");
             if (stmtId) {
-                mmx_dict.afterSearchDescriptorsById = function () {
-                    Mmx.MatchFirstSearchResult();
-                    mmx_dict.afterSearchDescriptorsById = undefined;
-                };
+                const key = query.get("key");
+                if (key) {
+                    mmx_dict.afterSearchDescriptorsById = function () {
+                        Mmx.SelectDescriptor(
+                            mmx_dict.keywordSearchResult.firstElementChild
+                        );
+                        mmx_dict.afterSearchDescriptorsById = undefined;
+                    };
 
-                Mmx.SearchDescriptorsById(stmtId);
+                    await Promise.all([
+                        Mmx.SearchDescriptorsById(stmtId),
+                        Mmx.SearchDescriptorsByKey(key, stmtId),
+                    ]);
+                } else {
+                    mmx_dict.afterSearchDescriptorsById = function () {
+                        const matchRequest = Mmx.MatchFirstSearchResult();
+                        mmx_dict.afterSearchDescriptorsById = undefined;
+                        return matchRequest;
+                    };
+
+                    await Mmx.SearchDescriptorsById(stmtId);
+                }
             } else if (query.get("src") == "dynamic") {
                 console.log("dynamic");
                 if (sessionStorage.matchDescriptor) {
@@ -1536,7 +1621,7 @@ export default class Mmx {
                     mmx_dict.keywordSearchResult.appendChild(
                         Mmx.RenderDescriptor(val, true)
                     );
-                    Mmx.MatchFirstSearchResult();
+                    await Mmx.MatchFirstSearchResult();
                 }
             }
         }
@@ -1566,7 +1651,7 @@ export default class Mmx {
             let url = `/descriptors?searchKey=${mmx_dict.searchKey}&eleType=${
                 mmx_dict.searchEleType
             }&${jsonToQueryString(
-                localStorage.getItem("matchWeightsObj")
+                MmMatchProfileModal.getMatchWeights()
             )}&matchThreshold=${matchThresholdInput.value}`;
             Mmx.LoadJsonAsync(url, function (result) {
                 if (fileType === "json") {
@@ -1582,103 +1667,42 @@ export default class Mmx {
         if (downloadCSVButton) {
             downloadCSVButton.onclick = () => downloadJsonOrCsv("csv");
         }
-        // Get the modal
-        let match_modal = root.getElementById("match-modal");
-        let matchSettings = [
-            "alg-w-cc",
-            "alg-w-cp",
-            "alg-w-pc",
-            "alg-w-pp",
-            "alg-t-cc",
-            "alg-t-cp",
-            "alg-t-pc",
-            "alg-t-pp",
-            "alg-w-k",
-            "alg-t-k",
-            "alg-w-c",
-            "alg-t-c",
-            "alg-w-p",
-            "alg-t-p",
-            "alg-w-d",
-            "alg-t-d",
-        ];
-
-        // Get the button that opens the modal
-        let match_console_button = root.getElementById("match-console-button");
-
-        // Get the <span> element that closes the modal
-        let close_console = root.querySelectorAll(".close_console");
-        let modifyBtn = root.querySelector(".modify-btn_console");
-
-        // When the user clicks on the button, open the modal
-        if (match_console_button) {
-            match_console_button.onclick = function () {
-                match_modal.style.display = "block";
-                let matchWeightsObj = JSON.parse(
-                    localStorage.getItem("matchWeightsObj")
-                );
-                if (!matchWeightsObj) {
-                    matchWeightsObj = {
-                        "alg-w-cc": "2",
-                        "alg-t-cc": "0",
-                        "alg-w-cp": "1",
-                        "alg-t-cp": "0",
-                        "alg-w-pc": "0.5",
-                        "alg-t-pc": "0",
-                        "alg-w-pp": "0.25",
-                        "alg-t-pp": "0",
-                        "alg-w-k": "1",
-                        "alg-t-k": "0",
-                        "alg-w-c": "1",
-                        "alg-t-c": "0",
-                        "alg-w-p": "1",
-                        "alg-t-p": "0",
-                        "alg-w-d": "0",
-                        "alg-t-d": "0",
-                    };
-                }
-                for (let property of matchSettings) {
-                    let item = root.getElementById(property);
-                    item.innerHTML = matchWeightsObj[property];
-                }
+        const matchProfileModal = root.querySelector(
+            "mm-match-profile-modal"
+        );
+        const matchProfileButton = root.getElementById(
+            "match-console-button"
+        );
+        if (matchProfileButton && matchProfileModal) {
+            matchProfileButton.onclick = () => {
+                matchProfileModal.descriptorId = mmx_dict.searchSuppressId;
+                matchProfileModal.show();
             };
+            matchProfileModal.addEventListener(
+                "match-profile-change",
+                () => {
+                    if (mmx_dict.searchKey) {
+                        Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
+                    }
+                }
+            );
         }
 
-        // When the user clicks on close_console(x), close the modal
-        for (let close of close_console) {
-            if (close) {
-                close.onclick = function () {
-                    match_modal.style.display = "none";
-                    downloadModal.style.display = "none";
-                };
-            }
-        }
-
-        if (modifyBtn) {
-            modifyBtn.onclick = function () {
-                match_modal.style.display = "none";
-                const stmtId = mmx_dict.searchSuppressId;
-                window.location.href = `/c/MatchConsole?id=${stmtId}`;
+        const downloadClose = downloadModal?.querySelector(".close_console");
+        if (downloadClose) {
+            downloadClose.onclick = () => {
+                downloadModal.style.display = "none";
             };
         }
 
         // When the user clicks anywhere outside of the modal, close it
         window.onclick = function (event) {
-            if (event.target == match_modal) {
-                match_modal.style.display = "none";
-            }
             if (event.target == downloadModal) {
                 downloadModal.style.display = "none";
             }
         };
 
         localStorage.setItem("matchFilter", null);
-
-        const profiles = root.querySelector("mm-match-profile-select");
-
-        profiles.onSelectAction = () => {
-            Mmx.SearchDescriptorsByKey(mmx_dict.searchKey);
-        };
     }
 }
 

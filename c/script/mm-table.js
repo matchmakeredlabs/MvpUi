@@ -1,4 +1,5 @@
 import bdoc from "./bdoc.js";
+import "./mm-loading.js";
 
 class MmTable extends HTMLElement {
     static observedAttributes = [
@@ -8,6 +9,10 @@ class MmTable extends HTMLElement {
     ];
 
     #data = [];
+
+    #hasData = false;
+
+    #totalCount = null;
 
     #cols = {};
 
@@ -46,10 +51,17 @@ class MmTable extends HTMLElement {
 
     loadingText;
 
+    countText;
+
     set data(data) {
         this.#data = data;
+        this.#hasData = true;
 
         this.render();
+    }
+
+    set totalCount(totalCount) {
+        this.#totalCount = Number.isFinite(totalCount) ? totalCount : null;
     }
 
     set cols(cols) {
@@ -62,9 +74,15 @@ class MmTable extends HTMLElement {
 
     connectedCallback() {
         this.loadingText = bdoc.ele(
-            "h3",
-            "Loading...",
-            bdoc.attr("style", "text-align: center; font-size: 20px;")
+            "mm-loading",
+            bdoc.attr("message", "Loading table..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+        this.countText = bdoc.ele(
+            "div",
+            bdoc.class("table-count"),
+            bdoc.attr("hidden", ""),
+            bdoc.attr("aria-live", "polite")
         );
 
         bdoc.append(
@@ -81,10 +99,12 @@ class MmTable extends HTMLElement {
             ),
             bdoc.ele(
                 "div",
-                bdoc.class("table-container"),
-                this.loadingText,
+                bdoc.class("table-content"),
+                this.countText,
                 bdoc.ele(
                     "div",
+                    bdoc.class("table-container"),
+                    this.loadingText,
                     bdoc.ele(
                         "table",
                         bdoc.ele(
@@ -92,14 +112,6 @@ class MmTable extends HTMLElement {
                             bdoc.ele(
                                 "tr",
                                 bdoc.id("table-titles")
-                                // bdoc.ele(
-                                //     "h3",
-                                //     "Loading...",
-                                //     bdoc.attr(
-                                //         "style",
-                                //         "text-align: center; font-size: 20px;"
-                                //     )
-                                // )
                                 // ...Object.keys(this.#cols).map((colKey, i) => {
                                 //     const heading = bdoc.ele(
                                 //         "th",
@@ -129,6 +141,8 @@ class MmTable extends HTMLElement {
                 )
             )
         );
+
+        if (this.#hasData) this.render();
     }
 
     getShadowRoot() {
@@ -136,8 +150,18 @@ class MmTable extends HTMLElement {
     }
 
     render() {
-        if (this.loadingText) {
-            this.loadingText.style.display = "none";
+        if (this.loadingText && this.#hasData) {
+            this.loadingText.hide();
+        }
+
+        if (this.countText && this.#hasData) {
+            const visibleCount = this.#data.length;
+            const totalCount = this.#totalCount ?? visibleCount;
+            this.countText.textContent =
+                visibleCount === totalCount
+                    ? `${totalCount} ${totalCount === 1 ? "item" : "items"}`
+                    : `${visibleCount} of ${totalCount} items`;
+            this.countText.hidden = false;
         }
 
         const tableHead = this.shadowRoot.getElementById("table-titles");

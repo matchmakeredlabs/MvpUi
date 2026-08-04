@@ -3,6 +3,7 @@ import config from "/config.js";
 import bsession from "./bsession.js";
 import MmViewCustomSets from "./mm-view-custom-sets.js";
 import MmCollections from "./mm-collections.js";
+import "./mm-loading.js";
 
 class MmMatchSets extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -29,9 +30,9 @@ class MmMatchSets extends HTMLElement {
 
     connectedCallback() {
         this.loadingElement = bdoc.ele(
-            "h2",
-            "Loading...",
-            bdoc.attr("style", "margin: 2em; text-align: center;")
+            "mm-loading",
+            bdoc.attr("message", "Loading match sets..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
         );
 
         const customSetsContainer = bdoc.ele(
@@ -81,57 +82,53 @@ class MmMatchSets extends HTMLElement {
                     bdoc.attr("style", "width: 365px")
                 ),
                 bdoc.ele(
-                    "button",
-                    bdoc.class("header-button reset"),
-                    "Clear",
-                    bdoc.eventListener("click", () => {
-                        localStorage.removeItem(
-                            "currentGenerateMatchesWorkflow"
-                        );
-                        for (const setCategory in this.#sets) {
-                            for (const setType in this.#sets[setCategory]) {
-                                for (const set of this.#sets[setCategory][
-                                    setType
-                                ]) {
-                                    const identifierType =
-                                        setType === "custom-set"
-                                            ? "name"
-                                            : "id";
-                                    this.#removeSet(
-                                        set[identifierType],
-                                        setCategory,
-                                        setType
-                                    );
-                                }
-                            }
-                        }
-                        customElements
-                            .whenDefined("mm-filter-table")
-                            .then(async () => {
-                                const tables =
-                                    this.shadowRoot.querySelectorAll(
-                                        "mm-filter-table"
-                                    );
-
-                                for (const table of tables) {
-                                    const tableRoot =
-                                        await table.getInnerTableRoot();
-
-                                    const inputs =
-                                        tableRoot.querySelectorAll("input");
-                                    for (const input of inputs) {
-                                        input.checked = false;
-                                    }
-                                }
-                            });
-                    })
-                ),
-                bdoc.ele(
                     "div",
                     bdoc.class("header-button-group"),
                     bdoc.ele(
-                        "mm-match-profile-select",
-                        bdoc.attr("style", "margin-top: 1em")
+                        "button",
+                        bdoc.class("header-button reset"),
+                        "Clear",
+                        bdoc.eventListener("click", () => {
+                            localStorage.removeItem(
+                                "currentGenerateMatchesWorkflow"
+                            );
+                            for (const setCategory in this.#sets) {
+                                for (const setType in this.#sets[setCategory]) {
+                                    for (const set of this.#sets[setCategory][
+                                        setType
+                                    ]) {
+                                        const identifierType =
+                                            setType === "custom-set"
+                                                ? "name"
+                                                : "id";
+                                        this.#removeSet(
+                                            set[identifierType],
+                                            setCategory,
+                                            setType
+                                        );
+                                    }
+                                }
+                            }
+                            customElements
+                                .whenDefined("mm-filter-table")
+                                .then(async () => {
+                                    const tables =
+                                        this.shadowRoot.querySelectorAll(
+                                            "mm-filter-table"
+                                        );
+
+                                    for (const table of tables) {
+                                        const tableRoot =
+                                            await table.getInnerTableRoot();
+
+                                        const inputs =
+                                            tableRoot.querySelectorAll("input");
+                                        for (const input of inputs) {
+                                            input.checked = false;
+                                        }
+                                    }
+                                });
+                        })
                     ),
                     bdoc.ele(
                         "button",
@@ -258,11 +255,6 @@ class MmMatchSets extends HTMLElement {
                 "script",
                 bdoc.attr("type", "module"),
                 bdoc.attr("src", "/c/script/mm-match-profile-modal.js")
-            ),
-            bdoc.ele(
-                "script",
-                bdoc.attr("type", "module"),
-                bdoc.attr("src", "/c/script/mm-match-profile-select.js")
             )
         );
 
@@ -351,7 +343,7 @@ class MmMatchSets extends HTMLElement {
                 );
         }
 
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
 
         this.shadowRoot
             .querySelectorAll(".dropdown-container")
@@ -507,7 +499,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Anchored,Responding,Described"
+                        "name,subject,publisher,Project,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -568,16 +560,24 @@ class MmMatchSets extends HTMLElement {
                             ) {
                                 currentValue = "Null";
                             }
+
+                            if (currentValue.length > 15 && !currentValue.includes(" ")) {
+                                return currentValue.slice(0, 12) + "...";
+                            }
                             return currentValue;
                         };
                         return acc;
                     }, {}),
-                    ["Project"]: (collection) =>
-                        collection._projectId || "Null",
+                    ["Project"]: (collection) => {
+                        const project = collection._projectId || "Null";
+
+                        if (project.length > 15 && !project.includes(" ")) {
+                            return project.slice(0, 12) + "...";
+                        }
+                        return project; },
                     ["Described"]: (collection) =>
                         bdoc.ele(
                             "td",
-                            bdoc.attr("style", "text-align: center"),
                             `${collection.percentDescribed}%`
                         ),
                     ["Anchored"]: (collection, root) =>
@@ -598,8 +598,8 @@ class MmMatchSets extends HTMLElement {
 
                 collectionsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Responding"]: "width: 1%",
-                    ["Anchored"]: "width: 1%",
+                    ["Responding"]: "width: 1%; text-align: center",
+                    ["Anchored"]: "width: 1%; text-align: center",
                 };
 
                 collectionsTable.customSorts = {
@@ -698,7 +698,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Described,Anchored,Responding"
+                        "name,subject,publisher,Project,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -721,6 +721,12 @@ class MmMatchSets extends HTMLElement {
                         displayCustomSets
                     );
 
+                customSetsTable.customColStyles = {
+                    ["Described"]: "width: 1%",
+                    ["Responding"]: "width: 1%; text-align: center",
+                    ["Anchored"]: "width: 1%; text-align: center",
+                };
+
                 customSetsTable.generateCols = (displayProperties) => ({
                     name: (customSet) =>
                         bdoc.ele(
@@ -741,15 +747,24 @@ class MmMatchSets extends HTMLElement {
                             ) {
                                 currentValue = "Null";
                             }
+
+                            if (currentValue.length > 15 && !currentValue.includes(" ")) {
+                                return currentValue.slice(0, 12) + "...";
+                            }
                             return currentValue;
                         };
                         return acc;
                     }, {}),
-                    Project: (customSet) => customSet._projectId || "Null",
+                    Project: (customSet) => {
+                        const project = customSet._projectId || "Null";
+                        if (project.length > 15 && !project.includes(" ")) {
+                            return project.slice(0, 12) + "...";
+                        }
+                        return project;
+                    },
                     ["Described"]: (customSet) =>
                         bdoc.ele(
                             "td",
-                            bdoc.attr("style", "text-align: center"),
                             `${customSet.percentDescribed}%`
                         ),
                     ["Anchored"]: (customSet, root) =>

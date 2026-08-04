@@ -209,6 +209,16 @@ $w_type: 4em;
     background-color: #f9f9f9;
     cursor: pointer;
     }
+
+.search-type-ai-options {
+    display: flex;
+    margin-left: 0.75rem;
+}
+
+.search-type-text-option,
+.search-type-ai-options .toggle-button {
+    border-radius: 2px;
+}
 .active {
     background-color: #0068b3;
     color: white;
@@ -300,5 +310,4 @@ $w_type: 4em;
 #mmx_find_and_select.transparent {
     opacity: 0;
 }
-
 

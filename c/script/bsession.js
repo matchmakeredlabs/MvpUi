@@ -10,7 +10,7 @@ export default class bsession {
     // and the Authorization (sent) headers. It also defaults to the configured back-end origin.
     // Path must start with a slash and must not include a domain name.
     // Options is the same as used with conventional fetch.
-    async fetch(path, options = null) {
+    async fetch(path, options = null, sessionOptions = {}) {
         const url = this.baseUrl + path;
         const sessionKey = "bsession_" + this.tag;
 
@@ -57,8 +57,10 @@ export default class bsession {
 
             if (response.status === 401) {
                 localStorage.removeItem(sessionKey);
-                alert("Session expired. Please log in again.");
-                auth.redirectToLogin();
+                if (sessionOptions.redirectOnUnauthorized !== false) {
+                    alert("Session expired. Please log in again.");
+                    auth.redirectToLogin();
+                }
             }
 
             return response;

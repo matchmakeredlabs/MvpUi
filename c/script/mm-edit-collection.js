@@ -2,6 +2,9 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmElementCard from "./mm-element-card.js";
+import "./mm-prompt-modal.js";
+import { confirmMessage, showMessage } from "./mm-message-modal.js";
+import "./mm-loading.js";
 
 export default class EditCollection extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -15,13 +18,18 @@ export default class EditCollection extends HTMLElement {
 
     handleError = async (response) => {
         console.log(response);
+        let message = "An error occurred.";
         try {
             const body = await response.json();
-            if (body.error) alert(body.error);
-            if (body.log) alert(body.log[0].message);
-        } catch (e) {
-            alert("An error occurred");
-        }
+            message =
+                body.log?.[0]?.message ||
+                body.error ||
+                body.message ||
+                body.Message ||
+                body.title ||
+                message;
+        } catch (e) {}
+        await showMessage({ title: "Request Error", message });
     };
 
     static fetchCollection = async (collectionId) => {
@@ -41,7 +49,7 @@ export default class EditCollection extends HTMLElement {
                 method: "DELETE",
             }
         );
-        if (response.status !== 200) {
+        if (!response.ok) {
             return Promise.reject(response);
         }
         return response;
@@ -50,7 +58,10 @@ export default class EditCollection extends HTMLElement {
     loadingElement;
 
     connectedCallback() {
-        this.loadingElement = bdoc.ele("h2", "Loading...");
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading collection...")
+        );
 
         bdoc.append(
             this.shadowRoot,
@@ -92,6 +103,8 @@ export default class EditCollection extends HTMLElement {
                 )
             ),
             bdoc.ele("mm-create-element-modal"),
+            bdoc.ele("mm-prompt-modal"),
+            bdoc.ele("mm-loading", bdoc.attr("overlay"), bdoc.attr("hidden")),
             bdoc.script("mm-collection.js"),
             bdoc.script("mm-element-card.js"),
             bdoc.script("mm-create-element-modal.js")
@@ -108,18 +121,26 @@ export default class EditCollection extends HTMLElement {
             window.location.href = "/c/ManageCollections";
         }
 
-        const loadedCollection = await EditCollection.fetchCollection(
-            collectionId
-        ).catch((response) => {
+        let loadedCollection;
+        try {
+            loadedCollection = await EditCollection.fetchCollection(
+                collectionId
+            );
+        } catch (response) {
+            this.loadingElement.hide();
             if (response.status === 404) {
-                alert("Collection not found");
+                await showMessage({
+                    title: "Collection Not Found",
+                    message: "The requested collection could not be found.",
+                });
             } else {
-                this.handleError(response);
+                await this.handleError(response);
             }
             window.location.href = "/c/ManageCollections";
-        });
+            return;
+        }
 
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
@@ -135,18 +156,24 @@ export default class EditCollection extends HTMLElement {
                 bdoc.class("custom-checkbox"),
                 bdoc.id("public-checkbox"),
                 topLevelEle._public ? bdoc.attr("checked") : "",
-                bdoc.eventListener("change", (e) => {
+                bdoc.eventListener("change", async (e) => {
                     const isPublic = e.target.checked;
-                    MmElementCard.updateElement({
-                        ...topLevelEle,
-                        _public: isPublic,
-                    }).then(
-                        () => {},
-                        (response) => {
-                            e.target.checked = !isPublic;
-                            this.handleError(response);
-                        }
+                    const loading = this.shadowRoot.querySelector(
+                        "mm-loading[overlay]"
                     );
+                    loading.show("Updating collection...");
+                    try {
+                        await MmElementCard.updateElement({
+                            ...topLevelEle,
+                            _public: isPublic,
+                        });
+                    } catch (response) {
+                        e.target.checked = !isPublic;
+                        loading.hide();
+                        await this.handleError(response);
+                    } finally {
+                        loading.hide();
+                    }
                 })
             ),
             bdoc.ele("span", "Public")
@@ -260,37 +287,67 @@ export default class EditCollection extends HTMLElement {
                         "style",
                         "background-color: #D32F2F; color: white; cursor: pointer; border: none; border-radius: 2px; background-image: none; width: auto; height: auto; "
                     ),
-                    bdoc.eventListener("click", () => {
+                    bdoc.eventListener("click", async () => {
                         const isLeaf = element.intHasPart.length === 0;
                         let canDelete;
+                        const promptModal = this.shadowRoot.querySelector(
+                            "mm-prompt-modal"
+                        );
                         if (isRoot) {
                             canDelete =
-                                prompt(
-                                    'Are you sure you want to delete the collection? This will delete every element in the collection, and is irreversible. Type "collectionDelete" to confirm.'
-                                ) === "collectionDelete";
+                                (await promptModal.ask({
+                                    title: "Delete Collection",
+                                    message:
+                                        "This deletes every element in the collection and cannot be undone.",
+                                    label: 'Type "collectionDelete" to confirm',
+                                    placeholder: "collectionDelete",
+                                    confirmText: "Delete collection",
+                                    expectedValue: "collectionDelete",
+                                })) !== null;
                         } else if (isLeaf) {
-                            canDelete = confirm(
-                                "Are you sure you want to delete this element?"
-                            );
+                            canDelete = await confirmMessage({
+                                title: "Delete Element",
+                                message:
+                                    "Are you sure you want to delete this element?",
+                                confirmText: "Delete element",
+                            });
                         } else {
                             canDelete =
-                                prompt(
-                                    "Are you sure you want to delete this element? This will delete all of its children. Type 'yes' to confirm."
-                                ) === "yes";
+                                (await promptModal.ask({
+                                    title: "Delete Element",
+                                    message:
+                                        "This deletes the element and all of its children.",
+                                    label: 'Type "yes" to confirm',
+                                    placeholder: "yes",
+                                    confirmText: "Delete element",
+                                    expectedValue: "yes",
+                                })) !== null;
                         }
                         if (!canDelete) return;
 
                         console.log(element);
 
-                        EditCollection.deleteElement(element.id)
-                            .then(() => {
-                                if (isRoot) {
-                                    window.location.href =
-                                        "/c/ManageCollections";
-                                }
-                                collectionEle.deleteDescriptor(element);
-                            })
-                            .catch(this.handleError);
+                        const loading = this.shadowRoot.querySelector(
+                            "mm-loading[overlay]"
+                        );
+                        loading.show(
+                            isRoot
+                                ? "Deleting collection..."
+                                : "Deleting element..."
+                        );
+                        try {
+                            await EditCollection.deleteElement(element.id);
+                            if (isRoot) {
+                                window.location.href = "/c/ManageCollections";
+                                return;
+                            }
+                            collectionEle.deleteDescriptor(element);
+                        } catch (response) {
+                            loading.hide();
+                            await this.handleError(response);
+                        } finally {
+                            loading.hide();
+                        }
                     })
                 );
                 return bdoc.ele(

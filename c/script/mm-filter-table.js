@@ -243,7 +243,7 @@ class MmFilterTable extends HTMLElement {
             "input",
             bdoc.id("keywordElement"),
             bdoc.attr("type", "text"),
-            bdoc.attr("placeholder", "Enter keyword..."),
+            bdoc.attr("placeholder", "Enter search term..."),
             bdoc.eventListener("keydown", (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();
@@ -394,7 +394,7 @@ class MmFilterTable extends HTMLElement {
                 ...filterContainers
             ),
 
-            bdoc.ele("b", "Search by Keyword: "),
+            bdoc.ele("b", "Search: "),
             keywordElement,
             addKeyword,
             bdoc.ele("br")
@@ -463,6 +463,7 @@ class MmFilterTable extends HTMLElement {
         const table = this.shadowRoot.querySelector("mm-table");
         customElements.whenDefined("mm-table").then(() => {
             table.cols = this.generateCols(this.#displayProperties);
+            table.totalCount = this.#data.length;
             table.data = dataFilteredByFilter;
         });
     }

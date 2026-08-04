@@ -3,6 +3,9 @@ import config from "/config.js";
 import bsession from "./bsession.js";
 import MmViewCustomSets from "./mm-view-custom-sets.js";
 import MmMatchProfileSelect from "./mm-match-profile-select.js";
+import "./mm-prompt-modal.js";
+import { confirmMessage, showMessage } from "./mm-message-modal.js";
+import "./mm-loading.js";
 
 export default class MmViewCustomSet extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -15,13 +18,18 @@ export default class MmViewCustomSet extends HTMLElement {
     #currentCustomSetName;
 
     handleError = async (response) => {
+        let message = "An error occurred.";
         try {
             const body = await response.json();
-            if (body.error) alert(body.error);
-            if (body.log) alert(body.log[0].message);
-        } catch (e) {
-            alert("An error occurred");
-        }
+            message =
+                body.log?.[0]?.message ||
+                body.error ||
+                body.message ||
+                body.Message ||
+                body.title ||
+                message;
+        } catch (e) {}
+        await showMessage({ title: "Save Error", message });
     };
 
     #collection;
@@ -47,9 +55,27 @@ export default class MmViewCustomSet extends HTMLElement {
     };
 
     saveCustomSet = async () => {
-        const name = prompt("Provide a name for this custom set.").trim();
+        const name = await this.shadowRoot
+            .querySelector("mm-prompt-modal")
+            .ask({
+                title: "Save Custom Set",
+                message: "Provide a name for this custom set.",
+                label: "Custom set name",
+                confirmText: "Save",
+            });
+        if (name === null) return;
 
-        const settings = await MmMatchProfileSelect.getSettings();
+        const loading = this.shadowRoot.querySelector("mm-loading");
+        loading.show("Loading settings...");
+
+        let settings;
+        try {
+            settings = await MmMatchProfileSelect.getSettings();
+        } catch (error) {
+            loading.hide();
+            return;
+        }
+        loading.hide();
         const customSets = settings.customSets || {};
 
         const currentCustomSet = JSON.parse(
@@ -57,32 +83,46 @@ export default class MmViewCustomSet extends HTMLElement {
         );
 
         if (name in customSets) {
-            if (
-                !confirm(
-                    `A custom set with the name "${name}" already exists. Do you want to overwrite it?`
-                )
-            ) {
+            const shouldOverwrite = await confirmMessage({
+                title: "Overwrite Custom Set",
+                message: `A custom set named "${name}" already exists.`,
+                confirmText: "Overwrite",
+            });
+            if (!shouldOverwrite) {
                 return;
             }
         }
 
-        if (name !== null && name !== "") {
-            customSets[name] = currentCustomSet;
-            const newSettings = {
-                ...settings,
-                customSets: customSets,
-            };
+        customSets[name] = currentCustomSet;
+        const newSettings = {
+            ...settings,
+            customSets: customSets,
+        };
 
-            MmMatchProfileSelect.updateSettings(settings, newSettings).then(
-                (response) => {
-                    if (!response.ok) {
-                        this.handleError(response);
-                        return;
-                    }
-                    alert(`Custom set ${name} has been saved!`);
-                    window.location.href = "./GenerateReport";
-                }
+        loading.show("Saving custom set...");
+        try {
+            const response = await MmMatchProfileSelect.updateSettings(
+                settings,
+                newSettings
             );
+            loading.hide();
+            if (!response.ok) {
+                await this.handleError(response);
+                return;
+            }
+            await showMessage({
+                title: "Custom Set Saved",
+                message: `Custom set ${name} has been saved.`,
+            });
+            window.location.href = "./GenerateReport";
+        } catch (error) {
+            loading.hide();
+            await showMessage({
+                title: "Save Error",
+                message: error?.message || "Unable to save the custom set.",
+            });
+        } finally {
+            loading.hide();
         }
     };
 
@@ -143,10 +183,13 @@ export default class MmViewCustomSet extends HTMLElement {
                         "mm-element-card",
                         bdoc.id("descriptor-card"),
                         bdoc.attr("style", "display: block; margin-top: 50px"),
-                        bdoc.attr("show-describe-links")
+                        bdoc.attr("show-describe-links"),
+                        bdoc.attr("suppress-description-edit")
                     )
                 )
             ),
+            bdoc.ele("mm-prompt-modal"),
+            bdoc.ele("mm-loading", bdoc.attr("overlay"), bdoc.attr("hidden")),
 
             bdoc.script("mm-collection.js"),
             bdoc.script("mm-element-card.js")
@@ -155,14 +198,16 @@ export default class MmViewCustomSet extends HTMLElement {
     }
 
     #renderCollection = async () => {
-        this.#collection = await this.fetchCustomSet().catch((response) => {
-            if (response.status === 404) {
-                alert("Collection not found");
-            } else {
-                this.handleError(response);
-            }
+        try {
+            this.#collection = await this.fetchCustomSet();
+        } catch (error) {
+            await showMessage({
+                title: "Custom Set Error",
+                message: error?.message || "Unable to load the custom set.",
+            });
             window.location.href = "/c/Collections";
-        });
+            return;
+        }
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 

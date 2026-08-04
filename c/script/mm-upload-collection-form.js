@@ -11,6 +11,8 @@ export default class MmUploadCollectionForm extends HTMLElement {
 
     #formGroupsContainer;
 
+    #isSubmitting = false;
+
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "parent-element") {
             this.#parentElement = JSON.parse(newValue);
@@ -66,6 +68,17 @@ export default class MmUploadCollectionForm extends HTMLElement {
     #submitUploadCollection = async (event) => {
         event.preventDefault();
 
+        if (this.#isSubmitting) {
+            return;
+        }
+
+        if (!event.target.checkValidity()) {
+            event.target.reportValidity();
+            return;
+        }
+
+        this.#isSubmitting = true;
+
         const formData = new FormData(event.target);
 
         const projectId = formData.get("project");
@@ -82,13 +95,17 @@ export default class MmUploadCollectionForm extends HTMLElement {
             fileType,
         };
 
-        const response = await MmCreateElementForm.createElement(
-            file,
-            projectId,
-            fileTypeToMIMEType[fileType]
-        );
+        try {
+            const response = await MmCreateElementForm.createElement(
+                file,
+                projectId,
+                fileTypeToMIMEType[fileType]
+            );
 
-        this.onSettled(variables, response);
+            await this.onSettled(variables, response);
+        } finally {
+            this.#isSubmitting = false;
+        }
     };
 
     getInnerForm = () => {

@@ -246,6 +246,10 @@ export default class MmCreateGroupForm extends HTMLElement {
         );
     };
 
+    loadOwners = async () => {
+        await this.#populateOwners();
+    };
+
     connectedCallback() {
         const roleChoices = ["none", ...MmAddMemberForm.roles];
 
@@ -400,8 +404,6 @@ export default class MmCreateGroupForm extends HTMLElement {
 
         roleGroup.style.display = "block";
         updateRoleLabel();
-        this.#preloadOwners();
-        this.#populateOwners();
     }
 }
 

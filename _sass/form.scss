@@ -63,7 +63,8 @@
     text-decoration: underline;
 }
 
-mm-self-register-form[hidden] {
+mm-self-register-form[hidden],
+mm-forgot-password-form[hidden] {
     display: none;
 }
 

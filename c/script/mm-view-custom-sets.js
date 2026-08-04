@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import MmMatchProfileSelect from "./mm-match-profile-select.js";
 import MmCollections from "./mm-collections.js";
+import "./mm-loading.js";
 
 export default class MmViewCustomSets extends HTMLElement {
     constructor() {
@@ -12,9 +13,9 @@ export default class MmViewCustomSets extends HTMLElement {
 
     connectedCallback() {
         this.loadingElement = bdoc.ele(
-            "h2",
-            "Loading...",
-            bdoc.attr("style", "margin: 2em; text-align: center;")
+            "mm-loading",
+            bdoc.attr("message", "Loading custom sets..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
         );
 
         bdoc.append(
@@ -253,7 +254,7 @@ export default class MmViewCustomSets extends HTMLElement {
             displayCustomSets = {};
         }
 
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
 
         customElements.whenDefined("mm-filter-table").then(() => {
             const customSetsFilterTableContainer =

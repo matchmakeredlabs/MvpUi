@@ -1,7 +1,6 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
-import MmCustomers from "./mm-customers.js";
 
 export default class MmGroups extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -15,28 +14,24 @@ export default class MmGroups extends HTMLElement {
     };
 
     static getOwnedById = (group) => {
-        return group.customerId || group.customer || group.project || group.projectId || "";
+        return group.customerId || group.customer || group.project || group.projectId || group.org || "";
     };
 
-    static getCustomerLabel = (customerMap, customerId) => {
-        if (!customerId) return "";
-        const customer = customerMap[customerId];
-        return customer?.name || customer?.id || customerId;
+    static truncateOneWord = (value, maxLength = 15) => {
+        if (!value) return value;
+        const text = `${value}`;
+        return text.length > maxLength && !/\s/.test(text)
+            ? `${text.slice(0, maxLength - 3)}...`
+            : text;
     };
 
-    static getOwnedByLabel = (group, customerMap) => {
+    static getOwnedByLabel = (group) => {
         const ownerType = MmGroups.getOwnedByType(group);
         const ownerId = MmGroups.getOwnedById(group);
-        if (!ownerId) return ownerType;
-
-        if (ownerType === "Organization") {
-            return `${ownerType}: ${MmGroups.getCustomerLabel(customerMap, ownerId)}`;
-        }
-
-        return `${ownerType}: ${ownerId}`;
+        return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
     };
 
-    static renderOwnedBy = (group, cachedAcl, customerMap) => {
+    static renderOwnedBy = (group) => {
         const ownerType = MmGroups.getOwnedByType(group);
         const ownerId = MmGroups.getOwnedById(group);
 
@@ -45,18 +40,13 @@ export default class MmGroups extends HTMLElement {
         }
 
         if (ownerType === "Organization") {
-            const label = MmGroups.getCustomerLabel(customerMap, ownerId);
-            if (!MmGroups.canWriteCustomer(ownerId)) {
-                return `${ownerType}: ${label}`;
-            }
-
             return bdoc.ele(
                 "span",
                 `${ownerType}: `,
                 bdoc.ele(
                     "a",
                     bdoc.attr("href", `/c/Customer?id=${ownerId}`),
-                    label
+                    ownerId
                 )
             );
         }
@@ -74,14 +64,6 @@ export default class MmGroups extends HTMLElement {
         );
     };
 
-    static fetchCustomers = async () => {
-        try {
-            return await MmCustomers.fetchCustomers();
-        } catch {
-            return [];
-        }
-    };
-
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -89,7 +71,15 @@ export default class MmGroups extends HTMLElement {
 
     static fetchGroups = async () => {
         const response = await MmGroups.session.fetch("/api/groups");
-        return (await response.json()).items;
+        const text = await response.text();
+        const body = text ? JSON.parse(text) : {};
+
+        if (!response.ok) {
+            const message = body.Message || body.message || body.title || text || response.statusText;
+            throw new Error(`HTTP ${response.status} ${response.statusText}: ${message}`);
+        }
+
+        return body.items || [];
     };
 
     static canReadGroups = () => {
@@ -118,15 +108,7 @@ export default class MmGroups extends HTMLElement {
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl[group.project]?.includes("WriteGroup") || false;
-    };
-
-    static canWriteCustomer = (customerId) => {
-        const acl = MmGroups.session.getCachedAcl();
-        if (!acl) return false;
-        if ("admin" in acl) return true;
-
-        return acl[customerId]?.includes("WriteCustomer") || false;
+        return acl[MmGroups.getOwnedById(group)]?.includes("WriteGroup") || false;
     };
 
     static canWriteProject = (projectId) => {
@@ -177,14 +159,14 @@ export default class MmGroups extends HTMLElement {
                   ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("style", "height: 100%"),
+                bdoc.class("list-table"),
                 bdoc.attr("filter-properties", "ownedByType"),
                 bdoc.attr(
                     "filter-display-names",
                     JSON.stringify({ ownedByType: "Owned by" })
                 ),
                 bdoc.attr("sort-properties", "name,Owned by"),
-                bdoc.attr("first-col-width", "40%"),
+                bdoc.attr("first-col-width", "25%"),
             ),
             bdoc.ele("mm-create-group-modal"),
             bdoc.script("mm-filter-table.js"),
@@ -217,8 +199,10 @@ export default class MmGroups extends HTMLElement {
 
         // Browser back/forward can restore this page from BFCache with stale data.
         // Re-render on pageshow so newly created groups appear without manual refresh.
-        this.#onPageShow = () => {
-            this.#reloadPage();
+        this.#onPageShow = (event) => {
+            if (event.persisted) {
+                this.#reloadPage();
+            }
         };
         window.addEventListener("pageshow", this.#onPageShow);
 
@@ -237,25 +221,18 @@ export default class MmGroups extends HTMLElement {
 
         filterTable.data = [];
 
-        let loadingRow = this.shadowRoot.getElementById("groups-loading");
-        if (!loadingRow) {
-            loadingRow = bdoc.ele(
-                "p",
-                bdoc.attr("id", "groups-loading"),
-                "Loading groups..."
+        let groups;
+        try {
+            groups = await MmGroups.fetchGroups();
+        } catch (err) {
+            await customElements.whenDefined("mm-filter-table");
+            filterTable.loadData([]);
+            bdoc.append(
+                this.shadowRoot,
+                bdoc.ele("p", `Failed to load groups: ${err.message}`)
             );
-            this.shadowRoot.appendChild(loadingRow);
+            return;
         }
-
-        const [groups, customers] = await Promise.all([
-            MmGroups.fetchGroups(),
-            MmGroups.fetchCustomers(),
-        ]);
-        const customerMap = customers.reduce((acc, customer) => {
-            acc[customer.id] = customer;
-            return acc;
-        }, {});
-        const cachedAcl = MmGroups.session.getCachedAcl();
 
         Promise.all([
             customElements.whenDefined("mm-filter-table"),
@@ -268,18 +245,19 @@ export default class MmGroups extends HTMLElement {
 
             filterTable.generateCols = () => ({
                 name: (group) => {
+                    const label = MmGroups.truncateOneWord(group.name);
                     if (!MmGroups.canWriteGroup(group)) {
-                        return group.name;
+                        return label;
                     }
 
                     return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Group?id=${group.id}`),
-                        group.name
+                        bdoc.attr("title", group.name),
+                        label
                     );
                 },
-                ["Owned by"]: (group) =>
-                    MmGroups.renderOwnedBy(group, cachedAcl, customerMap),
+                ["Owned by"]: (group) => MmGroups.renderOwnedBy(group),
                 description: (group) =>
                     group.description
                         ? bdoc.ele(
@@ -292,9 +270,7 @@ export default class MmGroups extends HTMLElement {
 
             filterTable.customSorts = {
                 ["Owned by"]: (a, b) =>
-                    MmGroups.getOwnedByLabel(a, customerMap).localeCompare(
-                        MmGroups.getOwnedByLabel(b, customerMap)
-                    ),
+                    MmGroups.getOwnedByLabel(a).localeCompare(MmGroups.getOwnedByLabel(b)),
                 name: (a, b) =>
                     a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1,
             };
@@ -314,8 +290,6 @@ export default class MmGroups extends HTMLElement {
                     createGroupModal.show();
                 };
             }
-
-            loadingRow?.remove();
         });
     };
 }

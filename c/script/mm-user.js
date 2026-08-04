@@ -35,6 +35,7 @@
 import bdoc from './bdoc.js';
 import config from '/config.js';
 import bsession from './bsession.js';
+import './mm-loading.js';
 
 class MmUser extends HTMLElement {
     static observedAttributes = ["userid"];
@@ -50,6 +51,7 @@ class MmUser extends HTMLElement {
     //#internals; // This class doesn't need #internals but elements that participate in forms do need it
     #connected = false;
     #userid;
+    loadingElement;
 
     constructor() {
         // Call the constructor on the parent class
@@ -66,6 +68,12 @@ class MmUser extends HTMLElement {
     connectedCallback() {
         // Here we use bdoc to create the shadow DOM but an alternative would be to assign an HTML string to #shadow.innerHTML
 
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading user..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
         const propList = bdoc.ele("dl");
         for (const prop of MmUser.#properties) {
             if (!prop.label) continue; // Suppress username and anything else with special treatment
@@ -77,19 +85,23 @@ class MmUser extends HTMLElement {
             );
         }
 
+        const userForm = bdoc.ele("div", bdoc.class("user-form"),
+            bdoc.attr("style", "display: none;"),
+            bdoc.ele("div", bdoc.class("button-bar"),
+                bdoc.ele("button", bdoc.eventListener("click", (event) => this.#onClickSave(this, event)), "Save")
+            ),
+            bdoc.ele("h2", bdoc.id("name")),
+            bdoc.ele("h3", "Details"),
+            propList
+        );
+
         bdoc.append(this.shadowRoot,
             bdoc.ele("link",
                 bdoc.attr("rel", "stylesheet"),
                 bdoc.attr("href", "/c/res/mm-controls.css"),
             ),
-            bdoc.ele("div", bdoc.class("user-form"),
-                bdoc.ele("div", bdoc.class("button-bar"),
-                    bdoc.ele("button", bdoc.eventListener("click", (event) => this.#onClickSave(this, event)), "Save")
-                ),
-                bdoc.ele("h2", bdoc.id("name")),
-                bdoc.ele("h3", "Details"),
-                propList
-            )
+            this.loadingElement,
+            userForm
         );
 
         const userid = this.getAttribute("userid");
@@ -117,6 +129,8 @@ class MmUser extends HTMLElement {
             const val = data[prop.id];
             shadow.getElementById(prop.id).textContent = val ? val : "";
         }
+        this.loadingElement.hide();
+        shadow.querySelector(".user-form").style.display = "";
     }
 
     async #onClickSave(ele, event) {

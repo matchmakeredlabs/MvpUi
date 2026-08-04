@@ -12,6 +12,14 @@ export default class MmProjects extends HTMLElement {
         return customer?.name || customer?.id || customerId;
     };
 
+    static truncateOneWord = (value, maxLength = 15) => {
+        if (!value) return value;
+        const text = `${value}`;
+        return text.length > maxLength && !/\s/.test(text)
+            ? `${text.slice(0, maxLength - 3)}...`
+            : text;
+    };
+
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -92,10 +100,11 @@ export default class MmProjects extends HTMLElement {
             ),
             bdoc.ele(
                 "div",
-                bdoc.attr("style", "max-height: 80%; margin: 20px"),
+                bdoc.class("list-table-container"),
                 bdoc.ele(
                     "mm-filter-table",
-                    bdoc.attr("sort-properties", "name,Customer,description")
+                    bdoc.attr("sort-properties", "name,Customer,description"),
+                    bdoc.attr("first-col-width", "25%")
                 ),
                 bdoc.ele(
                     "script",
@@ -125,32 +134,39 @@ export default class MmProjects extends HTMLElement {
             const table = this.shadowRoot.querySelector("mm-filter-table");
             table.generateCols = () => ({
                 name: (project) => {
+                    const label = MmProjects.truncateOneWord(project.name);
                     if (!MmProjects.canWriteProject(project.id)) {
-                        return project.name;
+                        return label;
                     }
 
                     return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Project?id=${project.id}`),
-                        project.name
+                        bdoc.attr("title", project.name),
+                        label
                     );
                 },
                 Organization: (project) => {
                     const customerId = project.customerId || project.customer || "";
                     if (!customerId) return "";
                     const label = MmProjects.getCustomerLabel(customerMap, customerId);
+                    const displayLabel = MmProjects.truncateOneWord(label);
                     if (!MmProjects.canWriteCustomer(customerId)) {
-                        return label;
+                        return displayLabel;
                     }
 
                     return bdoc.ele(
                         "a",
                         bdoc.attr("href", `/c/Customer?id=${customerId}`),
-                        label
+                        bdoc.attr("title", label),
+                        displayLabel
                     );
                 },
                 description: (project) => project.description,
             });
+            table.customColStyles = {
+                Organization: "width: 25%",
+            };
             table.customSorts = {
                 name: (a, b) => a.name.localeCompare(b.name),
                 Customer: (a, b) =>

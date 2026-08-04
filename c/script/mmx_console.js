@@ -2,6 +2,8 @@ import bdoc from "/c/script/bdoc.js";
 import config from "/config.js";
 import bsession from "/c/script/bsession.js";
 import MmMatchProfileSelect from "./mm-match-profile-select";
+import "./mm-prompt-modal.js";
+import { showMessage } from "./mm-message-modal.js";
 const session = new bsession(config.backEndUrl, config.sessionTag);
 
 let defaultMatchWeightsObj = {
@@ -21,6 +23,8 @@ let defaultMatchWeightsObj = {
     "alg-t-p": "0",
     "alg-w-d": "0",
     "alg-t-d": "0",
+    "alg-w-tl": "0",
+    "alg-t-tl": "0",
 };
 
 function jsonToQueryString(jsonString) {
@@ -263,9 +267,15 @@ function minimizeDisplay() {
 function updateMatchProfile() {
     let profiles = document.getElementById("match-profiles");
     if (profiles.value === "MM Default") {
-        alert("Can not update MM Default Match Profile");
+        showMessage({
+            title: "Match Profile",
+            message: "Cannot update MM Default Match Profile.",
+        });
     } else if (profiles.value === "--") {
-        alert("Can not update null match profile.");
+        showMessage({
+            title: "Match Profile",
+            message: "No match profile selected.",
+        });
     } else {
         let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
         let weightsObject = getCurrentWeightValues();
@@ -286,16 +296,33 @@ function getCurrentWeightValues() {
     return weightsObject;
 }
 
-function addMatchProfile() {
+function getPromptModal() {
+    let modal = document.querySelector("mm-prompt-modal");
+    if (!modal) {
+        modal = document.createElement("mm-prompt-modal");
+        document.body.appendChild(modal);
+    }
+    return modal;
+}
+
+async function addMatchProfile() {
     let weightsObject = getCurrentWeightValues();
 
     let matchProfiles = JSON.parse(localStorage.getItem("matchProfiles"));
-    let profileName = prompt("Please provide a name for this match profile:");
-    if (profileName !== null) {
-        matchProfiles[profileName] = weightsObject;
-        localStorage.setItem("matchProfiles", JSON.stringify(matchProfiles));
-        alert(`${profileName} has been saved as a Match Profile!`);
-    }
+    const profileName = await getPromptModal().ask({
+        title: "Add Match Profile",
+        message: "Please provide a name for this match profile.",
+        label: "Match profile name",
+        confirmText: "Add",
+    });
+    if (profileName === null) return;
+
+    matchProfiles[profileName] = weightsObject;
+    localStorage.setItem("matchProfiles", JSON.stringify(matchProfiles));
+    await showMessage({
+        title: "Match Profile Saved",
+        message: `${profileName} has been saved as a Match Profile.`,
+    });
 
     let profiles = document.getElementById("match-profiles");
 
@@ -326,7 +353,10 @@ function deleteMatchProfile() {
     let profiles = document.getElementById("match-profiles");
     let valueToDelete = profiles.value;
     if (valueToDelete == "MM Default") {
-        alert("Cannot delete MM Default Match Profile");
+        showMessage({
+            title: "Match Profile",
+            message: "Cannot delete MM Default Match Profile.",
+        });
     } else {
         removeOption(valueToDelete);
 

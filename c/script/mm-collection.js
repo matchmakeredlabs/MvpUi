@@ -1,4 +1,5 @@
 import bdoc from "./bdoc.js";
+import "./mm-loading.js";
 
 class MmCollection extends HTMLElement {
     constructor() {
@@ -41,7 +42,11 @@ class MmCollection extends HTMLElement {
     };
 
     connectedCallback() {
-        (this.loadingElement = bdoc.ele("div", "Loading...")),
+        (this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading collection..."),
+            bdoc.attr("style", "display: flex; margin: 1em auto;")
+        )),
             bdoc.append(
                 this.shadowRoot,
                 this.loadingElement,
@@ -55,7 +60,7 @@ class MmCollection extends HTMLElement {
     }
 
     loadDescriptors(collection) {
-        this.loadingElement.style.display = "none";
+        this.loadingElement.hide();
         for (let desc of collection) {
             this.descriptors[desc.intId] = desc;
             this.idToIntId[desc.id] = desc.intId;

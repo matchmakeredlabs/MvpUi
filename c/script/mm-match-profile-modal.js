@@ -1,9 +1,18 @@
 import bdoc from "./bdoc.js";
+import "./mm-loading.js";
+import {
+    matchSettings,
+    defaultMatchWeights,
+    normalizeMatchWeights,
+    getMatchWeights,
+    setMatchWeights,
+} from "./mm-match-profile-state.js";
 
 export default class MmMatchProfileModal extends HTMLElement {
     static observedAttributes = ["descriptorId"];
 
     descriptorId = null;
+    #profileSelectPromise;
 
     constructor() {
         super();
@@ -16,83 +25,77 @@ export default class MmMatchProfileModal extends HTMLElement {
         }
     }
 
-    static matchSettings = [
-        "alg-w-cc",
-        "alg-w-cp",
-        "alg-w-pc",
-        "alg-w-pp",
-        "alg-t-cc",
-        "alg-t-cp",
-        "alg-t-pc",
-        "alg-t-pp",
-        "alg-w-k",
-        "alg-t-k",
-        "alg-w-c",
-        "alg-t-c",
-        "alg-w-p",
-        "alg-t-p",
-        "alg-w-d",
-        "alg-t-d",
-    ];
+    static matchSettings = matchSettings;
 
-    static defaultMatchWeights = {
-        "alg-w-cc": "2",
-        "alg-t-cc": "0",
-        "alg-w-cp": "1",
-        "alg-t-cp": "0",
-        "alg-w-pc": "0.5",
-        "alg-t-pc": "0",
-        "alg-w-pp": "0.25",
-        "alg-t-pp": "0",
-        "alg-w-k": "1",
-        "alg-t-k": "0",
-        "alg-w-c": "1",
-        "alg-t-c": "0",
-        "alg-w-p": "1",
-        "alg-t-p": "0",
-        "alg-w-d": "0",
-        "alg-t-d": "0",
-    };
+    static defaultMatchWeights = defaultMatchWeights;
+
+    static normalizeMatchWeights(matchWeightsObj) {
+        return normalizeMatchWeights(matchWeightsObj);
+    }
 
     static getMatchWeights() {
-        let matchWeightsObj = JSON.parse(
-            localStorage.getItem("matchWeightsObj")
-        );
-        if (
-            !matchWeightsObj ||
-            matchWeightsObj === null ||
-            Object.keys(matchWeightsObj).length === 0
-        ) {
-            matchWeightsObj = MmMatchProfileModal.defaultMatchWeights;
-        }
-        return matchWeightsObj;
+        return getMatchWeights();
     }
 
     static setMatchWeights(matchWeightsObj) {
-        if (
-            !matchWeightsObj ||
-            matchWeightsObj === null ||
-            Object.keys(matchWeightsObj).length === 0
-        ) {
-            return;
-        }
-        localStorage.setItem(
-            "matchWeightsObj",
-            JSON.stringify(matchWeightsObj)
-        );
+        setMatchWeights(matchWeightsObj);
     }
 
-    show() {
-        this.shadowRoot.getElementById("match-modal").style.display = "block";
-        const matchWeightsObj = MmMatchProfileModal.getMatchWeights();
-        for (let property of MmMatchProfileModal.matchSettings) {
-            let item = this.shadowRoot.getElementById(property);
-            item.innerHTML = matchWeightsObj[property];
+    #renderWeights(matchWeightsObj) {
+        const normalizedMatchWeights =
+            MmMatchProfileModal.normalizeMatchWeights(matchWeightsObj);
+        for (const property of MmMatchProfileModal.matchSettings) {
+            const item = this.shadowRoot.getElementById(property);
+            if (item) item.textContent = normalizedMatchWeights[property];
         }
+    }
+
+    async show() {
+        this.shadowRoot.getElementById("match-modal").style.display = "block";
+        this.#renderWeights(MmMatchProfileModal.getMatchWeights());
+        await this.#ensureProfileSelect();
     }
 
     hide() {
         this.shadowRoot.getElementById("match-modal").style.display = "none";
+    }
+
+    #ensureProfileSelect() {
+        if (this.#profileSelectPromise) return this.#profileSelectPromise;
+
+        this.#profileSelectPromise = import(
+            "./mm-match-profile-select.js"
+        ).then(() => {
+            const selectorContainer = this.shadowRoot.getElementById(
+                "match-profile-selector-container"
+            );
+            const loading = bdoc.ele(
+                "mm-loading",
+                bdoc.attr("message", "Loading profiles...")
+            );
+            const profileSelect = bdoc.ele("mm-match-profile-select");
+            profileSelect.hidden = true;
+            profileSelect.onRenderAction = (_, matchWeights) => {
+                this.#renderWeights(matchWeights);
+            };
+            profileSelect.onSelectAction = (profileName, matchWeights) => {
+                this.#renderWeights(matchWeights);
+                this.dispatchEvent(
+                    new CustomEvent("match-profile-change", {
+                        bubbles: true,
+                        composed: true,
+                        detail: { profileName, matchWeights },
+                    })
+                );
+            };
+            profileSelect.onLoadAction = (error) => {
+                loading.remove();
+                if (!error) profileSelect.hidden = false;
+            };
+            bdoc.append(selectorContainer, loading, profileSelect);
+        });
+
+        return this.#profileSelectPromise;
     }
 
     connectedCallback() {
@@ -133,6 +136,15 @@ export default class MmMatchProfileModal extends HTMLElement {
                         "h2",
                         bdoc.attr("style", "text-align: center;"),
                         "Match Settings"
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.id("match-profile-selector-container"),
+                        bdoc.attr(
+                            "style",
+                            "display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 1rem;"
+                        ),
+                        bdoc.ele("label", "Match Profile")
                     ),
                     bdoc.ele("br"),
                     // First table
@@ -212,6 +224,7 @@ export default class MmMatchProfileModal extends HTMLElement {
                                 "Conceptual Understanding",
                                 "Process",
                                 "Pedagogy",
+                                "Time and Location",
                             ].map((header) =>
                                 bdoc.ele(
                                     "th",
@@ -228,7 +241,7 @@ export default class MmMatchProfileModal extends HTMLElement {
                                 bdoc.class("row-label_console"),
                                 "Weight"
                             ),
-                            ...["alg-w-k", "alg-w-c", "alg-w-p", "alg-w-d"].map(
+                            ...["alg-w-k", "alg-w-c", "alg-w-p", "alg-w-d", "alg-w-tl"].map(
                                 (id) =>
                                     bdoc.ele(
                                         "td",
@@ -245,7 +258,7 @@ export default class MmMatchProfileModal extends HTMLElement {
                                 bdoc.class("row-label_console"),
                                 "Threshold"
                             ),
-                            ...["alg-t-k", "alg-t-c", "alg-t-p", "alg-t-d"].map(
+                            ...["alg-t-k", "alg-t-c", "alg-t-p", "alg-t-d", "alg-t-tl"].map(
                                 (id) =>
                                     bdoc.ele(
                                         "td",

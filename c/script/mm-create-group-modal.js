@@ -63,6 +63,7 @@ class MmCreateGroupModal extends HTMLElement {
 
     show = () => {
         customElements.whenDefined("mm-modal").then(() => {
+            this.shadowRoot.querySelector("mm-create-group-form")?.loadOwners?.();
             this.shadowRoot.querySelector("mm-modal").show();
         });
     };
