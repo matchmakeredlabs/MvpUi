@@ -1,5 +1,6 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
+import { enablePasswordVisibility } from "./mm-password-visibility.js";
 import "./mm-loading.js";
 
 class MmPasswordResetForm extends HTMLElement {
@@ -50,6 +51,8 @@ class MmPasswordResetForm extends HTMLElement {
                 )
             )
         );
+
+        enablePasswordVisibility(this.shadowRoot);
     }
 
     #field(id, label, type, autocomplete) {

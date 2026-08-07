@@ -11,8 +11,8 @@ autht: "anonymous"
             <button type="button" id="show_register" class="link-button">Create account</button>
         </p>
         <div id="form_msg" class="message" aria-live="polite" style="visibility: hidden;"></div>
-        <p><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" required /></p>
-        <p><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" required /></p>
+        <p class="login-field"><label for="username">Username:</label> <input type="text" name="username" id="username" autocomplete="username" required /></p>
+        <p class="login-field"><label for="password">Password:</label> <input type="password" name="password" id="password" autocomplete="current-password" required /></p>
         <p class="auth-form-actions">
             <button id="login_submit" style="cursor: pointer;" type="submit">Login</button>
             <mm-loading id="login_loading" message="Signing in..." hidden style="margin-left: 0.75rem;"></mm-loading>
@@ -30,10 +30,12 @@ autht: "anonymous"
 
 import config from '/config.js';
 import bsession from '/c/script/bsession.js';
+import { enablePasswordVisibility } from '/c/script/mm-password-visibility.js';
 import '/c/script/mm-self-register-form.js';
 import '/c/script/mm-forgot-password-form.js';
 import '/c/script/mm-loading.js';
 const session = new bsession(config.backEndUrl, config.sessionTag);
+enablePasswordVisibility(document.getElementById("login_form"));
 
 async function login(un, pw) {
     const payload = {

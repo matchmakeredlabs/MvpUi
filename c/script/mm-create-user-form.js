@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
+import { enablePasswordVisibility } from "./mm-password-visibility.js";
 
 export default class MmCreateUserForm extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -125,6 +126,8 @@ export default class MmCreateUserForm extends HTMLElement {
                 bdoc.ele("slot", bdoc.attr("name", "form-footer"))
             )
         );
+
+        enablePasswordVisibility(this.shadowRoot);
     }
 }
 

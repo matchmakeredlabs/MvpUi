@@ -1,5 +1,6 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
+import { enablePasswordVisibility } from "./mm-password-visibility.js";
 import "./mm-loading.js";
 
 class MmSelfRegisterForm extends HTMLElement {
@@ -81,6 +82,8 @@ class MmSelfRegisterForm extends HTMLElement {
                 )
             )
         );
+
+        enablePasswordVisibility(this.shadowRoot);
     }
 
     #field(id, label, type, autocomplete) {

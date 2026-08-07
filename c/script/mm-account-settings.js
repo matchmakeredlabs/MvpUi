@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
+import { enablePasswordVisibility } from "./mm-password-visibility.js";
 import "./mm-loading.js";
 
 class MmAccountSettings extends HTMLElement {
@@ -133,6 +134,7 @@ class MmAccountSettings extends HTMLElement {
             )
         );
 
+        enablePasswordVisibility(this.shadowRoot);
         this.#loadFullName(userId);
     }
 
