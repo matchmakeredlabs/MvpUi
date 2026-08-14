@@ -62,10 +62,10 @@ class MmCollection extends HTMLElement {
     loadDescriptors(collection) {
         this.loadingElement.hide();
         for (let desc of collection) {
-            this.descriptors[desc.intId] = desc;
-            this.idToIntId[desc.id] = desc.intId;
-            if (desc.intId > this.maxIntId) {
-                this.maxIntId = desc.intId;
+            this.descriptors[desc._intId] = desc;
+            this.idToIntId[desc.id] = desc._intId;
+            if (desc._intId > this.maxIntId) {
+                this.maxIntId = desc._intId;
             }
         }
         MmCollection.expand(0, this.shadowRoot, this);
@@ -80,12 +80,12 @@ class MmCollection extends HTMLElement {
         }
     }
 
-    dfsWithPostfixCallback = (intId, callback) => {
-        const descriptor = this.descriptors[intId];
+    dfsWithPostfixCallback = (_intId, callback) => {
+        const descriptor = this.descriptors[_intId];
         if (!descriptor) {
             return;
         }
-        for (const childId of descriptor.intHasPart) {
+        for (const childId of descriptor._intHasPart) {
             this.dfsWithPostfixCallback(childId, callback);
         }
         callback(descriptor);
@@ -113,7 +113,7 @@ class MmCollection extends HTMLElement {
         }
 
         const descriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${referencedDescriptor.intId}"]`
+            `li[feid="${referencedDescriptor._intId}"]`
         );
         if (descriptorEle) {
             const span = descriptorEle.querySelector("span");
@@ -128,7 +128,7 @@ class MmCollection extends HTMLElement {
         }
 
         if (propagate && keysToUpdate.length > 0) {
-            for (const childId of referencedDescriptor.intHasPart) {
+            for (const childId of referencedDescriptor._intHasPart) {
                 this.dfsWithPostfixCallback(childId, (desc) => {
                     for (const key of keysToUpdate) {
                         desc[key] = referencedDescriptor[key];
@@ -143,7 +143,7 @@ class MmCollection extends HTMLElement {
             this.descriptors[this.idToIntId[descriptor.isPartOfId]];
 
         const parentDescriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${parentDescriptor.intId}"]`
+            `li[feid="${parentDescriptor._intId}"]`
         );
 
         const described = !!(descriptor.key && descriptor.key.length > 0);
@@ -151,36 +151,33 @@ class MmCollection extends HTMLElement {
             parentDescriptor.key && parentDescriptor.key.length > 0
         );
 
-        let leafCountToDecrement = descriptor.leafCount;
-        let describedLeafCountToDecrement = descriptor.leafWithKeyCount;
+        let leafCountToDecrement = descriptor._leafCount;
+        let describedLeafCountToDecrement = descriptor._leafWithKeyCount;
 
-        const decrementLeafCounts = (descriptorEle, intId) => {
+        const decrementLeafCounts = (descriptorEle, _intId) => {
             const descriptorLi = this.#getLi(descriptorEle);
             const currentDescriptor = this.descriptors[descriptorLi.feid];
-            currentDescriptor.leafCount -= leafCountToDecrement;
-            if (!descriptorEle || intId === 0) {
+            currentDescriptor._leafCount -= leafCountToDecrement;
+            if (!descriptorEle || _intId === 0) {
                 // if no parent, remove from root
-                this.descriptors[0].leafCount -= leafCountToDecrement;
+                this.descriptors[0]._leafCount -= leafCountToDecrement;
                 if (described) {
-                    this.descriptors[0].leafWithKeyCount -=
+                    this.descriptors[0]._leafWithKeyCount -=
                         leafCountToDecrement;
-
-                    // if (currentDescriptor.leafCount < 0) currentDescriptor.leafCount = 0;
                 }
                 return;
             }
 
             if (described) {
-                currentDescriptor.leafWithKeyCount -=
+                currentDescriptor._leafWithKeyCount -=
                     describedLeafCountToDecrement;
 
-                // if (currentDescriptor.leafWithKeyCount < 0) currentDescriptor.leafWithKeyCount = 0;
             }
             const descButton = descriptorLi.querySelector("button.mmb_tri");
 
             if (
-                currentDescriptor.leafCount ===
-                currentDescriptor.leafWithKeyCount
+                currentDescriptor._leafCount ===
+                currentDescriptor._leafWithKeyCount
             ) {
                 descButton.classList.remove("mmb_partial");
                 descButton.classList.add("mmb_desc");
@@ -192,7 +189,7 @@ class MmCollection extends HTMLElement {
             );
         };
         // if parent only has this descriptor, parent will become leaf, so leaf count increases by one
-        if (parentDescriptor.intHasPart.length === 1) {
+        if (parentDescriptor._intHasPart.length === 1) {
             leafCountToDecrement--;
 
             // if (leafCountToDecrement < 0) leafCountToDecrement = 0;
@@ -212,19 +209,19 @@ class MmCollection extends HTMLElement {
                 );
             }
         }
-        decrementLeafCounts(parentDescriptorEle, parentDescriptor.intId);
+        decrementLeafCounts(parentDescriptorEle, parentDescriptor._intId);
 
         const descriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${descriptor.intId}"]`
+            `li[feid="${descriptor._intId}"]`
         );
         const parentUl = descriptorEle.parentElement;
         parentUl.removeChild(descriptorEle);
 
-        parentDescriptor.intHasPart = parentDescriptor.intHasPart.filter(
-            (id) => id !== descriptor.intId
+        parentDescriptor._intHasPart = parentDescriptor._intHasPart.filter(
+            (id) => id !== descriptor._intId
         );
-        this.dfsWithPostfixCallback(descriptor.intId, (desc) => {
-            delete this.descriptors[desc.intId];
+        this.dfsWithPostfixCallback(descriptor._intId, (desc) => {
+            delete this.descriptors[desc._intId];
             delete this.idToIntId[desc.id];
         });
 
@@ -232,34 +229,34 @@ class MmCollection extends HTMLElement {
     }
 
     addNewDescriptor(descriptor) {
-        descriptor.intId = ++this.maxIntId;
-        descriptor.intHasPart = [];
-        descriptor.leafCount = 1;
-        descriptor.leafWithKeyCount = 0;
+        descriptor._intId = ++this.maxIntId;
+        descriptor._intHasPart = [];
+        descriptor._leafCount = 1;
+        descriptor._leafWithKeyCount = 0;
 
         const parentDescriptor =
             this.descriptors[this.idToIntId[descriptor.isPartOfId]];
 
         const parentDescriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${parentDescriptor.intId}"]`
+            `li[feid="${parentDescriptor._intId}"]`
         );
 
         const incrementLeafCounts = (descriptorEle) => {
             if (!descriptorEle) {
                 // if no parent, add to root
-                this.descriptors[0].leafCount++;
+                this.descriptors[0]._leafCount++;
                 return;
             }
 
             const descriptorLi = this.#getLi(descriptorEle);
             const currentDescriptor = this.descriptors[descriptorLi.feid];
-            currentDescriptor.leafCount++;
+            currentDescriptor._leafCount++;
 
             const descButton = descriptorLi.querySelector("button.mmb_tri");
 
             if (
-                currentDescriptor.leafWithKeyCount !== 0 &&
-                currentDescriptor.leafCount > currentDescriptor.leafWithKeyCount
+                currentDescriptor._leafWithKeyCount !== 0 &&
+                currentDescriptor._leafCount > currentDescriptor._leafWithKeyCount
             ) {
                 descButton.classList.remove("mmb_desc");
                 descButton.classList.add("mmb_partial");
@@ -269,7 +266,7 @@ class MmCollection extends HTMLElement {
             }
         };
         // if parent was leaf, do not increment leaf counts (parent is no longer a leaf)
-        if (parentDescriptor.intHasPart.length > 0) {
+        if (parentDescriptor._intHasPart.length > 0) {
             incrementLeafCounts(parentDescriptorEle);
         } else {
             if (parentDescriptorEle) {
@@ -285,10 +282,10 @@ class MmCollection extends HTMLElement {
             }
         }
 
-        parentDescriptor.intHasPart.push(descriptor.intId);
+        parentDescriptor._intHasPart.push(descriptor._intId);
 
-        this.descriptors[descriptor.intId] = descriptor;
-        this.idToIntId[descriptor.id] = descriptor.intId;
+        this.descriptors[descriptor._intId] = descriptor;
+        this.idToIntId[descriptor.id] = descriptor._intId;
 
         if (!parentDescriptorEle) {
             // if no parent, add to root
@@ -301,7 +298,7 @@ class MmCollection extends HTMLElement {
             ul.appendChild(li);
         } else {
             MmCollection.expand(
-                parentDescriptor.intId,
+                parentDescriptor._intId,
                 parentDescriptorEle,
                 this
             );
@@ -422,7 +419,7 @@ class MmCollection extends HTMLElement {
         let fullyExpanded = true;
         newListEles.forEach((ele) => {
             const d = this.descriptors[ele.feid];
-            const hasChildren = d && Array.isArray(d.intHasPart) && d.intHasPart.length > 0;
+            const hasChildren = d && Array.isArray(d._intHasPart) && d._intHasPart.length > 0;
 
             if (!ele.expanded && hasChildren) {
                 fullyExpanded = false
@@ -517,7 +514,7 @@ class MmCollection extends HTMLElement {
         const descContainer = bdoc.ele("div", bdoc.class("desc-container"));
         // descContainer.expanded = false;
         // descContainer.feid = cid; // Framework Element ID
-        const cid = cn.intId;
+        const cid = cn._intId;
         li.expanded = false;
         li.feid = cid; // Framework Element ID
 
@@ -529,15 +526,15 @@ class MmCollection extends HTMLElement {
             bdoc.class("mmb_tri")
         );
 
-        if (cn.intHasPart && cn.intHasPart.length > 0) {
+        if (cn._intHasPart && cn._intHasPart.length > 0) {
             bdoc.append(
                 button,
                 bdoc.eventListener("click", origin.clickExpand(origin))
             );
 
-            if (cn.leafWithKeyCount >= cn.leafCount) {
+            if (cn._leafWithKeyCount >= cn._leafCount) {
                 button.classList.add("mmb_desc");
-            } else if (cn.leafWithKeyCount > 0) {
+            } else if (cn._leafWithKeyCount > 0) {
                 button.classList.add("mmb_partial");
             }
         } else {
@@ -546,7 +543,7 @@ class MmCollection extends HTMLElement {
                 button,
                 bdoc.eventListener("click", origin.clickSelect(origin))
             );
-            if (cn.leafWithKeyCount > 0) {
+            if (cn._leafWithKeyCount > 0) {
                 button.classList.add("mmb_desc");
             }
         }
@@ -595,13 +592,13 @@ class MmCollection extends HTMLElement {
             expandButton.classList.add("mmb_expanded");
         }
 
-        if (!node || (node.intHasPart.length == 0 && node.intId !== 0)) return;
+        if (!node || (node._intHasPart.length == 0 && node._intId !== 0)) return;
         let ul = bdoc.ele("ul");
         if (id == 0) {
             ul.style.paddingLeft = "0px";
             ul.style.paddingRight = "1em";
         }
-        for (let cid of node.intHasPart) {
+        for (let cid of node._intHasPart) {
             let cn = origin.descriptors[cid];
             if (cn) {
                 const li = MmCollection.makeElement(cn, origin);

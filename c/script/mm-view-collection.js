@@ -60,7 +60,7 @@ export default class ViewCollection extends HTMLElement {
             return queryParams.join("&");
         };
         for (let i = 0; i < currentCollection.length; i++) {
-            if (currentCollection[i].intHasPart.length === 0) {
+            if (currentCollection[i]._intHasPart.length === 0) {
                 let paletKey = currentCollection[i].key;
                 if (paletKey && paletKey !== "") {
                     paletKey = paletKey.split("/");

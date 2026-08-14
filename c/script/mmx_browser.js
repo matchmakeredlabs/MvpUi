@@ -119,9 +119,9 @@ class MmFramework {
 
     expand(id, parentEle) {
         let node = this.stmts[id];
-        if (!node || node.intHasPart.length == 0) return;
+        if (!node || node._intHasPart.length == 0) return;
         let ul = document.createElement("ul");
-        for (let cid of node.intHasPart) {
+        for (let cid of node._intHasPart) {
             let cn = this.stmts[cid];
             if (cn) {
                 let li = document.createElement("li");
@@ -131,7 +131,7 @@ class MmFramework {
                 let button = document.createElement("button");
                 button.type = "button";
 
-                if (cn.intHasPart && cn.intHasPart.length > 0) {
+                if (cn._intHasPart && cn._intHasPart.length > 0) {
                     button.onclick = MmFramework.clickExpand;
                 }
                 else {

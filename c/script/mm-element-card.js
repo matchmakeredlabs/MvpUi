@@ -321,10 +321,10 @@ export default class MmElementCard extends HTMLElement {
         if (showDescribeLinks) {
             const canEditDescription =
                 !suppressDescriptionEdit && val._canUpdate !== false;
-            if ((canEditDescription && val.intHasPart && val.intHasPart.length === 0) || val.key) {
+            if ((canEditDescription && val._intHasPart && val._intHasPart.length === 0) || val.key) {
                 eleContainer.appendChild(bdoc.ele("h3", "Links"));
             }
-            if (canEditDescription && val.intHasPart && val.intHasPart.length === 0) {
+            if (canEditDescription && val._intHasPart && val._intHasPart.length === 0) {
                 eleContainer.appendChild(
                     bdoc.ele(
                         "div",

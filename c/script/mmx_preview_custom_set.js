@@ -120,7 +120,7 @@ export default class MmCollection {
 
         // Load up the statements
         for (let desc of collection) {
-            descriptors[desc.intId] = desc;
+            descriptors[desc._intId] = desc;
         }
 
         this.descriptors = descriptors;
@@ -184,10 +184,10 @@ export default class MmCollection {
         if (!desc.id) return; // No edit description or view descriptor on preview
 
         const canEditDescription = desc._canUpdate !== false;
-        if ((canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) || desc.key){
+        if ((canEditDescription && desc._intHasPart && desc._intHasPart.length === 0) || desc.key){
             detail.appendChild(bdoc.ele("h3", "Links"));
         }
-        if (canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) {
+        if (canEditDescription && desc._intHasPart && desc._intHasPart.length === 0) {
             detail.appendChild(bdoc.ele("div", bdoc.ele("a",
                 bdoc.attr("href", "/c/Describe?id=" + encodeURIComponent(desc.id)),
                 bdoc.attr("target", "_blank"),
@@ -210,9 +210,9 @@ export default class MmCollection {
 
     expand(id, parentEle) {
         let node = this.descriptors[id];
-        if (!node || node.intHasPart.length == 0) return;
+        if (!node || node._intHasPart.length == 0) return;
         let ul = document.createElement("ul");
-        for (let cid of node.intHasPart) {
+        for (let cid of node._intHasPart) {
             let cn = this.descriptors[cid];
             if (cn) {
                 let li = document.createElement("li");
@@ -222,19 +222,19 @@ export default class MmCollection {
                 let button = document.createElement("button");
                 button.type = "button";
 
-                if (cn.intHasPart && cn.intHasPart.length > 0) {
+                if (cn._intHasPart && cn._intHasPart.length > 0) {
                     button.onclick = MmCollection.clickExpand;
-                    if (cn.leafWithKeyCount >= cn.leafCount) {
+                    if (cn._leafWithKeyCount >= cn._leafCount) {
                         button.classList.add("mmb_desc");
                     }
-                    else if (cn.leafWithKeyCount > 0) {
+                    else if (cn._leafWithKeyCount > 0) {
                         button.classList.add("mmb_partial");
                     }
                 }
                 else {
                     button.className = "mmb_leaf";
                     button.onclick = MmCollection.clickSelect;
-                    if (cn.leafWithKeyCount > 0) {
+                    if (cn._leafWithKeyCount > 0) {
                         button.classList.add("mmb_desc");
                     }
                 }
@@ -249,7 +249,7 @@ export default class MmCollection {
                 // Create the span element for the custom checkbox
                 let customCheckbox = document.createElement('span');
                 customCheckbox.className = 'custom-checkbox';
-                customCheckbox.id = cn.intId;
+                customCheckbox.id = cn._intId;
 
                 let span = document.createElement("span");
                 span.onclick = MmCollection.clickSelect;

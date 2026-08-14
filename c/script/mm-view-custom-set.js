@@ -34,12 +34,23 @@ export default class MmViewCustomSet extends HTMLElement {
 
     #collection;
 
+    static getStoredCustomSet = () => {
+        const stored = localStorage.getItem("currentCustomSet");
+        if (!stored) {
+            throw new Error("No custom-set selection was found. Select at least one element before previewing the set.");
+        }
+
+        const customSet = JSON.parse(stored);
+        if (!customSet?.descriptors) {
+            throw new Error("The saved custom-set selection is invalid.");
+        }
+
+        return customSet;
+    };
+
     fetchCustomSet = async () => {
         if (!this.#currentCustomSetName) {
-            const currentCustomSet = JSON.parse(
-                localStorage.getItem("currentCustomSet")
-            );
-            console.log(currentCustomSet);
+            const currentCustomSet = MmViewCustomSet.getStoredCustomSet();
             return Object.values(currentCustomSet.descriptors);
         } else {
             const customSets = await MmViewCustomSets.fetchCustomSets();
@@ -78,9 +89,16 @@ export default class MmViewCustomSet extends HTMLElement {
         loading.hide();
         const customSets = settings.customSets || {};
 
-        const currentCustomSet = JSON.parse(
-            localStorage.getItem("currentCustomSet")
-        );
+        let currentCustomSet;
+        try {
+            currentCustomSet = MmViewCustomSet.getStoredCustomSet();
+        } catch (error) {
+            await showMessage({
+                title: "Custom Set Error",
+                message: error.message,
+            });
+            return;
+        }
 
         if (name in customSets) {
             const shouldOverwrite = await confirmMessage({
@@ -212,6 +230,13 @@ export default class MmViewCustomSet extends HTMLElement {
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
         const topLevelEle = this.#collection[0];
+        if (!topLevelEle) {
+            await showMessage({
+                title: "Custom Set Error",
+                message: "This custom set does not contain any elements.",
+            });
+            return;
+        }
 
         const topLevelButtons = bdoc.ele(
             "div",

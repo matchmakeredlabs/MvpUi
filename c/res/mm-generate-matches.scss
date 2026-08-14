@@ -205,6 +205,88 @@
         background-color: #497528;
     }
 
+    .download-report-form {
+        max-width: 34em;
+        margin: 0 auto;
+        padding: 0.5em 1em 1em;
+
+        h2 {
+            margin: 0 0 1.5em;
+            text-align: center;
+        }
+    }
+
+    .download-threshold-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5em;
+        line-height: 1.4;
+        text-align: center;
+
+        input {
+            box-sizing: border-box;
+            width: 5em;
+            padding: 0.4em 0.5em;
+            border: 1px solid #949494;
+            border-radius: 4px;
+            font: inherit;
+        }
+    }
+
+    .download-scope {
+        margin: 0 0 1.5em;
+        color: #555;
+        line-height: 1.4;
+        text-align: center;
+    }
+
+    .download-report-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1em;
+        margin-top: 2em;
+    }
+
+    .download-report-button {
+        width: min(100%, 18em);
+        padding: 0.75em 1em;
+        border: 0;
+        border-radius: 6px;
+        background: #f0f0f0;
+        color: #000;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+    }
+
+    .download-report-button:hover {
+        background: #e2e2e2;
+    }
+
+    .download-report-button:focus-visible {
+        outline: 2px solid $mm-blue;
+        outline-offset: 2px;
+    }
+
+    .download-report-button:disabled {
+        cursor: wait;
+        opacity: 0.6;
+    }
+
+    .download-status {
+        min-height: 1.4em;
+        margin: 1em 0 0;
+        color: $mm-green;
+        text-align: center;
+    }
+
+    .download-status.error {
+        color: $mm-red;
+    }
+
 }
 
 .info-button {
@@ -231,7 +313,5 @@
 }
 
     
-
-
 
 

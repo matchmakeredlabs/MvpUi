@@ -22,11 +22,11 @@ function createParentMap(data) {
         (parentNode) => parentNode.id === node.isPartOfId
       );
       if (parent) {
-        parentMap[node.intId] = parent.intId;
+        parentMap[node._intId] = parent._intId;
       }
     } else {
       // Root node (no parent)
-      parentMap[node.intId] = null;
+      parentMap[node._intId] = null;
     }
   });
 
@@ -38,7 +38,7 @@ function createAdjacencyList(data) {
 
   // Initialize the adjacency list with empty arrays for each node
   data.forEach((node) => {
-    adjacencyList[node.intId] = [];
+    adjacencyList[node._intId] = [];
   });
 
   // Populate the adjacency list
@@ -49,7 +49,7 @@ function createAdjacencyList(data) {
         (parentNode) => parentNode.id === node.isPartOfId
       );
       if (parent) {
-        adjacencyList[parent.intId].push(node.intId);
+        adjacencyList[parent._intId].push(node._intId);
       }
     }
   });
@@ -251,12 +251,12 @@ function previewCustomSet() {
   });
 
   let checkedLeafDescriptors = checkedDescriptors.filter(
-    (descriptor) => descriptor.intHasPart.length === 0
+    (descriptor) => descriptor._intHasPart.length === 0
   );
 
   customSet["leafNodes"] = [];
   for (let leaf of checkedLeafDescriptors) {
-    customSet["leafNodes"].push(leaf.intId);
+    customSet["leafNodes"].push(leaf._intId);
   }
   customSet["associatedCollectionId"] =
     MmCollection.thisCollection.descriptors[0].id;
@@ -273,12 +273,12 @@ function previewCustomSet() {
   // console.log(finalDescriptorsArr.sort());
   let descriptorObj = {};
 
-  for (let intId of finalDescriptorsArr) {
-    let currentDescriptor = MmCollection.thisCollection.descriptors[intId];
-    currentDescriptor["parent"] = MmCollection.parentMap[intId];
-    currentDescriptor["checked"] = MmCollection.checkStatus.get(intId);
+  for (let _intId of finalDescriptorsArr) {
+    let currentDescriptor = MmCollection.thisCollection.descriptors[_intId];
+    currentDescriptor["parent"] = MmCollection.parentMap[_intId];
+    currentDescriptor["checked"] = MmCollection.checkStatus.get(_intId);
 
-    descriptorObj[intId] = currentDescriptor;
+    descriptorObj[_intId] = currentDescriptor;
   }
   customSet["descriptors"] = descriptorObj;
   console.log(customSet);
@@ -306,7 +306,7 @@ export default class MmCollection {
       createDepthParentSiblingMapFromParentMap(MmCollection.parentMap);
 
     data.collection.forEach((num) => {
-      MmCollection.checkStatus.set(num["intId"], false);
+      MmCollection.checkStatus.set(num["_intId"], false);
     });
 
     console.log("data.collection", data.collection);
@@ -356,7 +356,7 @@ export default class MmCollection {
 
     // Load up the statements
     for (let desc of collection) {
-      descriptors[desc.intId] = desc;
+      descriptors[desc._intId] = desc;
     }
 
     this.descriptors = descriptors;
@@ -419,10 +419,10 @@ export default class MmCollection {
     if (!desc.id) return; // No edit description or view descriptor on preview
 
     const canEditDescription = desc._canUpdate !== false;
-    if ((canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) || desc.key) {
+    if ((canEditDescription && desc._intHasPart && desc._intHasPart.length === 0) || desc.key) {
       detail.appendChild(bdoc.ele("h3", "Links"));
     }
-    if (canEditDescription && desc.intHasPart && desc.intHasPart.length === 0) {
+    if (canEditDescription && desc._intHasPart && desc._intHasPart.length === 0) {
       detail.appendChild(
         bdoc.ele(
           "div",
@@ -458,9 +458,9 @@ export default class MmCollection {
 
   expand(id, parentEle) {
     let node = this.descriptors[id];
-    if (!node || node.intHasPart.length == 0) return;
+    if (!node || node._intHasPart.length == 0) return;
     let ul = document.createElement("ul");
-    for (let cid of node.intHasPart) {
+    for (let cid of node._intHasPart) {
       let cn = this.descriptors[cid];
       if (cn) {
         let li = document.createElement("li");
@@ -470,17 +470,17 @@ export default class MmCollection {
         let button = document.createElement("button");
         button.type = "button";
 
-        if (cn.intHasPart && cn.intHasPart.length > 0) {
+        if (cn._intHasPart && cn._intHasPart.length > 0) {
           button.onclick = MmCollection.clickExpand;
-          if (cn.leafWithKeyCount >= cn.leafCount) {
+          if (cn._leafWithKeyCount >= cn._leafCount) {
             button.classList.add("mmb_desc");
-          } else if (cn.leafWithKeyCount > 0) {
+          } else if (cn._leafWithKeyCount > 0) {
             button.classList.add("mmb_partial");
           }
         } else {
           button.className = "mmb_leaf";
           button.onclick = MmCollection.clickSelect;
-          if (cn.leafWithKeyCount > 0) {
+          if (cn._leafWithKeyCount > 0) {
             button.classList.add("mmb_desc");
           }
         }
@@ -494,7 +494,7 @@ export default class MmCollection {
         // Create the span element for the custom checkbox
         let customCheckbox = document.createElement("span");
         customCheckbox.className = "custom-checkbox";
-        customCheckbox.id = cn.intId;
+        customCheckbox.id = cn._intId;
 
         let span = document.createElement("span");
         span.onclick = MmCollection.clickSelect;
@@ -668,7 +668,7 @@ export default class MmCollection {
     ) {
       for (let descriptor of Object.values(currentCustomSet.descriptors)) {
         MmCollection.checkStatus.set(
-          Number(descriptor.intId),
+          Number(descriptor._intId),
           descriptor.checked
         );
       }

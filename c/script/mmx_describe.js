@@ -24,7 +24,9 @@ let mmx_dict = {};
 window.searchProperty = "Text";
 mmx_dict.searchToken = 0;
 mmx_dict.inFlight = false;
-mmx_dict.statementSearchCache = new Map();
+mmx_dict.statementSearchController = null;
+mmx_dict.paginationRequest = null;
+mmx_dict.descriptorInFlight = false;
 
 function extractStmtIDs() {
     const stmtIdElements = document.querySelectorAll(".mm_stmtId");
@@ -217,7 +219,7 @@ class Mmx {
 
     static ApplyStatementSearchType(
         searchType,
-        { runSearch = true, forceRefresh = false } = {}
+        { runSearch = true } = {}
     ) {
         const buttons = {
             [statementSearchTypes.text]:
@@ -255,7 +257,9 @@ class Mmx {
         localStorage.setItem("useAIPaletSearch", useAI);
         Mmx.UpdateSearchExplanation(searchType);
 
-        if (runSearch) Mmx.SearchStatements({ forceRefresh });
+        if (runSearch && !mmx_dict.descriptorInFlight) {
+            Mmx.SearchStatements();
+        }
     }
 
     static SelectStatementSearchType(event) {
@@ -264,7 +268,7 @@ class Mmx {
             window.searchProperty,
             selectedType
         );
-        Mmx.ApplyStatementSearchType(nextType, { forceRefresh: true });
+        Mmx.ApplyStatementSearchType(nextType);
     }
 
     static async RenderStatementSearch(element) {
@@ -467,12 +471,13 @@ class Mmx {
         const scrollHandler = throttle(({ target }) => {
             const searchProperty = window.searchProperty;
 
-            // guard 1: don’t paginate while a request is in flight
-            if (mmx_dict.inFlight) return;
+            // Initial searches and pagination have separate request state. A
+            // stale page request must never unlock a newer descriptor search.
+            if (mmx_dict.inFlight || mmx_dict.paginationRequest) return;
 
             if (
                 target.scrollTop + target.clientHeight <
-                target.scrollHeight - 1200
+                target.scrollHeight - 200
             )
                 return;
 
@@ -483,6 +488,11 @@ class Mmx {
             // guard 3: make sure this is still the latest search
             if (entry.token !== mmx_dict.searchToken) return;
 
+            // Vector search is the only mode that supports paging. Offset 0
+            // means there is no next page, and hasMore is cleared after a
+            // short/empty page is returned.
+            if (!entry.offset || entry.hasMore === false) return;
+
             if (localStorage.getItem("useAIPaletSearch") === "false") {
                 return;
             }
@@ -490,27 +500,54 @@ class Mmx {
             const loadingMore = document.getElementById("loading-more-results");
             if (loadingMore) loadingMore.show();
 
-            mmx_dict.inFlight = true;
+            const paginationController = new AbortController();
+            const paginationRequest = {
+                token: entry.token,
+                entry,
+                offset: entry.offset,
+                controller: paginationController,
+            };
+            mmx_dict.paginationRequest = paginationRequest;
 
             const requestBody = JSON.stringify({
                 generatedEmbedding: entry.result.generatedEmbedding,
-                offset: entry.offset,
+                offset: paginationRequest.offset,
             });
 
             session
                 .fetch("/api/match/palet?useVectorSearch", {
                     method: "POST",
                     body: requestBody,
+                    headers: {
+                        "Content-Type": "application/json; charset=UTF-8",
+                    },
+                    signal: paginationController.signal,
                 })
-                .then((r) => r.json())
-                .then(({ statements, nextOffset }) => {
-                    // stale? bail silently
-                    if (entry.token !== mmx_dict.searchToken) {
-                        mmx_dict.inFlight = false;
-                        return;
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Statement pagination failed (${response.status}).`
+                        );
                     }
+                    return response.json();
+                })
+                .then(({ statements, nextOffset }) => {
+                    if (
+                        mmx_dict.paginationRequest !== paginationRequest ||
+                        entry.token !== mmx_dict.searchToken
+                    )
+                        return;
 
-                    for (const stmt of statements) {
+                    const pageStatements = Array.isArray(statements)
+                        ? statements
+                        : [];
+                    const knownStatementIds = new Set(
+                        entry.result.statements.map((statement) => statement.id)
+                    );
+
+                    for (const stmt of pageStatements) {
+                        if (knownStatementIds.has(stmt.id)) continue;
+                        knownStatementIds.add(stmt.id);
                         if (window.searchProperty === searchProperty) {
                             bdoc.append(
                                 mmx_dict.stmtSearchResult,
@@ -520,9 +557,24 @@ class Mmx {
                         entry.result.statements.push(stmt);
                     }
                     entry.offset = nextOffset;
+                    entry.hasMore =
+                        pageStatements.length === 100 &&
+                        Number.isInteger(nextOffset) &&
+                        nextOffset > paginationRequest.offset;
+                })
+                .catch((error) => {
+                    if (
+                        error.name !== "AbortError" &&
+                        mmx_dict.paginationRequest === paginationRequest
+                    ) {
+                        console.error(error);
+                    }
                 })
                 .finally(() => {
-                    mmx_dict.inFlight = false;
+                    if (mmx_dict.paginationRequest !== paginationRequest) {
+                        return;
+                    }
+                    mmx_dict.paginationRequest = null;
                     const loadingMore = document.getElementById(
                         "loading-more-results"
                     );
@@ -537,7 +589,6 @@ class Mmx {
             bdoc.eventListener("scroll", scrollHandler)
         );
         mmx_dict.stmtSearchResultsDict = {};
-        mmx_dict.loadingSearch = false;
         parent.appendChild(mmx_dict.stmtSearchResult);
         bdoc.append(
             parent,
@@ -557,7 +608,9 @@ class Mmx {
             preferredSearch,
             useAI
         );
-        Mmx.ApplyStatementSearchType(preferredSearch);
+        // Selecting the initial mode only configures the controls. The
+        // descriptor refresh owns the page's one automatic statement load.
+        Mmx.ApplyStatementSearchType(preferredSearch, { runSearch: false });
     }
 
     static ToggleEco() {
@@ -566,7 +619,7 @@ class Mmx {
             window.searchProperty,
             useAI
         );
-        Mmx.ApplyStatementSearchType(searchType, { forceRefresh: true });
+        Mmx.ApplyStatementSearchType(searchType);
     }
 
     static RenderKeyComposeForm(element) {
@@ -940,7 +993,13 @@ class Mmx {
         mmx_dict.keyTable.innerHTML = "";
         if (!key) return;
         const response = await session.fetch("/key/" + Mmx.StripKeyPrefix(key));
+        if (!response.ok) {
+            throw new Error(`Palet key request failed (${response.status}).`);
+        }
         const data = await response.json();
+        if (!Array.isArray(data.statements)) {
+            throw new Error("Palet key response did not contain statements.");
+        }
 
         for (let val of data.statements) {
             const renderedInSearch = document.getElementById("stmt_" + val.id);
@@ -1026,20 +1085,18 @@ class Mmx {
         }
     }
 
-    static CacheStatementSearch(key, entry) {
-        const cache = mmx_dict.statementSearchCache;
-        cache.delete(key);
-        cache.set(key, entry);
-        if (cache.size > 20) {
-            cache.delete(cache.keys().next().value);
-        }
-    }
-
     static ShowStatementSearchLoading() {
         const searchResults = document.querySelector(
             ".mmc_stmtSearchResult"
         );
-        if (!searchResults) return;
+        if (!searchResults) return null;
+
+        const loadingState = {
+            container: searchResults,
+            previousChildren: Array.from(searchResults.childNodes),
+            previousTextAlign: searchResults.style.textAlign,
+            previousScrollTop: searchResults.scrollTop,
+        };
 
         searchResults.replaceChildren(
             bdoc.ele(
@@ -1050,50 +1107,59 @@ class Mmx {
         );
         searchResults.style.textAlign = "center";
         searchResults.scrollTop = 0;
+        return loadingState;
     }
 
-    static SearchStatements(options = {}) {
-        // claim a new search token
-        const token = ++mmx_dict.searchToken;
+    static RestoreStatementSearch(loadingState) {
+        if (!loadingState) return;
+        loadingState.container.replaceChildren(
+            ...loadingState.previousChildren
+        );
+        loadingState.container.style.textAlign =
+            loadingState.previousTextAlign;
+        loadingState.container.scrollTop = loadingState.previousScrollTop;
+    }
 
-        // reset UI
+    static CancelStatementRequests() {
+        ++mmx_dict.searchToken;
+        mmx_dict.statementSearchController?.abort();
+        mmx_dict.statementSearchController = null;
+        mmx_dict.paginationRequest?.controller?.abort();
+        mmx_dict.paginationRequest = null;
+        mmx_dict.inFlight = false;
+
         const loadingMore = document.getElementById("loading-more-results");
         if (loadingMore) loadingMore.hide();
 
+        return mmx_dict.searchToken;
+    }
+
+    static SearchStatements(options = {}) {
+        // Every user or descriptor refresh starts a new request. There is no
+        // result cache here: each search-mode change and descriptor change must
+        // reload its statements exactly once.
+        const token = Mmx.CancelStatementRequests();
+        const searchProperty = window.searchProperty;
+
         const text = Mmx.GetSearchText(options);
         if (!text || text.trim().length === 0) {
-            mmx_dict.inFlight = false;
             Mmx.SetNavigationButtonState(false);
             return Promise.resolve(null);
         }
 
         const searchResults = document.querySelector(".mmc_stmtSearchResult");
-        if (searchResults) {
+        if (searchResults && options.showLoading !== false) {
             Mmx.ShowStatementSearchLoading();
         }
 
         Mmx.SetNavigationButtonState(true);
-
         mmx_dict.inFlight = true;
 
+        const controller = new AbortController();
+        mmx_dict.statementSearchController = controller;
         const requestBody = JSON.stringify({ matchText: text });
-        const url = getStatementSearchEndpoint(
-            localStorage.getItem("useAIPaletSearch") === "true"
-        );
-        const cacheKey = `${url}:${requestBody}`;
-        const cachedEntry = options.forceRefresh
-            ? null
-            : mmx_dict.statementSearchCache.get(cacheKey);
-        if (cachedEntry?.result) {
-            cachedEntry.token = token;
-            mmx_dict.stmtSearchResultsDict[window.searchProperty] =
-                cachedEntry;
-            mmx_dict.inFlight = false;
-            if (loadingMore) loadingMore.hide();
-            Mmx.SetNavigationButtonState(false);
-            Mmx.SearchStatements_Callback(cachedEntry.result);
-            return Promise.resolve(cachedEntry.result);
-        }
+        const useAI = localStorage.getItem("useAIPaletSearch") === "true";
+        const url = getStatementSearchEndpoint(useAI);
 
         return session
             .fetch(url, {
@@ -1102,6 +1168,7 @@ class Mmx {
                 headers: {
                     "Content-Type": "application/json; charset=UTF-8",
                 },
+                signal: controller.signal,
             })
             .then((response) => {
                 if (!response.ok) {
@@ -1112,22 +1179,36 @@ class Mmx {
                 return response.json();
             })
             .then((json) => {
-                if (token !== mmx_dict.searchToken) return null;
+                if (
+                    token !== mmx_dict.searchToken ||
+                    mmx_dict.statementSearchController !== controller
+                )
+                    return null;
 
                 const entry = {
                     token,
                     offset: json.nextOffset,
+                    hasMore:
+                        useAI &&
+                        Array.isArray(json.statements) &&
+                        json.statements.length === 100 &&
+                        Number.isInteger(json.nextOffset) &&
+                        json.nextOffset > 0,
                     prevSearch: requestBody,
                     result: json,
                 };
-                mmx_dict.stmtSearchResultsDict[window.searchProperty] = entry;
-                Mmx.CacheStatementSearch(cacheKey, entry);
+                mmx_dict.stmtSearchResultsDict[searchProperty] = entry;
 
                 Mmx.SearchStatements_Callback(json);
                 return json;
             })
             .catch((error) => {
-                if (token === mmx_dict.searchToken && searchResults) {
+                if (
+                    error.name !== "AbortError" &&
+                    token === mmx_dict.searchToken &&
+                    mmx_dict.statementSearchController === controller &&
+                    searchResults
+                ) {
                     console.error(error);
                     searchResults.textContent =
                         "Unable to load statement search results.";
@@ -1136,9 +1217,13 @@ class Mmx {
                 return null;
             })
             .finally(() => {
-                if (token !== mmx_dict.searchToken) return;
+                if (
+                    token !== mmx_dict.searchToken ||
+                    mmx_dict.statementSearchController !== controller
+                )
+                    return;
+                mmx_dict.statementSearchController = null;
                 mmx_dict.inFlight = false;
-                if (loadingMore) loadingMore.hide();
                 Mmx.SetNavigationButtonState(false);
             });
     }
@@ -1406,13 +1491,14 @@ class Mmx {
             }
         }
 
-        const keyPromise = Mmx.LoadKeyIntoDescriptorSearchForm(value.key);
-        let statementSearchPromise =
-            mmx_dict.stmtSearchResult &&
-            window.searchProperty !== "+ Context"
-                ? Mmx.SearchStatements({ auto: true })
-                : Promise.resolve(null);
-
+        const keyPromise = Mmx.LoadKeyIntoDescriptorSearchForm(value.key).catch(
+            (error) => {
+                console.error(error);
+                mmx_dict.keyTable.replaceChildren(
+                    bdoc.ele("p", "Unable to load the descriptor's Palet key.")
+                );
+            }
+        );
         function parentOf(id, collectionObject) {
             let keys = Object.keys(collectionObject);
             for (let i = 0; i < keys.length; i++) {
@@ -1425,11 +1511,24 @@ class Mmx {
 
         let data = { collection: [] };
         if (value.mainEntityId) {
-            const response = await session.fetch(
-                "/api/collections/" + value.mainEntityId
-            );
-            if (response.ok) {
-                data = await response.json();
+            try {
+                const response = await session.fetch(
+                    "/api/collections/" + value.mainEntityId
+                );
+                if (response.ok) {
+                    const collectionData = await response.json();
+                    if (Array.isArray(collectionData.collection)) {
+                        data = collectionData;
+                    }
+                } else {
+                    console.error(
+                        `Descriptor context request failed (${response.status}).`
+                    );
+                }
+            } catch (error) {
+                // Collection context is supplementary. A failure here should not
+                // prevent the descriptor itself from being displayed or edited.
+                console.error("Unable to load descriptor context.", error);
             }
         }
 
@@ -1439,7 +1538,7 @@ class Mmx {
         let currentIntID;
 
         for (let i = 0; i < data.collection.length; i++) {
-            collectionObject[i] = data.collection[i].intHasPart || [];
+            collectionObject[i] = data.collection[i]._intHasPart || [];
             nodeParents[i] = [];
             nodes.push(i);
             if (data.collection[i].id === value.id) {
@@ -1534,14 +1633,7 @@ class Mmx {
             )
         );
 
-        if (
-            mmx_dict.stmtSearchResult &&
-            window.searchProperty === "+ Context"
-        ) {
-            statementSearchPromise = Mmx.SearchStatements({ auto: true });
-        }
-
-        await Promise.all([keyPromise, statementSearchPromise]);
+        await keyPromise;
     }
 
     static ShowDescriptorLoading(container) {
@@ -1569,7 +1661,14 @@ class Mmx {
             await Mmx.LoadLrmiForm(value);
             loading.remove();
             form.hidden = false;
+            mmx_dict.descriptorInFlight = false;
+
+            // The outer descriptor refresh already put the statement panel in
+            // its one loading state. Start exactly one automatic search without
+            // replacing that loader a second time.
+            void Mmx.SearchStatements({ auto: true, showLoading: false });
         } catch (error) {
+            mmx_dict.descriptorInFlight = false;
             console.error(error);
             container.replaceChildren(
                 bdoc.ele("p", "Unable to load the descriptor.")
@@ -1592,6 +1691,7 @@ class Mmx {
 
             return Mmx.DisplayLrmiForm(stmt, container, loading);
         }
+        mmx_dict.descriptorInFlight = false;
         Mmx.RenderLrmiForm(container);
     }
 
@@ -1610,6 +1710,7 @@ class Mmx {
             Mmx.descriptor = desc;
             await Mmx.DisplayLrmiForm(desc, container, loading);
         } catch (error) {
+            mmx_dict.descriptorInFlight = false;
             console.error(error);
             container.replaceChildren(
                 bdoc.ele("p", "Unable to load the descriptor.")
@@ -1819,7 +1920,7 @@ class Mmx {
         });
         if (response.ok) {
             alert("Saved!");
-            await Mmx.SearchStatements({ forceRefresh: true });
+            await Mmx.SearchStatements();
         } else {
             try {
                 const text = await response.text();
@@ -1858,6 +1959,13 @@ class Mmx {
         const id = sourceData.id;
         if (!id) return;
         Mmx.SetNavigationButtonState(true);
+
+        // Invalidate any search still completing for the old descriptor, then
+        // clear both columns before beginning navigation. This prevents the old
+        // statement list from lingering beside the new descriptor's loader.
+        mmx_dict.descriptorInFlight = true;
+        Mmx.CancelStatementRequests();
+        const statementLoadingState = Mmx.ShowStatementSearchLoading();
         const loadingState = Mmx.ShowDescriptorLoading(
             document.querySelector(".mmx_lrmiCompose")
         );
@@ -1879,16 +1987,22 @@ class Mmx {
                     loadingState.loading
                 );
             } else if (nextPrev) {
+                mmx_dict.descriptorInFlight = false;
                 Mmx.RestoreDescriptor(loadingState);
+                Mmx.RestoreStatementSearch(statementLoadingState);
                 alert("No more descriptors.");
             } else {
+                mmx_dict.descriptorInFlight = false;
                 Mmx.RestoreDescriptor(loadingState);
+                Mmx.RestoreStatementSearch(statementLoadingState);
                 alert("No preceding descriptors.");
             }
         } catch (error) {
+            mmx_dict.descriptorInFlight = false;
             if (loadingState.loading.isConnected) {
                 Mmx.RestoreDescriptor(loadingState);
             }
+            Mmx.RestoreStatementSearch(statementLoadingState);
             throw error;
         } finally {
             Mmx.SetNavigationButtonState(false);
@@ -1950,6 +2064,8 @@ class Mmx {
             await Mmx.RenderStatementSearch(ele);
         }
         if (hasInitialDescriptor) {
+            mmx_dict.descriptorInFlight = true;
+            Mmx.CancelStatementRequests();
             Mmx.ShowStatementSearchLoading();
         }
 

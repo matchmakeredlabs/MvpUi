@@ -1173,7 +1173,7 @@ export default class Mmx {
         let currentIntID;
 
         for (let i = 0; i < data["collection"].length; i++) {
-            collectionObject[i] = data["collection"][i]["intHasPart"];
+            collectionObject[i] = data["collection"][i]["_intHasPart"];
             nodeParents[i] = [];
             nodes.push(i);
             if (data["collection"][i].id === value.id) {

@@ -5,7 +5,9 @@ import MmViewCustomSets from "./mm-view-custom-sets.js";
 import MmCollections from "./mm-collections.js";
 import MmMatchProfileModal from "./mm-match-profile-modal.js";
 import MmElementCard from "./mm-element-card.js";
+import { convertJsonToCsv } from "./downloadhelper.js";
 import "./mm-loading.js";
+import "./mm-modal.js";
 
 class MmGenerateMatches extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -15,6 +17,7 @@ class MmGenerateMatches extends HTMLElement {
     #customSetsData = {};
 
     #currentlySelectedElement = null;
+    #displayedElement = null;
 
     #matchesData = null;
     #generateMatchesPromise = null;
@@ -99,37 +102,7 @@ class MmGenerateMatches extends HTMLElement {
                                         bdoc.attr("slot", "tooltip-button"),
                                         bdoc.eventListener(
                                             "click",
-                                            async () => {
-                                                if (!this.#matchesData) {
-                                                    if (
-                                                        !this.#fetchSetsPromise
-                                                    ) {
-                                                        return;
-                                                    }
-                                                    await this
-                                                        .#fetchSetsPromise;
-
-                                                    await this.#generateMatches();
-                                                }
-                                                const a =
-                                                    document.createElement("a");
-                                                a.href = URL.createObjectURL(
-                                                    new Blob(
-                                                        [
-                                                            JSON.stringify(
-                                                                this
-                                                                    .#matchesData
-                                                            ),
-                                                        ],
-                                                        {
-                                                            type: "application/json",
-                                                        }
-                                                    )
-                                                );
-                                                a.download = `match-report${new Date().toISOString()}.json`;
-                                                a.click();
-                                                URL.revokeObjectURL(a.href);
-                                            }
+                                            () => this.#showDownloadModal()
                                         )
                                     ),
                                     bdoc.ele(
@@ -175,6 +148,53 @@ class MmGenerateMatches extends HTMLElement {
                 )
             ),
 
+            bdoc.ele(
+                "mm-modal",
+                bdoc.id("download-modal"),
+                bdoc.ele(
+                    "form",
+                    bdoc.class("download-report-form"),
+                    bdoc.eventListener("submit", (event) =>
+                        event.preventDefault()
+                    ),
+                    bdoc.ele("h2", "Download Match Report"),
+                    bdoc.ele(
+                        "p",
+                        bdoc.class("download-scope"),
+                        "This export includes only the matches shown for the selected anchored element and element type."
+                    ),
+                    bdoc.ele(
+                        "label",
+                        bdoc.class("download-threshold-row"),
+                        bdoc.ele(
+                            "span",
+                            "Only include matches with a MatchIndex greater than or equal to:"
+                        ),
+                        bdoc.ele(
+                            "input",
+                            bdoc.attr("type", "number"),
+                            bdoc.attr("id", "match-threshold"),
+                            bdoc.attr("name", "match-threshold"),
+                            bdoc.attr("value", "0"),
+                            bdoc.attr("min", "0"),
+                            bdoc.attr("step", "any"),
+                            bdoc.attr("required", "true")
+                        )
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("download-report-actions"),
+                        this.#downloadButton("json", "Download JSON"),
+                        this.#downloadButton("csv", "Download CSV")
+                    ),
+                    bdoc.ele(
+                        "p",
+                        bdoc.id("download-status"),
+                        bdoc.class("download-status"),
+                        bdoc.attr("aria-live", "polite")
+                    )
+                )
+            ),
             bdoc.ele("mm-modal", bdoc.id("element-modal")),
             bdoc.ele(
                 "script",
@@ -190,11 +210,6 @@ class MmGenerateMatches extends HTMLElement {
                 "script",
                 bdoc.attr("type", "module"),
                 bdoc.attr("src", "/c/script/mm-element-card.js")
-            ),
-            bdoc.ele(
-                "script",
-                bdoc.attr("type", "module"),
-                bdoc.attr("src", "/c/script/mm-modal.js")
             ),
             bdoc.script("mm-tooltip.js")
         );
@@ -218,6 +233,152 @@ class MmGenerateMatches extends HTMLElement {
             });
         });
     }
+
+    #downloadButton = (format, label) =>
+        bdoc.ele(
+            "button",
+            bdoc.attr("type", "button"),
+            bdoc.attr("data-report-format", format),
+            bdoc.class("download-report-button"),
+            bdoc.eventListener("click", () => this.#downloadReport(format)),
+            label
+        );
+
+    #showDownloadModal = async () => {
+        await customElements.whenDefined("mm-modal");
+        const modal = this.shadowRoot.getElementById("download-modal");
+        this.#setDownloadStatus("");
+        modal.show();
+        modal.querySelector("#match-threshold").focus();
+    };
+
+    #downloadReport = async (format) => {
+        const modal = this.shadowRoot.getElementById("download-modal");
+        const thresholdInput = modal.querySelector("#match-threshold");
+        if (!thresholdInput.reportValidity()) {
+            return;
+        }
+
+        const threshold = Number(thresholdInput.value);
+        if (!Number.isFinite(threshold)) {
+            this.#setDownloadStatus("Enter a valid MatchIndex threshold.", true);
+            return;
+        }
+        if (!this.#displayedElement) {
+            this.#setDownloadStatus(
+                "Select an anchored element before downloading a report.",
+                true
+            );
+            return;
+        }
+
+        this.#setDownloadBusy(true);
+        this.#setDownloadStatus("Preparing your report...");
+        try {
+            if (!this.#matchesData) {
+                await this.#fetchSetsPromise;
+                await this.#generateMatches();
+            }
+            if (!this.#matchesData) {
+                throw new Error("No match report is available to download.");
+            }
+
+            const report = this.#buildDisplayedReport(threshold);
+            const matchCount = report.result.reduce(
+                (count, result) => count + result.matches.length,
+                0
+            );
+
+            if (format === "json") {
+                this.#saveReportFile(
+                    JSON.stringify(report, null, 2),
+                    "application/json",
+                    "json"
+                );
+            } else {
+                const rows = report.result.flatMap(({ item, matches }) =>
+                    matches.map((match) => ({
+                        ...match,
+                        matchedTo: item?.id || "",
+                    }))
+                );
+                this.#saveReportFile(
+                    convertJsonToCsv(rows),
+                    "text/csv;charset=utf-8",
+                    "csv"
+                );
+            }
+
+            this.#setDownloadStatus(
+                `Downloaded ${matchCount} match${matchCount === 1 ? "" : "es"}.`
+            );
+        } catch (error) {
+            this.#setDownloadStatus(
+                error.message || "Unable to download the match report.",
+                true
+            );
+        } finally {
+            this.#setDownloadBusy(false);
+        }
+    };
+
+    #buildDisplayedReport = (threshold) => {
+        const displayedResult = (this.#matchesData.result || []).find(
+            ({ item }) => item.id === this.#displayedElement.id
+        );
+        if (!displayedResult) {
+            throw new Error(
+                "No match results are available for the displayed element."
+            );
+        }
+
+        const selectedType =
+            this.shadowRoot.getElementById("type-select").value;
+        const matches = (displayedResult.matches || []).filter(
+            (match) =>
+                (selectedType === "any" || match.eleType === selectedType) &&
+                Number(match._matchIndex) >= threshold
+        );
+
+        return {
+            ...this.#matchesData,
+            result: [
+                {
+                    ...displayedResult,
+                    matches,
+                },
+            ],
+        };
+    };
+
+    #saveReportFile = (content, type, extension) => {
+        const url = URL.createObjectURL(new Blob([content], { type }));
+        const link = document.createElement("a");
+        const timestamp = new Date()
+            .toISOString()
+            .replace(/[:.]/g, "-");
+        link.href = url;
+        link.download = `match-report-${timestamp}.${extension}`;
+        link.style.display = "none";
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+    };
+
+    #setDownloadBusy = (isBusy) => {
+        this.shadowRoot
+            .querySelectorAll("[data-report-format]")
+            .forEach((button) => {
+                button.disabled = isBusy;
+            });
+    };
+
+    #setDownloadStatus = (message, isError = false) => {
+        const status = this.shadowRoot.getElementById("download-status");
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+    };
 
     #fetchSets = async () => {
         this.#reqIds = {
@@ -440,6 +601,8 @@ class MmGenerateMatches extends HTMLElement {
         ) {
             return;
         }
+
+        this.#displayedElement = elementObj;
 
         const matchesContainer = this.shadowRoot.getElementById("matches");
 

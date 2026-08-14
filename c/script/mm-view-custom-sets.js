@@ -59,7 +59,6 @@ export default class MmViewCustomSets extends HTMLElement {
     // marked async in case we want to store custom sets in backend
     static fetchCustomSets = async () => {
         const settings = await MmMatchProfileSelect.getSettings();
-
         return settings.customSets || {};
     };
 

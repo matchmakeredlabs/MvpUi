@@ -107,7 +107,7 @@ export function convertJsonToCsv(
         const row = headers
             .map((header) => {
                 // Replace any double quotes in the field with two double quotes to escape them
-                const field = descriptor[header] || "";
+                const field = descriptor[header] ?? "";
                 return `"${field.toString().replace(/"/g, '""')}"`;
             })
             .join(",");
@@ -150,7 +150,7 @@ export function convertJsonToCsvNoHeader(data) {
         const row = headers
             .map((header) => {
                 // Replace any double quotes in the field with two double quotes to escape them
-                const field = descriptor[header] || "";
+                const field = descriptor[header] ?? "";
                 return `"${field.toString().replace(/"/g, '""')}"`;
             })
             .join(",");

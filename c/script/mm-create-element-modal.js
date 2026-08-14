@@ -32,23 +32,29 @@ class MmCreateElementModal extends HTMLElement {
     }
 
     handleError = async (response) => {
-        try {
-            const body = await response.json();
+        let message = `Request failed: ${response.status} ${response.statusText}`;
 
-            if (body.log) {
-                alert(body.log[0].message);
-            } else if (body.error) {
-                alert(body.error);
-            } else if (body.message) {
-                alert(body.message);
-            } else if (body.ExceptionMessage) {
-                alert(body.ExceptionMessage);
-            } else {
-                alert("An error occurred");
+        try {
+            const responseText = await response.text();
+            if (responseText) {
+                try {
+                    const body = JSON.parse(responseText);
+
+                    message =
+                        body.log?.[0]?.message ??
+                        body.error ??
+                        body.message ??
+                        body.ExceptionMessage ??
+                        body.exceptionMessage ??
+                        body.title ??
+                        message;
+                } catch {
+                    message = responseText;
+                }
             }
-        } catch (e) {
-            alert("An error occurred");
-        }
+        } catch {}
+
+        alert(message);
     };
 
     show = () => {

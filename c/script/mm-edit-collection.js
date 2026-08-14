@@ -239,8 +239,8 @@ export default class EditCollection extends HTMLElement {
                             "mm-create-element-modal"
                         );
 
-                        const otherChildren = element.intHasPart.map(
-                            (intId) => collectionEle.descriptors[intId]
+                        const otherChildren = element._intHasPart.map(
+                            (_intId) => collectionEle.descriptors[_intId]
                         );
                         let highestChildUrlEnding = 1;
                         for (const child of otherChildren) {
@@ -288,7 +288,7 @@ export default class EditCollection extends HTMLElement {
                         "background-color: #D32F2F; color: white; cursor: pointer; border: none; border-radius: 2px; background-image: none; width: auto; height: auto; "
                     ),
                     bdoc.eventListener("click", async () => {
-                        const isLeaf = element.intHasPart.length === 0;
+                        const isLeaf = element._intHasPart.length === 0;
                         let canDelete;
                         const promptModal = this.shadowRoot.querySelector(
                             "mm-prompt-modal"

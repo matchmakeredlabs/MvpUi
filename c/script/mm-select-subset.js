@@ -42,30 +42,31 @@ export default class MmSelectSubset extends HTMLElement {
             console.error("Collection element not found");
             return;
         }
-        customElements.whenDefined("mm-collection").then(() => {
-            // Retrieve the descriptors
-            const descriptors = collectionEle.descriptors;
+        // Retrieve the descriptors. The element is already defined by the time
+        // its rendered checkbox can invoke this handler.
+        const descriptors = collectionEle.descriptors;
 
-            // Get all descriptors with checked === true; the parent descriptors should already be checked
-            // if any of their children are checked.
-            const customSetDescriptors = Object.values(descriptors).filter(
-                (desc) => desc.checked === true
-            );
-            const previewButton = this.shadowRoot.getElementById(
-                "match-collections-button"
-            );
+        // Get all descriptors with checked === true; the parent descriptors should already be checked
+        // if any of their children are checked.
+        const customSetDescriptors = Object.values(descriptors).filter(
+            (desc) => desc.checked === true
+        );
+        const previewButton = this.shadowRoot.getElementById(
+            "match-collections-button"
+        );
 
-            if (customSetDescriptors.length === 0) {
-                previewButton.setAttribute("disabled", "true");
-                return;
-            }
+        if (customSetDescriptors.length === 0) {
+            previewButton.setAttribute("disabled", "true");
+            localStorage.removeItem("currentCustomSet");
+            return;
+        }
 
-            previewButton.removeAttribute("disabled");
-            const customSet = {};
-            customSet.descriptors = customSetDescriptors;
+        previewButton.removeAttribute("disabled");
+        const customSet = {};
+        customSet.descriptors = customSetDescriptors;
+        customSet.associatedCollectionId = this.#collection[0]?.id;
 
-            localStorage.setItem("currentCustomSet", JSON.stringify(customSet));
-        });
+        localStorage.setItem("currentCustomSet", JSON.stringify(customSet));
 
         // // Filter the checked descriptors to only those that have no children
         // // (i.e. leaf descriptors).
@@ -287,8 +288,8 @@ export default class MmSelectSubset extends HTMLElement {
                     const updateDescendants = (descriptor) => {
                         descriptor.checked = isChecked;
 
-                        if (descriptor.intHasPart) {
-                            descriptor.intHasPart.forEach((childId) => {
+                        if (descriptor._intHasPart) {
+                            descriptor._intHasPart.forEach((childId) => {
                                 const child = descriptorsMap[childId];
                                 if (child) {
                                     updateDescendants(child);
@@ -300,14 +301,14 @@ export default class MmSelectSubset extends HTMLElement {
                     const areLeafNodesUnchecked = (descriptor) => {
                         // true if descriptor isn't checked and is a leaf node
                         if (
-                            !descriptor.intHasPart ||
-                            descriptor.intHasPart.length === 0
+                            !descriptor._intHasPart ||
+                            descriptor._intHasPart.length === 0
                         ) {
                             return !descriptor.checked;
                         }
 
                         // otherwise, check all children and return true only if all are unchecked
-                        return descriptor.intHasPart.every((childId) =>
+                        return descriptor._intHasPart.every((childId) =>
                             areLeafNodesUnchecked(descriptorsMap[childId])
                         );
                     };
