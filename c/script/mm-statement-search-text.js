@@ -53,7 +53,7 @@ export function composeStatementSearchText({
     if (searchProperty === statementSearchTypes.context) {
         return descriptor ? join(descriptor, context, keywords) : keywords;
     }
-    return keywords || descriptor;
+    return keywords;
 }
 
 export function getStatementSearchEndpoint(useAI) {

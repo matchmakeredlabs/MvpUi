@@ -585,9 +585,10 @@ class Mmx {
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
             bdoc.class("mmc_stmtSearchResult"),
-            "To search for Palet statements, try entering keywords above or by adding the element descriptor and/or context.",
+            "Enter keywords to search for Palet statements.",
             bdoc.eventListener("scroll", scrollHandler)
         );
+        mmx_dict.stmtSearchResult.style.textAlign = "center";
         mmx_dict.stmtSearchResultsDict = {};
         parent.appendChild(mmx_dict.stmtSearchResult);
         bdoc.append(
@@ -1142,12 +1143,23 @@ class Mmx {
         const searchProperty = window.searchProperty;
 
         const text = Mmx.GetSearchText(options);
+        const searchResults = document.querySelector(".mmc_stmtSearchResult");
         if (!text || text.trim().length === 0) {
             Mmx.SetNavigationButtonState(false);
+
+            if (
+                searchProperty === statementSearchTypes.text &&
+                searchResults
+            ) {
+                searchResults.textContent =
+                    "Enter keywords to search for Palet statements.";
+                searchResults.style.textAlign = "center";
+                searchResults.scrollTop = 0;
+            }
+
             return Promise.resolve(null);
         }
 
-        const searchResults = document.querySelector(".mmc_stmtSearchResult");
         if (searchResults && options.showLoading !== false) {
             Mmx.ShowStatementSearchLoading();
         }

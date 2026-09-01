@@ -232,7 +232,7 @@ export default class MmCustomer extends HTMLElement {
 
     #maxAssignableRole() {
         const acl = MmCustomer.session.getCachedAcl();
-        if (acl && ("admin" in acl || acl.admincustomer?.includes("WriteCustomer"))) {
+        if (acl && ("admin" in acl || acl.adminorganization?.includes("WriteCustomer"))) {
             return "owner";
         }
 

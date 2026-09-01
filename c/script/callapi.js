@@ -354,6 +354,11 @@ const templates = [
             offset: 0,
         },
     },
+    {
+        name: "Generate URI",
+        verb: "GET",
+        url: "/api/tag/generate",
+    }
 ];
 
 function onTemplateClick(e) {

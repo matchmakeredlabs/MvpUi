@@ -32,7 +32,7 @@ export default class MmProjects extends HTMLElement {
 
         return Object.entries(acl).some(
             ([scope, perms]) =>
-                scope !== "admincustomer" && perms.includes("WriteCustomer")
+                scope !== "adminorganization" && perms.includes("WriteCustomer")
         );
     };
 

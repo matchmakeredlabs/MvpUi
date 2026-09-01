@@ -265,17 +265,6 @@ export default class ViewCollection extends HTMLElement {
                                             .show();
                                     });
                             })
-                        ),
-                        bdoc.ele(
-                            "button",
-                            bdoc.class("export-button matches"),
-                            bdoc.id("match-collections-button"),
-                            bdoc.attr("disabled", "true"),
-                            "Export Collection Matches",
-                            bdoc.eventListener(
-                                "click",
-                                this.downloadCollectionMatches
-                            )
                         )
                     ),
 

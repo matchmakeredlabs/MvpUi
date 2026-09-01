@@ -99,7 +99,7 @@ export default class MmGroups extends HTMLElement {
             (perms) => perms.includes("WriteGroup")
         ) || Object.entries(acl).some(
             ([scope, perms]) =>
-                scope !== "admincustomer" && perms.includes("WriteCustomer")
+                scope !== "adminorganization" && perms.includes("WriteCustomer")
         );
     };
 

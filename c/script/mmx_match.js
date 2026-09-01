@@ -259,6 +259,16 @@ export default class Mmx {
             searchOneLiner.innerHTML = "";
             searchOneLiner.appendChild(text);
             searchOneLiner.innerHTML += tooltip;
+
+            if (!mmid_search.value.trim()) {
+                mmx_dict.stmtSearchResult.innerHTML = "";
+                mmx_dict.stmtSearchResult.appendChild(
+                    bdoc.ele(
+                        "div",
+                        "Enter keywords to search for Palet statements."
+                    )
+                );
+            }
         } else {
             let keywords = document.getElementById("mmid_search").value;
             mmid_search.placeholder = "Add another term to augment the search";
@@ -434,7 +444,8 @@ export default class Mmx {
 
         mmx_dict.stmtSearchResult = bdoc.ele(
             "div",
-            bdoc.class("mmc_stmtSearchResult")
+            bdoc.class("mmc_stmtSearchResult"),
+            "Enter keywords to search for Palet statements."
         );
         parent.appendChild(mmx_dict.stmtSearchResult);
     }
@@ -826,6 +837,17 @@ export default class Mmx {
     static SearchStatements() {
         let keywords = document.getElementById("mmid_search").value;
         if (window.searchProperty == "Text") {
+            if (!keywords.trim()) {
+                mmx_dict.stmtSearchResult.innerHTML = "";
+                mmx_dict.stmtSearchResult.appendChild(
+                    bdoc.ele(
+                        "div",
+                        "Enter keywords to search for Palet statements."
+                    )
+                );
+                return;
+            }
+
             let url = "/statements?keywords=" + encodeURIComponent(keywords);
             Mmx.LoadJsonAsync(url, Mmx.SearchStatements_Callback);
         } else {

@@ -29,7 +29,7 @@ export default class MmCustomers extends HTMLElement {
         if (!acl) return false;
         if ("admin" in acl) return true;
 
-        return acl.admincustomer?.includes("WriteCustomer") || false;
+        return acl.adminorganization?.includes("WriteCustomer") || false;
     };
 
     static canWriteCustomer = (customerId) => {

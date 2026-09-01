@@ -93,6 +93,12 @@ export default class MmCreateElementForm extends HTMLElement {
             return;
         }
 
+        const urlInput = event.target.elements.url;
+        if (urlInput) {
+            urlInput.value =
+                urlInput.value.trim() || this.#parentElement?.urlDefault || "";
+        }
+
         // checkValidity() returns false if any required fields are missing
         if (!event.target.checkValidity()) {
             // reportValidity() will output "Please fill out this field" on the first required field with empty input
@@ -115,13 +121,6 @@ export default class MmCreateElementForm extends HTMLElement {
             this.#isSubmitting = false;
             event.target.reportValidity();
             return;
-        }
-
-        if (variables.url === "" || !variables.url) {
-            // replace spaces with dashes in name and URI encode otherwise
-            variables.url = `mm:${encodeURIComponent(
-                variables.name.replace(/\s+/g, "-").toLowerCase()
-            )}`;
         }
 
         for (const detail of MmCreateElementForm.details) {
@@ -182,6 +181,58 @@ export default class MmCreateElementForm extends HTMLElement {
         this.getInnerForm().dispatchEvent(
             new Event("submit", { cancelable: true })
         );
+    };
+
+    #generateUrl = async (event) => {
+        const button = event.currentTarget;
+        const urlInput = this.shadowRoot.querySelector("#url");
+
+        if (!urlInput || button.disabled) return;
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Generating...";
+
+        try {
+            const response = await MmCreateElementForm.session.fetch(
+                "/api/tag/generate",
+                { method: "GET" }
+            );
+
+            if (!response.ok) {
+                let message = `${response.status} ${response.statusText}`;
+                const responseText = await response.text();
+
+                if (responseText) {
+                    try {
+                        const body = JSON.parse(responseText);
+                        message =
+                            body.log?.[0]?.message ??
+                            body.error ??
+                            body.message ??
+                            message;
+                    } catch {
+                        message = responseText;
+                    }
+                }
+
+                throw new Error(message);
+            }
+
+            const body = await response.json();
+            if (!body?.tag || typeof body.tag !== "string") {
+                throw new Error("The server did not return a generated tag.");
+            }
+
+            urlInput.value = body.tag;
+            urlInput.setCustomValidity("");
+            urlInput.focus();
+        } catch (error) {
+            alert(`Unable to generate URL / Tag: ${error.message}`);
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     };
 
     #fetchProjects = async () => {
@@ -315,30 +366,36 @@ export default class MmCreateElementForm extends HTMLElement {
                 bdoc.ele(
                     "label",
                     bdoc.attr("for", "url"),
-                    "URL / Location ",
+                    "URL / Tag",
+                    bdoc.ele("span", bdoc.class("mmc_form_required"), "* "),
                     this.#getTooltipButton(
-                        "Must be unique within a collection."
+                        "Insert the URL of the item you are describing or generate a MatchMaker tag with the button on the right. This can be changed later."
                     )
                 ),
                 bdoc.ele(
-                    "input",
-                    bdoc.attr("type", "text"),
-                    bdoc.attr("id", "url"),
-                    bdoc.attr("name", "url"),
-                    bdoc.attr(
-                        "placeholder",
-                        this.#parentElement
-                            ? "mm:algebra1/the-language-of/distributive"
-                            : "mm:algebra1"
+                    "div",
+                    bdoc.class("url-input-group"),
+                    bdoc.ele(
+                        "input",
+                        bdoc.attr("type", "text"),
+                        bdoc.attr("id", "url"),
+                        bdoc.attr("name", "url"),
+                        bdoc.attr("required", "true"),
+                        bdoc.attr(
+                            "placeholder",
+                            this.#parentElement
+                                ? this.#parentElement.urlDefault ||
+                                      "mm:algebra1/the-language-of/distributive"
+                                : "mm:algebra1"
+                        )
                     ),
-                    this.#parentElement
-                        ? bdoc.attr(
-                              "value",
-                              this.#parentElement.urlDefault ||
-                                  this.#parentElement.url ||
-                                  ""
-                          )
-                        : null
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("type", "button"),
+                        bdoc.class("generate-url-button"),
+                        bdoc.eventListener("click", this.#generateUrl),
+                        "Generate"
+                    )
                 )
             ),
             bdoc.ele(
