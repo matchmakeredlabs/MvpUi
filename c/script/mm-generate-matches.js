@@ -406,7 +406,9 @@ class MmGenerateMatches extends HTMLElement {
 
         this.#collections = await MmCollections.fetchCollections();
 
-        this.#customSetsData = await MmViewCustomSets.fetchCustomSets();
+        this.#customSetsData = await MmViewCustomSets.resolveCustomSets(
+            await MmViewCustomSets.fetchCustomSets()
+        );
 
         for (const setCategory in setIds) {
             for (const setType in setIds[setCategory]) {
@@ -443,15 +445,23 @@ class MmGenerateMatches extends HTMLElement {
                 switch (setType) {
                     case "custom-set":
                         for (const customSet of sets) {
-                            Object.values(customSet?.descriptors || {}).forEach(
-                                (descriptor) => {
+                            const ids =
+                                MmViewCustomSets.descriptorIdsOf(customSet);
+                            if (ids.length > 0) {
+                                this.#reqIds[
+                                    categoryToTarget[setCategory]
+                                ].push(...ids);
+                            } else {
+                                Object.values(
+                                    customSet?.descriptors || {}
+                                ).forEach((descriptor) => {
                                     if (descriptor?.id) {
                                         this.#reqIds[
                                             categoryToTarget[setCategory]
                                         ].push(descriptor.id);
                                     }
-                                }
-                            );
+                                });
+                            }
                         }
                         break;
                     case "collections":

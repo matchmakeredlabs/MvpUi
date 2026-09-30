@@ -65,6 +65,7 @@ export default class MmSelectSubset extends HTMLElement {
         const customSet = {};
         customSet.descriptors = customSetDescriptors;
         customSet.associatedCollectionId = this.#collection[0]?.id;
+        customSet.collectionId = this.#collection[0]?.id;
 
         localStorage.setItem("currentCustomSet", JSON.stringify(customSet));
 

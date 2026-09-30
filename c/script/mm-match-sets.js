@@ -333,7 +333,9 @@ class MmMatchSets extends HTMLElement {
     #fetchData = async () => {
         this.#collections = await MmCollections.fetchCollections();
 
-        this.#customSetsData = await MmViewCustomSets.fetchCustomSets();
+        this.#customSetsData = await MmViewCustomSets.resolveCustomSets(
+            await MmViewCustomSets.fetchCustomSets()
+        );
 
         let summarizedCustomSets, displayCustomSets;
         if (this.#customSetsData) {
@@ -698,7 +700,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Described"
+                        "name,Created,subject,publisher,Project,Described"
                     ),
                     bdoc.attr("display-properties", "subject,publisher")
                 );
@@ -737,6 +739,8 @@ class MmMatchSets extends HTMLElement {
                             ),
                             customSet.name
                         ),
+                    Created: (customSet) =>
+                        MmViewCustomSets.formatTimestamp(customSet.created),
                     ...displayProperties.reduce((acc, property) => {
                         acc[property] = (item) => {
                             let currentValue = item[property];
@@ -786,6 +790,13 @@ class MmMatchSets extends HTMLElement {
                 customSetsTable.customSorts = {
                     name: (a, b) => {
                         return a.name > b.name ? 1 : -1;
+                    },
+                    Created: (a, b) => {
+                        if (!a.created) return 1;
+                        if (!b.created) return -1;
+                        if (a.created < b.created) return -1;
+                        if (a.created > b.created) return 1;
+                        return 0;
                     },
                     subject: (a, b) => {
                         if (!a.subject) {
