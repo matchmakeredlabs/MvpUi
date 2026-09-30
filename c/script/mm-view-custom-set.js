@@ -17,7 +17,7 @@ export default class MmViewCustomSet extends HTMLElement {
 
     #currentCustomSetName;
 
-    handleError = async (response) => {
+    handleError = async (response, title = "Error") => {
         let message = "An error occurred.";
         try {
             const body = await response.json();
@@ -29,7 +29,7 @@ export default class MmViewCustomSet extends HTMLElement {
                 body.title ||
                 message;
         } catch (e) {}
-        await showMessage({ title: "Save Error", message });
+        await showMessage({ title, message });
     };
 
     #collection;
@@ -48,20 +48,150 @@ export default class MmViewCustomSet extends HTMLElement {
         return customSet;
     };
 
+    static fetchCollection = async (collectionId) => {
+        const response = await MmViewCustomSet.session.fetch(
+            `/api/collections/${collectionId}`
+        );
+        if (response.status !== 200) {
+            return Promise.reject(response);
+        }
+        return (await response.json()).collection;
+    };
+
+    static getCustomSetDescriptors = (customSet) =>
+        Array.isArray(customSet?.descriptors)
+            ? customSet.descriptors
+            : Object.values(customSet?.descriptors || {});
+
     fetchCustomSet = async () => {
         if (!this.#currentCustomSetName) {
             const currentCustomSet = MmViewCustomSet.getStoredCustomSet();
-            return Object.values(currentCustomSet.descriptors);
+            return MmViewCustomSet.getCustomSetDescriptors(currentCustomSet);
         } else {
             const customSets = await MmViewCustomSets.fetchCustomSets();
             if (this.#currentCustomSetName in customSets) {
-                return customSets[this.#currentCustomSetName].descriptors;
+                return MmViewCustomSet.getCustomSetDescriptors(
+                    customSets[this.#currentCustomSetName]
+                );
             }
             throw new Error(
                 `Custom set with name "${
                     this.#currentCustomSetName
                 }" not found.`
             );
+        }
+    };
+
+    updateCustomSet = async () => {
+        if (!this.#currentCustomSetName) {
+            return;
+        }
+
+        const loading = this.shadowRoot.querySelector("mm-loading");
+        loading.show("Loading settings...");
+
+        let settings;
+        try {
+            settings = await MmMatchProfileSelect.getSettings();
+        } catch (error) {
+            loading.hide();
+            return;
+        }
+
+        const customSets = settings.customSets || {};
+        const customSet = customSets[this.#currentCustomSetName];
+        if (!customSet) {
+            loading.hide();
+            await showMessage({
+                title: "Update Error",
+                message: `Custom set "${this.#currentCustomSetName}" not found.`,
+            });
+            return;
+        }
+
+        const collectionId = customSet.associatedCollectionId;
+        if (!collectionId) {
+            loading.hide();
+            await showMessage({
+                title: "Update Error",
+                message:
+                    "This custom set has no associated source collection to refresh from.",
+            });
+            return;
+        }
+
+        loading.show("Refreshing from source collection...");
+        let sourceCollection;
+        try {
+            sourceCollection =
+                await MmViewCustomSet.fetchCollection(collectionId);
+        } catch (response) {
+            loading.hide();
+            if (response?.status === 404) {
+                await showMessage({
+                    title: "Update Error",
+                    message: "Source collection not found.",
+                });
+            } else {
+                await this.handleError(response, "Update Error");
+            }
+            return;
+        }
+
+        const existingDescriptors =
+            MmViewCustomSet.getCustomSetDescriptors(customSet);
+        const selectedIds = new Set(
+            existingDescriptors.map((descriptor) => descriptor.id)
+        );
+        const refreshedDescriptors = sourceCollection.filter((descriptor) =>
+            selectedIds.has(descriptor.id)
+        );
+
+        if (refreshedDescriptors.length === 0) {
+            loading.hide();
+            await showMessage({
+                title: "Update Error",
+                message:
+                    "None of this custom set's elements were found in the source collection.",
+            });
+            return;
+        }
+
+        const newSettings = {
+            ...settings,
+            customSets: {
+                ...customSets,
+                [this.#currentCustomSetName]: {
+                    ...customSet,
+                    descriptors: refreshedDescriptors,
+                },
+            },
+        };
+
+        loading.show("Saving updated custom set...");
+        try {
+            const response = await MmMatchProfileSelect.updateSettings(
+                settings,
+                newSettings
+            );
+            loading.hide();
+            if (!response.ok) {
+                await this.handleError(response, "Update Error");
+                return;
+            }
+            await showMessage({
+                title: "Custom Set Updated",
+                message: `Custom set "${this.#currentCustomSetName}" has been refreshed from its source collection.`,
+            });
+            window.location.reload();
+        } catch (error) {
+            loading.hide();
+            await showMessage({
+                title: "Update Error",
+                message: error?.message || "Unable to update the custom set.",
+            });
+        } finally {
+            loading.hide();
         }
     };
 
@@ -125,7 +255,7 @@ export default class MmViewCustomSet extends HTMLElement {
             );
             loading.hide();
             if (!response.ok) {
-                await this.handleError(response);
+                await this.handleError(response, "Save Error");
                 return;
             }
             await showMessage({
@@ -181,12 +311,20 @@ export default class MmViewCustomSet extends HTMLElement {
                     "div",
                     bdoc.id("descriptor-container"),
 
-                    keyPresent
-                        ? null
-                        : bdoc.ele(
-                              "div",
-                              bdoc.class("export-buttons"),
-                              bdoc.ele(
+                    bdoc.ele(
+                        "div",
+                        bdoc.class("export-buttons"),
+                        keyPresent
+                            ? bdoc.ele(
+                                  "button",
+                                  bdoc.id("update-custom-set-button"),
+                                  "Update",
+                                  bdoc.eventListener(
+                                      "click",
+                                      this.updateCustomSet
+                                  )
+                              )
+                            : bdoc.ele(
                                   "button",
                                   bdoc.id("match-collections-button"),
                                   "Save Custom Set",
@@ -195,7 +333,7 @@ export default class MmViewCustomSet extends HTMLElement {
                                       this.saveCustomSet
                                   )
                               )
-                          ),
+                    ),
 
                     bdoc.ele(
                         "mm-element-card",

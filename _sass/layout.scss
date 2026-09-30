@@ -72,7 +72,8 @@ main {
 }
 
 
-#match-collections-button {
+#match-collections-button,
+#update-custom-set-button {
     background-color: #0068b3;
     color: white;
     border: none; /* Remove border */
@@ -83,16 +84,19 @@ main {
     float: right;
 }
 
-#match-collections-button:hover {
+#match-collections-button:hover,
+#update-custom-set-button:hover {
     background-color: #045a8d;
 }
 
-#match-collections-button:disabled {
+#match-collections-button:disabled,
+#update-custom-set-button:disabled {
 
     opacity: 0.5; 
     cursor: not-allowed; /* Change cursor to indicate disabled state */
 }
-#match-collections-button:hover:disabled {
+#match-collections-button:hover:disabled,
+#update-custom-set-button:hover:disabled {
     background-color: #0068b3;
 }
 
