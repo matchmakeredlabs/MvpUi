@@ -345,7 +345,7 @@ export default class MmViewCustomSets extends HTMLElement {
 
             Object.values(customSet.descriptors || {}).forEach((descriptor) => {
                 Object.keys(descriptor).forEach((key) => {
-                    if (key === "name") {
+                    if (key === "name" || key === "note") {
                         return;
                     }
                     if (!(key in summarizedCustomSet)) {
@@ -409,16 +409,27 @@ export default class MmViewCustomSets extends HTMLElement {
                             );
                         }
                     } else {
-                        summarizedCustomSet[filter].forEach((currentValue) => {
+                        // Handle note field as a string, other fields as Sets
+                        if (filter === "note") {
+                            const currentValue = summarizedCustomSet[filter];
                             if (
                                 currentValue === null ||
                                 currentValue === "" ||
                                 currentValue === undefined
                             ) {
-                                currentValue = "Null";
-                            }
-
-                            if (!(currentValue in selectedOptions[filter])) {
+                                const nullValue = "Null";
+                                if (!(nullValue in selectedOptions[filter])) {
+                                    selectedOptions[filter][nullValue] = false;
+                                    bdoc.append(
+                                        root.getElementById(`${filter}-dropdown`),
+                                        bdoc.ele(
+                                            "option",
+                                            nullValue,
+                                            bdoc.attr("value", nullValue)
+                                        )
+                                    );
+                                }
+                            } else if (!(currentValue in selectedOptions[filter])) {
                                 selectedOptions[filter][currentValue] = false;
                                 bdoc.append(
                                     root.getElementById(`${filter}-dropdown`),
@@ -429,7 +440,29 @@ export default class MmViewCustomSets extends HTMLElement {
                                     )
                                 );
                             }
-                        });
+                        } else {
+                            summarizedCustomSet[filter].forEach((currentValue) => {
+                                if (
+                                    currentValue === null ||
+                                    currentValue === "" ||
+                                    currentValue === undefined
+                                ) {
+                                    currentValue = "Null";
+                                }
+
+                                if (!(currentValue in selectedOptions[filter])) {
+                                    selectedOptions[filter][currentValue] = false;
+                                    bdoc.append(
+                                        root.getElementById(`${filter}-dropdown`),
+                                        bdoc.ele(
+                                            "option",
+                                            currentValue,
+                                            bdoc.attr("value", currentValue)
+                                        )
+                                    );
+                                }
+                            });
+                        }
                     }
                 });
             });
@@ -457,14 +490,20 @@ export default class MmViewCustomSets extends HTMLElement {
                         )
                             ? Object.keys(filters[filter]).some((selected) =>
                                   filters[filter][selected]
-                                      ? (item[filter] &&
-                                            item[filter].has(selected)) ||
-                                        (selected === "Null" &&
-                                            (item[filter] === undefined ||
-                                                item[filter] === null ||
-                                                item[filter] === "" ||
-                                                item[filter].size === 0 ||
-                                                item[filter].has("")))
+                                      ? filter === "note"
+                                          ? (item[filter] === selected) ||
+                                            (selected === "Null" &&
+                                                (item[filter] === undefined ||
+                                                    item[filter] === null ||
+                                                    item[filter] === ""))
+                                          : (item[filter] &&
+                                                item[filter].has(selected)) ||
+                                            (selected === "Null" &&
+                                                (item[filter] === undefined ||
+                                                    item[filter] === null ||
+                                                    item[filter] === "" ||
+                                                    item[filter].size === 0 ||
+                                                    item[filter].has("")))
                                       : false
                               )
                             : true
