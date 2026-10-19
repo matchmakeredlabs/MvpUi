@@ -173,6 +173,17 @@ export default class MmViewCustomSets extends HTMLElement {
         return customSets;
     };
 
+    static deleteCustomSet = async (customSetId) => {
+        const response = await MmViewCustomSets.session.fetch(
+            `/api/customSets/${encodeURIComponent(customSetId)}`,
+            {
+                method: "DELETE",
+            }
+        );
+        if (!response.ok) return Promise.reject(response);
+        return await response.json();
+    };
+
     // Keep ids that still exist in the live collection, always including the root.
     static refreshDescriptorIds = (customSet, liveCollection) => {
         const liveIds = new Set(
@@ -649,6 +660,40 @@ export default class MmViewCustomSets extends HTMLElement {
                             "td",
                             bdoc.attr("style", "text-align: center;"),
                             `${customSet.percentDescribed}%`
+                        ),
+                    Actions: (item) =>
+                        bdoc.ele(
+                            "td",
+                            bdoc.attr(
+                                "style",
+                                "float: right; border: none; white-space: nowrap;"
+                            ),
+                            bdoc.ele(
+                                "button",
+                                bdoc.class("delete-button"),
+                                bdoc.attr(
+                                    "style",
+                                    "border-color: white; background-color: #a82525; border-radius: 5px; color: white; cursor: pointer;"
+                                ),
+                                "🗑️ Delete",
+                                bdoc.eventListener("click", async () => {
+                                    const confirmDelete = confirm(
+                                        `Are you sure you want to delete the custom set "${item.name}"? This action cannot be undone.`
+                                    );
+                                    if (confirmDelete) {
+                                        try {
+                                            await MmViewCustomSets.deleteCustomSet(
+                                                item.id
+                                            );
+                                            this.#renderCustomSets();
+                                        } catch (error) {
+                                            alert(
+                                                `Failed to delete custom set: ${error.message || "Unknown error"}`
+                                            );
+                                        }
+                                    }
+                                })
+                            )
                         ),
                 });
 
