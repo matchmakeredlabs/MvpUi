@@ -691,7 +691,7 @@ class MmMatchSets extends HTMLElement {
                 const customSetsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("custom-sets-table"),
-                    bdoc.attr("filter-properties", "subject,publisher,_projectId"),
+                    bdoc.attr("filter-properties", "subject,publisher,_projectId,note"),
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
@@ -700,9 +700,9 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,Created,subject,publisher,Project,Described"
+                        "name,Created,subject,publisher,Project,Described,Note"
                     ),
-                    bdoc.attr("display-properties", "subject,publisher")
+                    bdoc.attr("display-properties", "subject,publisher,note")
                 );
                 bdoc.append(customSetsFilterTableContainer, customSetsTable);
 
@@ -727,6 +727,7 @@ class MmMatchSets extends HTMLElement {
                     ["Described"]: "width: 1%",
                     ["Responding"]: "width: 1%; text-align: center",
                     ["Anchored"]: "width: 1%; text-align: center",
+                    ["Note"]: "width: 15%",
                 };
 
                 customSetsTable.generateCols = (displayProperties) => ({
@@ -750,6 +751,13 @@ class MmMatchSets extends HTMLElement {
                                 currentValue === undefined
                             ) {
                                 currentValue = "Null";
+                            }
+
+                            if (property === "note") {
+                                if (currentValue.length > 30) {
+                                    return currentValue.slice(0, 27) + "...";
+                                }
+                                return currentValue;
                             }
 
                             if (currentValue.length > 15 && !currentValue.includes(" ")) {
@@ -821,6 +829,11 @@ class MmMatchSets extends HTMLElement {
                     },
                     ["Described"]: (a, b) => {
                         return a.percentDescribed - b.percentDescribed;
+                    },
+                    Note: (a, b) => {
+                        const aNote = a.note || "";
+                        const bNote = b.note || "";
+                        return aNote.localeCompare(bNote);
                     },
                     ["Anchored"]: (a, b) => {
                         return this.#sets.anchored["custom-set"].find(

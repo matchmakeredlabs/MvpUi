@@ -3,6 +3,7 @@ import "./mm-modal.js";
 export default class MmPromptModal extends HTMLElement {
     #modal;
     #input;
+    #noteInput;
     #error;
     #resolve;
 
@@ -32,6 +33,8 @@ export default class MmPromptModal extends HTMLElement {
         confirmText = "Save",
         cancelText = "Cancel",
         expectedValue = null,
+        showNoteInput = false,
+        defaultValue = "",
     } = {}) {
         this.#settle(null);
 
@@ -64,6 +67,22 @@ export default class MmPromptModal extends HTMLElement {
         this.#input.required = true;
         inputLabel.append(this.#input);
         form.append(inputLabel);
+
+        if (showNoteInput) {
+            const noteLabel = document.createElement("label");
+            noteLabel.style.display = "grid";
+            noteLabel.style.gap = "0.25rem";
+            noteLabel.textContent = "Note (optional)";
+
+            this.#noteInput = document.createElement("textarea");
+            this.#noteInput.value = defaultValue;
+            this.#noteInput.placeholder = "Add a note...";
+            this.#noteInput.rows = 3;
+            this.#noteInput.style.resize = "vertical";
+            this.#noteInput.style.fontFamily = "inherit";
+            noteLabel.append(this.#noteInput);
+            form.append(noteLabel);
+        }
 
         this.#error = document.createElement("div");
         this.#error.style.color = "#b42318";
@@ -103,7 +122,10 @@ export default class MmPromptModal extends HTMLElement {
                 return;
             }
 
-            this.#settle(value);
+            const result = showNoteInput
+                ? { name: value, note: this.#noteInput.value.trim() }
+                : value;
+            this.#settle(result);
             this.#modal.hide();
         });
 

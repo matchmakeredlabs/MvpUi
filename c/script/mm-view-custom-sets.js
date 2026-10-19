@@ -361,6 +361,7 @@ export default class MmViewCustomSets extends HTMLElement {
             summarizedCustomSet.id = customSet.id || "";
             summarizedCustomSet.collectionId =
                 MmViewCustomSets.collectionIdOf(customSet);
+            summarizedCustomSet.note = customSet.note || "";
 
             summarizedCustomSets.push(summarizedCustomSet);
         });
@@ -543,7 +544,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     "mm-filter-table",
                     bdoc.attr(
                         "filter-properties",
-                        "subject,publisher,_projectId"
+                        "subject,publisher,_projectId,note"
                     ),
                     bdoc.attr(
                         "filter-display-names",
@@ -553,9 +554,9 @@ export default class MmViewCustomSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,Created,subject,publisher,Project,Described"
+                        "name,Created,subject,publisher,Project,Described,Note"
                     ),
-                    bdoc.attr("display-properties", "subject,publisher")
+                    bdoc.attr("display-properties", "subject,publisher,note")
                 );
 
                 bdoc.append(customSetsFilterTableContainer, filterTable);
@@ -590,6 +591,14 @@ export default class MmViewCustomSets extends HTMLElement {
                             ) {
                                 currentValue = "Null";
                             }
+
+                            if (property === "note") {
+                                if (currentValue.length > 30) {
+                                    return currentValue.slice(0, 27) + "...";
+                                }
+                                return currentValue;
+                            }
+
                             return currentValue;
                         };
                         return acc;
@@ -616,6 +625,11 @@ export default class MmViewCustomSets extends HTMLElement {
                         return a.percentDescribed - b.percentDescribed;
                     },
                     Project: (a, b) => (a._projectId < b._projectId ? -1 : 1),
+                    Note: (a, b) => {
+                        const aNote = a.note || "";
+                        const bNote = b.note || "";
+                        return aNote.localeCompare(bNote);
+                    },
                 };
 
                 filterTable.loadData(Object.values(displayCustomSets));

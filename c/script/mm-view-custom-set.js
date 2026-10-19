@@ -154,6 +154,7 @@ export default class MmViewCustomSet extends HTMLElement {
                         name: this.#currentCustomSetName,
                         collectionId,
                         descriptorIds,
+                        note: this.#savedCustomSet.note || "",
                     }),
                 }
             );
@@ -179,15 +180,19 @@ export default class MmViewCustomSet extends HTMLElement {
     };
 
     saveCustomSet = async () => {
-        const name = await this.shadowRoot
+        const result = await this.shadowRoot
             .querySelector("mm-prompt-modal")
             .ask({
                 title: "Save Custom Set",
-                message: "Provide a name for this custom set.",
+                message: "Provide a name and optional note for this custom set.",
                 label: "Custom set name",
                 confirmText: "Save",
+                showNoteInput: true,
             });
-        if (name === null) return;
+        if (result === null) return;
+
+        const name = result.name;
+        const note = result.note || "";
 
         const loading = this.shadowRoot.querySelector("mm-loading");
 
@@ -251,6 +256,7 @@ export default class MmViewCustomSet extends HTMLElement {
             name,
             collectionId,
             descriptorIds,
+            note,
         };
         const isUpdate = Boolean(existing?.id);
         if (isUpdate) body.id = existing.id;
