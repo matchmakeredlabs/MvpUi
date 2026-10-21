@@ -45,7 +45,7 @@ export default class MmCreateSets extends HTMLElement {
                 ),
                 bdoc.attr(
                     "sort-properties",
-                    "Name,Subject,Publisher,Project,% Described"
+                    "Select,Name,Subject,Publisher,Project,% Described"
                 ),
                 bdoc.attr("display-properties", "subject,publisher")
             ),
@@ -109,6 +109,10 @@ export default class MmCreateSets extends HTMLElement {
 
             filterTable.addCustomStylesheets(["/c/res/mm-create-sets.css"]);
 
+            filterTable.customColStyles = {
+                ["Select"]: "width: 25px; text-align: center; padding: 0;",
+            };
+
             const createSetButton = bdoc.ele(
                 "button",
                 bdoc.id("create-set-button"),
@@ -129,6 +133,37 @@ export default class MmCreateSets extends HTMLElement {
             filterTable.addCustomHeaderElements([createSetButton]);
 
             filterTable.generateCols = (displayProperties) => ({
+                select: (collection, root) =>
+                    bdoc.ele(
+                        "td",
+                        bdoc.attr("style", "text-align: center; padding: 0;"),
+                        bdoc.ele(
+                            "input",
+                            bdoc.attr("type", "checkbox"),
+                            bdoc.class("collection-checkbox"),
+                            bdoc.attr("style", "cursor: pointer; padding: 0; margin: 0;"),
+
+                            bdoc.eventListener("change", (e) => {
+                                if (e.target.checked) {
+                                    this.selectedCollectionIds = [
+                                        collection.id,
+                                    ];
+                                    // this.selectedCollectionIds.push(
+                                    //     collection.id
+                                    // );
+                                } else {
+                                    this.selectedCollectionIds = [];
+                                    // this.selectedCollectionIds.filter(
+                                    //     (id) => id !== collection.id
+                                    // );
+                                }
+                                createSetButton.disabled =
+                                    this.selectedCollectionIds.length === 0;
+
+                                this.#disableCheckboxes(e.target, root);
+                            })
+                        )
+                    ),
                 name: (collection) =>
                     bdoc.ele(
                         "a",
@@ -154,37 +189,6 @@ export default class MmCreateSets extends HTMLElement {
                     const percent = collection.percentDescribed;
                     return `${percent}%`;
                 },
-                select: (collection, root) =>
-                    bdoc.ele(
-                        "td",
-                        bdoc.attr("style", "text-align: center;"),
-                        bdoc.ele(
-                            "input",
-                            bdoc.attr("type", "checkbox"),
-                            bdoc.class("collection-checkbox"),
-                            bdoc.attr("style", "cursor: pointer;"),
-
-                            bdoc.eventListener("change", (e) => {
-                                if (e.target.checked) {
-                                    this.selectedCollectionIds = [
-                                        collection.id,
-                                    ];
-                                    // this.selectedCollectionIds.push(
-                                    //     collection.id
-                                    // );
-                                } else {
-                                    this.selectedCollectionIds = [];
-                                    // this.selectedCollectionIds.filter(
-                                    //     (id) => id !== collection.id
-                                    // );
-                                }
-                                createSetButton.disabled =
-                                    this.selectedCollectionIds.length === 0;
-
-                                this.#disableCheckboxes(e.target, root);
-                            })
-                        )
-                    ),
             });
 
             const sortPotentiallyNull = (attr) => (a, b) => {
@@ -197,6 +201,11 @@ export default class MmCreateSets extends HTMLElement {
             };
 
             filterTable.customSorts = {
+                Select: (a, b) => {
+                    const aSelected = this.selectedCollectionIds.includes(a.id) ? 1 : 0;
+                    const bSelected = this.selectedCollectionIds.includes(b.id) ? 1 : 0;
+                    return bSelected - aSelected;
+                },
                 ["Name"]: sortPotentiallyNull("name"),
                 ["Subject"]: sortPotentiallyNull("subject"),
                 ["Publisher"]: sortPotentiallyNull("publisher"),

@@ -369,7 +369,7 @@ export default class MmSelectSubset extends HTMLElement {
                     bdoc.id(`checkbox-${element.id}`),
                     bdoc.attr(
                         "style",
-                        "display: inline-flex; gap: 0.5em; margin-right:0.25em;"
+                        "display: inline-flex; gap: 0.25em; margin-right:0.25em;"
                     ),
                     checkbox
                 );

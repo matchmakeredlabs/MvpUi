@@ -195,11 +195,11 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
     }
   });
 
+  table.innerHTML += "<th style='width: 40px; padding: 0;'>Select</th>";
   for (let property of displayProperties) {
     property = property.charAt(0).toUpperCase() + property.slice(1);
     table.innerHTML += `<th>${property}</th>`;
   }
-  table.innerHTML += "<th>Select</th>";
 
   for (let filter of listToFilter) {
     const oneFilterDropdown = document.createElement("select");
@@ -278,7 +278,6 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
       }
       elementData += `<td>${currentValue}</td>`;
     }
-    elementData += `<td style = "text-align: center;"><input type="checkbox" id=${collection["id"]}></td>`;
     // console.log("pikachu", elementData);
 
     // console.log(elementId);
@@ -287,6 +286,7 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
 
     // Generate HTML
     let htmlCode = `<tr id=${elementId}>
+        <td style = "text-align: center; padding: 0; width: 40px;"><input type="checkbox" id=${collection["id"]}></td>
         <td><a href="Browse?id=${collection.id}">
         ${collection.name}</a></td>${elementData}</tr>`;
 

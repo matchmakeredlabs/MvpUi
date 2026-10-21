@@ -97,7 +97,7 @@ export default class MmCollections extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,publisher,_projectId"),
+                bdoc.attr("filter-properties", "subject,publisher,_projectId,note"),
                 bdoc.attr(
                     "filter-display-names",
                     JSON.stringify({
@@ -106,8 +106,9 @@ export default class MmCollections extends HTMLElement {
                 ),
                 bdoc.attr(
                     "sort-properties",
-                    "Name,Subject,Publisher,Project,Described"
-                )
+                    "Name,Subject,Publisher,Project,Described,Note"
+                ),
+                bdoc.attr("display-properties", "subject,publisher,note")
             ),
             bdoc.ele(
                 "script",
@@ -169,15 +170,38 @@ export default class MmCollections extends HTMLElement {
                 return currentValue;
             };
 
-            filterTable.generateCols = () => ({
+            filterTable.generateCols = (displayProperties) => ({
                 ["Name"]: (collection) =>
                     bdoc.ele(
                         "a",
                         bdoc.attr("href", "/c/Browse?id=" + collection.id),
                         collection.name
                     ),
-                ["Subject"]: attrOrNull("subject"),
-                ["Publisher"]: attrOrNull("publisher"),
+                ...displayProperties.reduce((acc, property) => {
+                    acc[property] = (item) => {
+                        let currentValue = item[property];
+                        if (
+                            currentValue === null ||
+                            currentValue === "" ||
+                            currentValue === undefined
+                        ) {
+                            currentValue = "Null";
+                        }
+
+                        if (property === "note") {
+                            if (currentValue.length > 30) {
+                                return currentValue.slice(0, 27) + "...";
+                            }
+                            return currentValue;
+                        }
+
+                        if (currentValue.length > 15 && !currentValue.includes(" ")) {
+                            return currentValue.slice(0, 12) + "...";
+                        }
+                        return currentValue;
+                    };
+                    return acc;
+                }, {}),
                 ["Project"]: (collection) => collection._projectId || "Null",
                 ["Described"]: (collection) => {
                     const percent = collection.percentDescribed;
@@ -206,7 +230,122 @@ export default class MmCollections extends HTMLElement {
                 ["Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },
+                ["Note"]: (a, b) => {
+                    const aNote = a.note || "";
+                    const bNote = b.note || "";
+                    return aNote.localeCompare(bNote);
+                },
             };
+
+            filterTable.generateFilterOptions = (_displayElements, filters, selectedOptions, root) => {
+                collections.forEach((collection) => {
+                    filters.forEach((filter) => {
+                        if (!(filter in collection)) {
+                            const currentValue = "Null";
+                            if (!(currentValue in selectedOptions[filter])) {
+                                selectedOptions[filter][currentValue] = false;
+                                bdoc.append(
+                                    root.getElementById(`${filter}-dropdown`),
+                                    bdoc.ele(
+                                        "option",
+                                        currentValue,
+                                        bdoc.attr("value", currentValue)
+                                    )
+                                );
+                            }
+                        } else {
+                            // Handle note field as a string, other fields as Sets
+                            if (filter === "note") {
+                                const currentValue = collection[filter];
+                                if (
+                                    currentValue === null ||
+                                    currentValue === "" ||
+                                    currentValue === undefined
+                                ) {
+                                    const nullValue = "Null";
+                                    if (!(nullValue in selectedOptions[filter])) {
+                                        selectedOptions[filter][nullValue] = false;
+                                        bdoc.append(
+                                            root.getElementById(`${filter}-dropdown`),
+                                            bdoc.ele(
+                                                "option",
+                                                nullValue,
+                                                bdoc.attr("value", nullValue)
+                                            )
+                                        );
+                                    }
+                                } else if (!(currentValue in selectedOptions[filter])) {
+                                    selectedOptions[filter][currentValue] = false;
+                                    bdoc.append(
+                                        root.getElementById(`${filter}-dropdown`),
+                                        bdoc.ele(
+                                            "option",
+                                            currentValue,
+                                            bdoc.attr("value", currentValue)
+                                        )
+                                    );
+                                }
+                            } else {
+                                const currentValue = collection[filter];
+                                if (
+                                    currentValue === null ||
+                                    currentValue === "" ||
+                                    currentValue === undefined
+                                ) {
+                                    const nullValue = "Null";
+                                    if (!(nullValue in selectedOptions[filter])) {
+                                        selectedOptions[filter][nullValue] = false;
+                                        bdoc.append(
+                                            root.getElementById(`${filter}-dropdown`),
+                                            bdoc.ele(
+                                                "option",
+                                                nullValue,
+                                                bdoc.attr("value", nullValue)
+                                            )
+                                        );
+                                    }
+                                } else if (!(currentValue in selectedOptions[filter])) {
+                                    selectedOptions[filter][currentValue] = false;
+                                    bdoc.append(
+                                        root.getElementById(`${filter}-dropdown`),
+                                        bdoc.ele(
+                                            "option",
+                                            currentValue,
+                                            bdoc.attr("value", currentValue)
+                                        )
+                                    );
+                                }
+                            }
+                        }
+                    });
+                });
+            };
+
+            filterTable.dataFilteredByFilterOptions = (filteredBySearch, filters) =>
+                filteredBySearch
+                    .filter((item) =>
+                        Object.keys(filters).every((filter) =>
+                            Object.keys(filters[filter]).some(
+                                (selected) => filters[filter][selected]
+                            )
+                                ? Object.keys(filters[filter]).some((selected) =>
+                                    filters[filter][selected]
+                                        ? filter === "note"
+                                            ? (item[filter] === selected) ||
+                                              (selected === "Null" &&
+                                                  (item[filter] === undefined ||
+                                                      item[filter] === null ||
+                                                      item[filter] === ""))
+                                            : (item[filter] === selected) ||
+                                              (selected === "Null" &&
+                                                  (item[filter] === undefined ||
+                                                      item[filter] === null ||
+                                                      item[filter] === ""))
+                                        : false
+                                )
+                                : true
+                        )
+                    );
 
             filterTable.loadData(collections);
         });

@@ -492,7 +492,7 @@ class MmMatchSets extends HTMLElement {
                 const collectionsTable = bdoc.ele(
                     "mm-filter-table",
                     bdoc.id("collections-table"),
-                    bdoc.attr("filter-properties", "subject,publisher,_projectId"),
+                    bdoc.attr("filter-properties", "subject,publisher,_projectId,note"),
                     bdoc.attr(
                         "filter-display-names",
                         JSON.stringify({
@@ -501,9 +501,9 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,subject,publisher,Project,Described"
+                        "Anchored,Responding,name,subject,publisher,Project,Described,Note"
                     ),
-                    bdoc.attr("display-properties", "subject,publisher")
+                    bdoc.attr("display-properties", "subject,publisher,note")
                 );
 
                 bdoc.append(collectionsFilterTableContainer, collectionsTable);
@@ -546,6 +546,20 @@ class MmMatchSets extends HTMLElement {
                 }
 
                 collectionsTable.generateCols = (displayProperties) => ({
+                    ["Anchored"]: (collection, root) =>
+                        generateCheckbox(
+                            collection,
+                            "anchored",
+                            "collections",
+                            root
+                        ),
+                    ["Responding"]: (collection, root) =>
+                        generateCheckbox(
+                            collection,
+                            "responding",
+                            "collections",
+                            root
+                        ),
                     name: (collection) =>
                         bdoc.ele(
                             "a",
@@ -561,6 +575,13 @@ class MmMatchSets extends HTMLElement {
                                 currentValue === undefined
                             ) {
                                 currentValue = "Null";
+                            }
+
+                            if (property === "note") {
+                                if (currentValue.length > 30) {
+                                    return currentValue.slice(0, 27) + "...";
+                                }
+                                return currentValue;
                             }
 
                             if (currentValue.length > 15 && !currentValue.includes(" ")) {
@@ -582,29 +603,140 @@ class MmMatchSets extends HTMLElement {
                             "td",
                             `${collection.percentDescribed}%`
                         ),
-                    ["Anchored"]: (collection, root) =>
-                        generateCheckbox(
-                            collection,
-                            "anchored",
-                            "collections",
-                            root
-                        ),
-                    ["Responding"]: (collection, root) =>
-                        generateCheckbox(
-                            collection,
-                            "responding",
-                            "collections",
-                            root
-                        ),
                 });
 
                 collectionsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Responding"]: "width: 1%; text-align: center",
-                    ["Anchored"]: "width: 1%; text-align: center",
+                    ["Responding"]: "width: 40px; text-align: center; padding: 0;",
+                    ["Anchored"]: "width: 40px; text-align: center; padding: 0;",
+                    ["Note"]: "width: 15%",
                 };
 
+                collectionsTable.generateFilterOptions = (_displayElements, filters, selectedOptions, root) => {
+                    this.#collections.forEach((collection) => {
+                        filters.forEach((filter) => {
+                            if (!(filter in collection)) {
+                                const currentValue = "Null";
+                                if (!(currentValue in selectedOptions[filter])) {
+                                    selectedOptions[filter][currentValue] = false;
+                                    bdoc.append(
+                                        root.getElementById(`${filter}-dropdown`),
+                                        bdoc.ele(
+                                            "option",
+                                            currentValue,
+                                            bdoc.attr("value", currentValue)
+                                        )
+                                    );
+                                }
+                            } else {
+                                // Handle note field as a string, other fields as Sets
+                                if (filter === "note") {
+                                    const currentValue = collection[filter];
+                                    if (
+                                        currentValue === null ||
+                                        currentValue === "" ||
+                                        currentValue === undefined
+                                    ) {
+                                        const nullValue = "Null";
+                                        if (!(nullValue in selectedOptions[filter])) {
+                                            selectedOptions[filter][nullValue] = false;
+                                            bdoc.append(
+                                                root.getElementById(`${filter}-dropdown`),
+                                                bdoc.ele(
+                                                    "option",
+                                                    nullValue,
+                                                    bdoc.attr("value", nullValue)
+                                                )
+                                            );
+                                        }
+                                    } else if (!(currentValue in selectedOptions[filter])) {
+                                        selectedOptions[filter][currentValue] = false;
+                                        bdoc.append(
+                                            root.getElementById(`${filter}-dropdown`),
+                                            bdoc.ele(
+                                                "option",
+                                                currentValue,
+                                                bdoc.attr("value", currentValue)
+                                            )
+                                        );
+                                    }
+                                } else {
+                                    const currentValue = collection[filter];
+                                    if (
+                                        currentValue === null ||
+                                        currentValue === "" ||
+                                        currentValue === undefined
+                                    ) {
+                                        const nullValue = "Null";
+                                        if (!(nullValue in selectedOptions[filter])) {
+                                            selectedOptions[filter][nullValue] = false;
+                                            bdoc.append(
+                                                root.getElementById(`${filter}-dropdown`),
+                                                bdoc.ele(
+                                                    "option",
+                                                    nullValue,
+                                                    bdoc.attr("value", nullValue)
+                                                )
+                                            );
+                                        }
+                                    } else if (!(currentValue in selectedOptions[filter])) {
+                                        selectedOptions[filter][currentValue] = false;
+                                        bdoc.append(
+                                            root.getElementById(`${filter}-dropdown`),
+                                            bdoc.ele(
+                                                "option",
+                                                currentValue,
+                                                bdoc.attr("value", currentValue)
+                                            )
+                                        );
+                                    }
+                                }
+                            }
+                        });
+                    });
+                };
+
+                collectionsTable.dataFilteredByFilterOptions = (filteredBySearch, filters) =>
+                    filteredBySearch
+                        .filter((item) =>
+                            Object.keys(filters).every((filter) =>
+                                Object.keys(filters[filter]).some(
+                                    (selected) => filters[filter][selected]
+                                )
+                                    ? Object.keys(filters[filter]).some((selected) =>
+                                        filters[filter][selected]
+                                            ? filter === "note"
+                                                ? (item[filter] === selected) ||
+                                                  (selected === "Null" &&
+                                                      (item[filter] === undefined ||
+                                                          item[filter] === null ||
+                                                          item[filter] === ""))
+                                                : (item[filter] === selected) ||
+                                                  (selected === "Null" &&
+                                                      (item[filter] === undefined ||
+                                                          item[filter] === null ||
+                                                          item[filter] === ""))
+                                            : false
+                                    )
+                                    : true
+                            )
+                        );
+
                 collectionsTable.customSorts = {
+                    ["Anchored"]: (a, b) => {
+                        return this.#sets.anchored.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
+                    ["Responding"]: (a, b) => {
+                        return this.#sets.responding.collections.find(
+                            (collection) => collection.id === a.id
+                        )
+                            ? 1
+                            : -1;
+                    },
                     name: (a, b) => {
                         return a.name > b.name ? 1 : -1;
                     },
@@ -632,19 +764,10 @@ class MmMatchSets extends HTMLElement {
                     ["Project"]: (a, b) => {
                         return a._projectId < b._projectId ? -1 : 1;
                     },
-                    ["Anchored"]: (a, b) => {
-                        return this.#sets.anchored.collections.find(
-                            (collection) => collection.id === a.id
-                        )
-                            ? 1
-                            : -1;
-                    },
-                    ["Responding"]: (a, b) => {
-                        return this.#sets.responding.collections.find(
-                            (collection) => collection.id === a.id
-                        )
-                            ? 1
-                            : -1;
+                    ["Note"]: (a, b) => {
+                        const aNote = a.note || "";
+                        const bNote = b.note || "";
+                        return aNote.localeCompare(bNote);
                     },
                 };
 
@@ -700,7 +823,7 @@ class MmMatchSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,Created,subject,publisher,Project,Described,Note"
+                        "Anchored,Responding,name,Created,subject,publisher,Project,Described,Note"
                     ),
                     bdoc.attr("display-properties", "subject,publisher,note")
                 );
@@ -725,12 +848,26 @@ class MmMatchSets extends HTMLElement {
 
                 customSetsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Responding"]: "width: 1%; text-align: center",
-                    ["Anchored"]: "width: 1%; text-align: center",
+                    ["Responding"]: "width: 40px; text-align: center; padding: 0;",
+                    ["Anchored"]: "width: 40px; text-align: center; padding: 0;",
                     ["Note"]: "width: 15%",
                 };
 
                 customSetsTable.generateCols = (displayProperties) => ({
+                    ["Anchored"]: (customSet, root) =>
+                        generateCheckbox(
+                            customSet,
+                            "anchored",
+                            "custom-set",
+                            root
+                        ),
+                    ["Responding"]: (customSet, root) =>
+                        generateCheckbox(
+                            customSet,
+                            "responding",
+                            "custom-set",
+                            root
+                        ),
                     name: (customSet) =>
                         bdoc.ele(
                             "a",
@@ -779,23 +916,23 @@ class MmMatchSets extends HTMLElement {
                             "td",
                             `${customSet.percentDescribed}%`
                         ),
-                    ["Anchored"]: (customSet, root) =>
-                        generateCheckbox(
-                            customSet,
-                            "anchored",
-                            "custom-set",
-                            root
-                        ),
-                    ["Responding"]: (customSet, root) =>
-                        generateCheckbox(
-                            customSet,
-                            "responding",
-                            "custom-set",
-                            root
-                        ),
                 });
 
                 customSetsTable.customSorts = {
+                    ["Anchored"]: (a, b) => {
+                        return this.#sets.anchored["custom-set"].find(
+                            (customSet) => customSet.name === a.name
+                        )
+                            ? 1
+                            : -1;
+                    },
+                    ["Responding"]: (a, b) => {
+                        return this.#sets.responding["custom-set"].find(
+                            (customSet) => customSet.name === a.name
+                        )
+                            ? 1
+                            : -1;
+                    },
                     name: (a, b) => {
                         return a.name > b.name ? 1 : -1;
                     },
@@ -834,20 +971,6 @@ class MmMatchSets extends HTMLElement {
                         const aNote = a.note || "";
                         const bNote = b.note || "";
                         return aNote.localeCompare(bNote);
-                    },
-                    ["Anchored"]: (a, b) => {
-                        return this.#sets.anchored["custom-set"].find(
-                            (customSet) => customSet.name === a.name
-                        )
-                            ? 1
-                            : -1;
-                    },
-                    ["Responding"]: (a, b) => {
-                        return this.#sets.responding["custom-set"].find(
-                            (customSet) => customSet.name === a.name
-                        )
-                            ? 1
-                            : -1;
                     },
                 };
 

@@ -15,6 +15,8 @@ export default class MmViewCustomSets extends HTMLElement {
     }
 
     loadingElement;
+    #summarizedCustomSets;
+    #displayCustomSets;
 
     connectedCallback() {
         this.loadingElement = bdoc.ele(
@@ -556,15 +558,14 @@ export default class MmViewCustomSets extends HTMLElement {
             return;
         }
 
-        let summarizedCustomSets, displayCustomSets;
         try {
-            [summarizedCustomSets, displayCustomSets] =
+            [this.#summarizedCustomSets, this.#displayCustomSets] =
                 MmViewCustomSets.generateSummarizedAndDisplayCustomSets(
                     customSetsData
                 );
         } catch {
-            summarizedCustomSets = [];
-            displayCustomSets = {};
+            this.#summarizedCustomSets = [];
+            this.#displayCustomSets = {};
         }
 
         this.loadingElement.hide();
@@ -575,7 +576,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     "#custom-sets-filter-table-container"
                 );
 
-            if (!summarizedCustomSets || summarizedCustomSets.length === 0) {
+            if (!this.#summarizedCustomSets || this.#summarizedCustomSets.length === 0) {
                 bdoc.append(
                     customSetsFilterTableContainer,
                     bdoc.ele(
@@ -611,21 +612,42 @@ export default class MmViewCustomSets extends HTMLElement {
 
                 bdoc.append(customSetsFilterTableContainer, filterTable);
 
-                filterTable.generateFilterOptions =
-                    MmViewCustomSets.generateFilterOptionsCallback(
-                        summarizedCustomSets
-                    );
-                filterTable.dataFilteredBySearchKeywords =
-                    MmViewCustomSets.generateDataFilteredBySearchKeywordsCallback(
-                        summarizedCustomSets
-                    );
-                filterTable.dataFilteredByFilterOptions =
-                    MmViewCustomSets.generateDataFilteredByFilterOptionsCallback(
-                        displayCustomSets
-                    );
-
                 filterTable.nameElementCallback =
                     MmViewCustomSets.nameElementCallback;
+
+                const updateFilterTable = () => {
+                    if (this.#summarizedCustomSets.length === 0) {
+                        // Show empty state message
+                        filterTable.remove();
+                        bdoc.append(
+                            customSetsFilterTableContainer,
+                            bdoc.ele(
+                                "div",
+                                bdoc.attr("style", "margin: 2em;"),
+                                bdoc.ele("p", "No custom sets found."),
+                                bdoc.ele(
+                                    "a",
+                                    bdoc.attr("href", "/c/CreateSets"),
+                                    "Create a custom set"
+                                )
+                            )
+                        );
+                    } else {
+                        filterTable.generateFilterOptions =
+                            MmViewCustomSets.generateFilterOptionsCallback(
+                                this.#summarizedCustomSets
+                            );
+                        filterTable.dataFilteredBySearchKeywords =
+                            MmViewCustomSets.generateDataFilteredBySearchKeywordsCallback(
+                                this.#summarizedCustomSets
+                            );
+                        filterTable.dataFilteredByFilterOptions =
+                            MmViewCustomSets.generateDataFilteredByFilterOptionsCallback(
+                                this.#displayCustomSets
+                            );
+                        filterTable.loadData(Object.values(this.#displayCustomSets));
+                    }
+                };
 
                 filterTable.generateCols = (displayProperties) => ({
                     name: MmViewCustomSets.nameElementCallback,
@@ -685,7 +707,16 @@ export default class MmViewCustomSets extends HTMLElement {
                                             await MmViewCustomSets.deleteCustomSet(
                                                 item.id
                                             );
-                                            this.#renderCustomSets();
+                                            // Remove the deleted item from local data arrays
+                                            const index = this.#summarizedCustomSets.findIndex(
+                                                (cs) => cs.name === item.name
+                                            );
+                                            if (index > -1) {
+                                                this.#summarizedCustomSets.splice(index, 1);
+                                            }
+                                            delete this.#displayCustomSets[item.name];
+                                            // Update the filter table with the new data
+                                            updateFilterTable();
                                         } catch (error) {
                                             alert(
                                                 `Failed to delete custom set: ${error.message || "Unknown error"}`
@@ -716,7 +747,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     },
                 };
 
-                filterTable.loadData(Object.values(displayCustomSets));
+                updateFilterTable();
             }
         });
     };
