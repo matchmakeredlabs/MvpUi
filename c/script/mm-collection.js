@@ -139,93 +139,75 @@ class MmCollection extends HTMLElement {
     }
 
     deleteDescriptor(descriptor) {
+        const currentDescriptor = this.descriptors[this.idToIntId[descriptor.id]];
+        if (!currentDescriptor) return;
+
         const parentDescriptor =
-            this.descriptors[this.idToIntId[descriptor.isPartOfId]];
+            this.descriptors[this.idToIntId[currentDescriptor.isPartOfId]];
+        if (!parentDescriptor) return;
 
-        const parentDescriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${parentDescriptor._intId}"]`
-        );
-
-        const described = !!(descriptor.key && descriptor.key.length > 0);
-        const parentDescribed = !!(
-            parentDescriptor.key && parentDescriptor.key.length > 0
-        );
-
-        let leafCountToDecrement = descriptor._leafCount;
-        let describedLeafCountToDecrement = descriptor._leafWithKeyCount;
-
-        const decrementLeafCounts = (descriptorEle, _intId) => {
-            const descriptorLi = this.#getLi(descriptorEle);
-            const currentDescriptor = this.descriptors[descriptorLi.feid];
-            currentDescriptor._leafCount -= leafCountToDecrement;
-            if (!descriptorEle || _intId === 0) {
-                // if no parent, remove from root
-                this.descriptors[0]._leafCount -= leafCountToDecrement;
-                if (described) {
-                    this.descriptors[0]._leafWithKeyCount -=
-                        leafCountToDecrement;
-                }
-                return;
-            }
-
-            if (described) {
-                currentDescriptor._leafWithKeyCount -=
-                    describedLeafCountToDecrement;
-
-            }
-            const descButton = descriptorLi.querySelector("button.mmb_tri");
-
-            if (
-                currentDescriptor._leafCount ===
-                currentDescriptor._leafWithKeyCount
-            ) {
-                descButton.classList.remove("mmb_partial");
-                descButton.classList.add("mmb_desc");
-            }
-
-            decrementLeafCounts(
-                descriptorLi.parentElement,
-                this.idToIntId[currentDescriptor.isPartOfId]
-            );
-        };
-        // if parent only has this descriptor, parent will become leaf, so leaf count increases by one
-        if (parentDescriptor._intHasPart.length === 1) {
+        let leafCountToDecrement = currentDescriptor._leafCount;
+        let describedLeafCountToDecrement = currentDescriptor._leafWithKeyCount;
+        const parentBecomesLeaf = parentDescriptor._intHasPart.length === 1;
+        if (parentBecomesLeaf) {
             leafCountToDecrement--;
-
-            // if (leafCountToDecrement < 0) leafCountToDecrement = 0;
-
-            if (parentDescribed) {
+            if (parentDescriptor.key && parentDescriptor.key.length > 0) {
                 describedLeafCountToDecrement--;
-                // if (describedLeafCountToDecrement < 0) describedLeafCountToDecrement = 0;
-            }
-            if (parentDescriptorEle) {
-                const descButton =
-                    parentDescriptorEle.querySelector("button.mmb_tri");
-                descButton.classList.remove("mmb_expanded");
-                descButton.classList.add("mmb_leaf");
-                bdoc.append(
-                    descButton,
-                    bdoc.eventListener("click", this.clickSelect(this))
-                );
             }
         }
-        decrementLeafCounts(parentDescriptorEle, parentDescriptor._intId);
 
-        const descriptorEle = this.shadowRoot.querySelector(
-            `li[feid="${descriptor._intId}"]`
-        );
-        const parentUl = descriptorEle.parentElement;
-        parentUl.removeChild(descriptorEle);
+        // Walk the data, not the DOM: the collection root has no rendered LI,
+        // and ancestors can also be collapsed when a deletion completes.
+        let ancestor = parentDescriptor;
+        while (ancestor) {
+            ancestor._leafCount -= leafCountToDecrement;
+            ancestor._leafWithKeyCount -= describedLeafCountToDecrement;
+            const ancestorEle = this.shadowRoot.querySelector(
+                `li[feid="${ancestor._intId}"]`
+            );
+            const button = ancestorEle?.querySelector("button.mmb_tri");
+            if (button) {
+                button.classList.toggle(
+                    "mmb_desc",
+                    ancestor._leafWithKeyCount > 0 &&
+                        ancestor._leafWithKeyCount >= ancestor._leafCount
+                );
+                button.classList.toggle(
+                    "mmb_partial",
+                    ancestor._leafWithKeyCount > 0 &&
+                        ancestor._leafWithKeyCount < ancestor._leafCount
+                );
+            }
+            ancestor = this.descriptors[this.idToIntId[ancestor.isPartOfId]];
+        }
 
+        this.shadowRoot.querySelector(
+            `li[feid="${currentDescriptor._intId}"]`
+        )?.remove();
         parentDescriptor._intHasPart = parentDescriptor._intHasPart.filter(
-            (id) => id !== descriptor._intId
+            (id) => id !== currentDescriptor._intId
         );
-        this.dfsWithPostfixCallback(descriptor._intId, (desc) => {
+        this.dfsWithPostfixCallback(currentDescriptor._intId, (desc) => {
             delete this.descriptors[desc._intId];
             delete this.idToIntId[desc.id];
         });
 
-        console.log(this.descriptors);
+        const parentEle = this.shadowRoot.querySelector(
+            `li[feid="${parentDescriptor._intId}"]`
+        );
+        if (parentBecomesLeaf && parentEle) {
+            // Rebuild the row so its button selects the new leaf instead of
+            // retaining the old expand/collapse listener.
+            parentEle.replaceWith(MmCollection.makeElement(parentDescriptor, this));
+        }
+        this.clearSelections();
+        this.select(null, parentDescriptor);
+
+        const root = this.getRootNode();
+        const expandButton = root.getElementById("expand-btn" + this.numOnPage);
+        const contractButton = root.getElementById("contract-btn" + this.numOnPage);
+        if (expandButton) expandButton.disabled = this.isFullyExpanded();
+        if (contractButton) contractButton.disabled = this.isFullyContracted();
     }
 
     addNewDescriptor(descriptor) {
