@@ -186,6 +186,37 @@ export default class MmViewCustomSets extends HTMLElement {
         return await response.json();
     };
 
+    static duplicateCustomSet = async (customSetId, newName) => {
+        const response = await MmViewCustomSets.session.fetch(
+            `/api/customSets/${encodeURIComponent(customSetId)}`
+        );
+        if (!response.ok) {
+            const errorText = await response.text();
+            return Promise.reject(new Error(errorText || response.statusText));
+        }
+        const responseData = await response.json();
+        const originalSet = responseData.customSet || responseData;
+
+        const createResponse = await MmViewCustomSets.session.fetch(
+            "/api/customSets",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: newName,
+                    collectionId: MmViewCustomSets.collectionIdOf(originalSet),
+                    descriptorIds: MmViewCustomSets.descriptorIdsOf(originalSet),
+                    note: originalSet.note || "",
+                }),
+            }
+        );
+        if (!createResponse.ok) {
+            const errorText = await createResponse.text();
+            return Promise.reject(new Error(errorText || createResponse.statusText));
+        }
+        return await createResponse.json();
+    };
+
     // Keep ids that still exist in the live collection, always including the root.
     static refreshDescriptorIds = (customSet, liveCollection) => {
         const liveIds = new Set(
@@ -605,7 +636,7 @@ export default class MmViewCustomSets extends HTMLElement {
                     ),
                     bdoc.attr(
                         "sort-properties",
-                        "name,Created,subject,publisher,Project,Described,Note"
+                        "name,Created,subject,publisher,Project,Described,Note,Actions"
                     ),
                     bdoc.attr("display-properties", "subject,publisher,note")
                 );
@@ -692,6 +723,41 @@ export default class MmViewCustomSets extends HTMLElement {
                             ),
                             bdoc.ele(
                                 "button",
+                                bdoc.class("duplicate-button"),
+                                bdoc.attr(
+                                    "style",
+                                    "border-color: white; background-color: #4a90e2; border-radius: 5px; color: white; cursor: pointer; margin-right: 0.5em;"
+                                ),
+                                "📋 Duplicate",
+                                bdoc.eventListener("click", async () => {
+                                    const originalName = item.name;
+                                    const defaultName = `${originalName} (copy)`;
+                                    const newName = prompt(
+                                        `Enter a name for the duplicate of "${originalName}":`,
+                                        defaultName
+                                    );
+                                    if (newName === null) {
+                                        return;
+                                    }
+                                    if (!newName || newName.trim() === "") {
+                                        alert("Name cannot be empty.");
+                                        return;
+                                    }
+                                    try {
+                                        await MmViewCustomSets.duplicateCustomSet(
+                                            item.id,
+                                            newName.trim()
+                                        );
+                                        location.reload();
+                                    } catch (error) {
+                                        alert(
+                                            `Failed to duplicate custom set: ${error.message || "Unknown error"}`
+                                        );
+                                    }
+                                })
+                            ),
+                            bdoc.ele(
+                                "button",
                                 bdoc.class("delete-button"),
                                 bdoc.attr(
                                     "style",
@@ -745,6 +811,7 @@ export default class MmViewCustomSets extends HTMLElement {
                         const bNote = b.note || "";
                         return aNote.localeCompare(bNote);
                     },
+                    Actions: () => 0,
                 };
 
                 updateFilterTable();
