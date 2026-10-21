@@ -1,34 +1,53 @@
 export default class bdoc {
-    static ele(tagName, ...children) {
-        let ele = document.createElement(tagName);
+    static appendList(ele, children) {
         for (let cn of children) {
             if (cn === undefined || cn === null) {
                 ele.appendChild(document.createTextNode(""));
-            }
-            else if (cn instanceof Node) {
+            } else if (cn instanceof Node) {
                 ele.appendChild(cn);
-            }
-            else if (cn.addToEle !== undefined)
-            {
+            } else if (cn.addToEle !== undefined) {
                 cn.addToEle(ele);
-            }
-            else {
+            } else {
                 ele.appendChild(document.createTextNode(cn));
             }
         }
         return ele;
     }
 
+    static append(ele, ...children) {
+        this.appendList(ele, children);
+    }
+
+    static ele(tagName, ...children) {
+        return bdoc.appendList(document.createElement(tagName), children);
+    }
+
     static attr(name, value) {
         return new bdocAttr(name, value);
     }
 
+    static id(idvalue) {
+        return new bdocAttr("id", idvalue);
+    }
+
     static class(className) {
-        return new bdocAttr("className", className);
+        return new bdocAttr("class", className);
+    }
+
+    static eventListener(eventName, callback) {
+        return new bdocListener(eventName, callback);
     }
 
     static preText(value) {
         return new bdocPre(value);
+    }
+
+    static script(src) {
+        return bdoc.ele(
+            "script",
+            bdoc.attr("type", "module"),
+            bdoc.attr("src", `/c/script/${src}`)
+        );
     }
 }
 
@@ -39,7 +58,18 @@ class bdocAttr {
     }
 
     addToEle(ele) {
-        ele[this.name] = this.value;
+        ele.setAttribute(this.name, this.value);
+    }
+}
+
+class bdocListener {
+    constructor(eventName, callback) {
+        this.eventName = eventName;
+        this.callback = callback;
+    }
+
+    addToEle(ele) {
+        ele.addEventListener(this.eventName, this.callback);
     }
 }
 
@@ -53,14 +83,12 @@ class bdocPre {
     }
 }
 
-function appendPreformattedText(element, text)
-{
+function appendPreformattedText(element, text) {
     let first = true;
     for (let part of text.split("\n")) {
         if (first) {
             first = false;
-        }
-        else {
+        } else {
             element.appendChild(document.createElement("br"));
         }
 

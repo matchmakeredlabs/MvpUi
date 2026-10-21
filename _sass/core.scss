@@ -1,75 +1,56 @@
 @import "globals.scss";
+@import "colors.scss";
+@import "fonts.scss";
+@import "card.scss";
 
-// ==== Declare Constants ====
+/*
+ * Keep native scrollbars visually detached from their containers. Firefox
+ * supports color/width; Chromium and Safari also support the inset thumb.
+ */
+* {
+    scrollbar-color: #a7aaad transparent;
+    scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece,
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    min-width: 36px;
+    min-height: 36px;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-color: #a7aaad;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: #7f8387;
+}
+
+*::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
 :root {
-    --clr_accent1: #004D85; // Directory, Subtitle, Heading 1 (blue)
-    --clr_other: #8A1515; // (burgundy)
-    --clr_accent2: #004D85; // Title, Heading 2 (blue)
-    --clr_link: #18577e; // (blue)
-    --clr_link_visited: #278DCC;
-    --clr_link_hover_bg: #D0D0D0; // (medium-light gray)
-    --clr_code_bg: #E8E8E8; // (light gray)
-    --gradient_hr: linear-gradient(to right, white, #808080, #808080, white);
-}
-
-// ==== Import Fonts ====
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 800;
-    src: local('Open Sans ExtraBold'), local('OpenSans-ExtraBold'), url(https://fonts.gstatic.com/s/opensans/v15/mem5YaGs126MiZpBA-UN8rsOUuhp.woff2) format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: italic;
-    font-weight: 300;
-    src: local('Open Sans Light Italic'), local('OpenSans-LightItalic'), url(https://fonts.gstatic.com/s/opensans/v15/memnYaGs126MiZpBA-UFUKWyV9hrIqM.woff2) format('woff2');
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: italic;
-    font-weight: 400;
-    src: local('Open Sans Italic'), local('OpenSans-Italic'), url(https://fonts.gstatic.com/s/opensans/v15/mem6YaGs126MiZpBA-UFUK0Zdc0.woff2) format('woff2');
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: italic;
-    font-weight: 700;
-    src: local('Open Sans Bold Italic'), local('OpenSans-BoldItalic'), url(https://fonts.gstatic.com/s/opensans/v15/memnYaGs126MiZpBA-UFUKWiUNhrIqM.woff2) format('woff2');
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 300;
-    src: local('Open Sans Light'), local('OpenSans-Light'), url(https://fonts.gstatic.com/s/opensans/v15/mem5YaGs126MiZpBA-UN_r8OUuhp.woff2) format('woff2');
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Open Sans Regular'), local('OpenSans-Regular'), url(https://fonts.gstatic.com/s/opensans/v15/mem8YaGs126MiZpBA-UFVZ0b.woff2) format('woff2');
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 700;
-    src: local('Open Sans Bold'), local('OpenSans-Bold'), url(https://fonts.gstatic.com/s/opensans/v15/mem5YaGs126MiZpBA-UN7rgOUuhp.woff2) format('woff2');
-}
-
-// ==== Body Defaults ====
-
-body {
+    // ==== Constants ====
+    @include mmx_colors;
     font-family: 'Open Sans', 'Arial', Helvetica, sans-serif;
     color: black;
     background-color: white;
 }
+
+// ==== Body Defaults ====
 
 // Main frame for pages - should sit just inside body
 #frame {
@@ -400,7 +381,7 @@ table.custom th, table.custom td {
     margin: 0 auto; /* Center horizontally */
     padding: 20px;
     border: 1px solid #888;
-    width: 700px; /* Fixed width for the modal content */
+    width: 835px; /* Fixed width for the modal content */
     box-sizing: border-box; /* Include padding and border in the width */
     position: relative; /* Ensure relative positioning */
     top: 10%;
@@ -478,14 +459,14 @@ table.custom th, table.custom td {
     border-left: none;
   }
 
-  .data-table_console tr:nth-child(2) td:nth-child(n+2):nth-child(-n+5) {
+  .data-table_console tr:nth-child(2) td:nth-child(n+2) {
     border-bottom: 1px solid black;
 }
-.data-table_console tr:nth-child(2) td:nth-child(n+2):nth-child(-n+4) {
+.data-table_console tr:nth-child(2) td:nth-child(n+2):not(:last-child) {
     border-right: 1px solid black;
 }
 
-.data-table_console tr:nth-child(3) td:nth-child(n+2):nth-child(-n+4) {
+.data-table_console tr:nth-child(3) td:nth-child(n+2):not(:last-child) {
     border-right: 1px solid black;
 }
 
@@ -503,4 +484,8 @@ table.custom th, table.custom td {
 
   .header_console:last-child {
     border-right:none;
+}
+
+.card {
+    @include mmx_card;
 }
