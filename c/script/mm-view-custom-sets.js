@@ -718,14 +718,14 @@ export default class MmViewCustomSets extends HTMLElement {
                             "td",
                             bdoc.attr(
                                 "style",
-                                "float: right; border: none; white-space: nowrap;"
+                                "display: flex; flex-direction: column; align-items: flex-end; gap: 0.5em; border: none;"
                             ),
                             bdoc.ele(
                                 "button",
                                 bdoc.class("duplicate-button"),
                                 bdoc.attr(
                                     "style",
-                                    "border-color: white; background-color: #4a90e2; border-radius: 5px; color: white; cursor: pointer; margin-right: 0.5em;"
+                                    "border-color: white; background-color: #4a90e2; border-radius: 5px; color: white; cursor: pointer; width: 100px;"
                                 ),
                                 "📋 Duplicate",
                                 bdoc.eventListener("click", async () => {
@@ -760,7 +760,7 @@ export default class MmViewCustomSets extends HTMLElement {
                                 bdoc.class("delete-button"),
                                 bdoc.attr(
                                     "style",
-                                    "border-color: white; background-color: #a82525; border-radius: 5px; color: white; cursor: pointer;"
+                                    "border-color: white; background-color: #a82525; border-radius: 5px; color: white; cursor: pointer; width: 100px;"
                                 ),
                                 "🗑️ Delete",
                                 bdoc.eventListener("click", async () => {
