@@ -1,0 +1,48 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css
+---
+@import "globals.scss";
+
+:host {
+    display: block;
+}
+
+.user-form {
+    .button-bar {
+        margin-bottom: 0.5em;
+    }
+
+    h2 {
+        @include title2;
+    }
+
+    h3 {
+        @include comp-label;
+    }
+
+    dl>div {
+        display: flex;
+        margin: 0.25em 0;
+    }
+    
+    dt {
+        flex: 0 0 auto;
+        width: 7em;
+        color: inherit;
+        font-size: 0.85em;
+        font-weight: bold;
+        vertical-align: top;
+        overflow-wrap: break-word;
+    }
+    
+    dd {
+        flex: 1 1 0;
+        margin: 0;
+        min-width: 0; /* Default min-with for flex is the length of the content. This enables overflow-wrap */
+        vertical-align: top;
+        overflow-wrap: break-word;
+        border: 1px dashed lightgray;
+        padding: 0.05em 0.1em;
+    }
+
+}

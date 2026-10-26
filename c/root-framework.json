@@ -3,7 +3,7 @@
     {
       "id": 0,
       "name": "Competency Frameworks",
-      "intHasPart": [ 1, 2, 3, 4, 5 ]
+      "_intHasPart": [ 1, 2, 3, 4, 5 ]
     },
     {
       "id": 1,

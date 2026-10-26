@@ -1,4 +1,5 @@
 $w_add: 3em;
+$w_addWide: 9em;
 $w_id: 4em;
 $w_central: 3em;
 $w_centralWide: 5em;
@@ -13,6 +14,15 @@ $w_type: 4em;
     height: 100%;
     overflow-y: visible;
     margin-right: 1em;
+}
+
+.arrow_button {
+    cursor: pointer;
+}
+
+.arrow_button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .mm_descColumns>div:last-child {
@@ -34,6 +44,7 @@ $w_type: 4em;
 
 .mmc_stmtSearchButton {
     width: 3em;
+    cursor: pointer;
 }
 
 .mmc_stmtSearchResult {
@@ -76,7 +87,13 @@ $w_type: 4em;
 .mm_stmtAdd {
     display: inline-block;
     vertical-align: top;
+    
     width: $w_add;
+}
+
+.mm_stmtAdd.expanded {
+    width: $w_addWide;
+    text-align: center;
 }
 
 .mm_stmtCentral {
@@ -113,6 +130,14 @@ $w_type: 4em;
     display: inline-block;
     vertical-align: top;
     width: calc(100% - #{$w_add + $w_central + $w_id + $w_type + 0.25em});
+}
+
+.mm_stmtKeyText.expanded {
+    width: calc(100% - #{$w_addWide + $w_central + $w_id + $w_type + 0.25em});
+}
+
+.mm_stmtRemove {
+    cursor: pointer;
 }
 
 .mm_stmtWideText {
@@ -184,6 +209,16 @@ $w_type: 4em;
     background-color: #f9f9f9;
     cursor: pointer;
     }
+
+.search-type-ai-options {
+    display: flex;
+    margin-left: 0.75rem;
+}
+
+.search-type-text-option,
+.search-type-ai-options .toggle-button {
+    border-radius: 2px;
+}
 .active {
     background-color: #0068b3;
     color: white;
@@ -193,3 +228,86 @@ $w_type: 4em;
     color: white;
     cursor: not-allowed;
 }
+
+
+.info-button-wrapper {
+    height: 10px;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle; /* Aligns with the surrounding text */
+  }
+  
+  .info-button {
+    font-family: Arial, sans-serif;
+    width: 10px; /* Small width for the button */
+    height: 10px; /* Small height for the button */
+    font-style: normal;
+    background-color: #6c757d;
+    color: white;
+    text-align: center;
+    line-height: 12px; /* Aligns the 'i' vertically within the button */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    font-size: 8px; /* Small font size for the 'i' */
+    display: inline-block;
+    position: relative;
+    top: -5px; /* Moves the button up to give a superscript effect */
+  }
+  
+  .info-tooltip {
+    visibility: hidden;
+    width: 10rem;
+    background-color: #333;
+    font-style: normal;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    line-height: 15px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: visibility 0.2s, opacity 0.2s ease-in-out;
+    opacity: 0;
+    font-size: 15px; /* Larger font size for the tooltip text */
+    /* You can change this font-size to suit your needs */
+  }
+  
+  .info-button:hover .info-tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+
+
+#mmx_describe_element {
+    height: calc(100% - 150px);
+    position: absolute;
+    left: 50%;
+    width: 50%;
+    max-width: 500px;
+    transition: all 0.3s ease-in-out;
+}
+
+#mmx_describe_element.expanded {
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 100%;
+    max-width: 1020px;
+}
+
+#mmx_find_and_select {
+    height: calc(100% - 150px);
+    position: absolute;
+    right: 50%;
+    width: 50%;
+    max-width: 500px;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#mmx_find_and_select.transparent {
+    opacity: 0;
+}
+
