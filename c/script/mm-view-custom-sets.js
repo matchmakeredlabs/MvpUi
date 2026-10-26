@@ -85,13 +85,12 @@ export default class MmViewCustomSets extends HTMLElement {
         if (!iso) return "";
         const date = new Date(iso);
         if (Number.isNaN(date.getTime())) return String(iso);
-        return date.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-        });
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${month}/${day}/${year}, ${hours}:${minutes}`;
     };
 
     static #collectionCache = new Map();
