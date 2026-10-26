@@ -276,6 +276,10 @@ async function initialLoad(listToFilter, listToSort, displayProperties) {
       ) {
         currentValue = "Null";
       }
+      // Truncate note field if too long
+      if (property === "note" && currentValue.length > 30) {
+        currentValue = currentValue.slice(0, 27) + "...";
+      }
       elementData += `<td>${currentValue}</td>`;
     }
     // console.log("pikachu", elementData);
@@ -399,7 +403,11 @@ async function reload() {
             // If user selected that option to filter on
             if (selectedOptions[filter][option]) {
               // Make sure that this collection matches the selected option
-              if (option === collection[filter]) {
+              if (filter === "note") {
+                if (option === collection[filter] || (option == "Null" && (collection[filter] === undefined || collection[filter] === null || collection[filter] === ""))) {
+                  collectionsForEachFilter[filter].push(collection.id);
+                }
+              } else if (option === collection[filter]) {
                 collectionsForEachFilter[filter].push(collection.id);
               } else if (option == "Null" && collection[filter] == undefined) {
                 collectionsForEachFilter[filter].push(collection.id);
@@ -476,7 +484,7 @@ async function reload() {
   console.log(checkboxes);
 }
 
-let listToFilter = ["subject", "publisher"];
-let listToSort = ["subject", "publisher"];
-let displayProperties = ["subject", "publisher"];
+let listToFilter = ["subject", "publisher", "note"];
+let listToSort = ["subject", "publisher", "note"];
+let displayProperties = ["subject", "publisher", "note"];
 initialLoad(listToFilter, listToSort, displayProperties);
