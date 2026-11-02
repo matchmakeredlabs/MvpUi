@@ -107,6 +107,7 @@ class MmTable extends HTMLElement {
                     this.loadingText,
                     bdoc.ele(
                         "table",
+                        bdoc.ele("colgroup", bdoc.id("table-colgroup")),
                         bdoc.ele(
                             "thead",
                             bdoc.ele(
@@ -167,6 +168,22 @@ class MmTable extends HTMLElement {
         const tableHead = this.shadowRoot.getElementById("table-titles");
         if (!tableHead) return;
         tableHead.innerHTML = "";
+
+        const tableColgroup = this.shadowRoot.getElementById("table-colgroup");
+        if (tableColgroup) {
+            tableColgroup.innerHTML = "";
+            bdoc.append(
+                tableColgroup,
+                ...Object.keys(this.#cols).map((colKey) => {
+                    const col = bdoc.ele("col");
+                    if (colKey in this.customColStyles) {
+                        col.style = this.customColStyles[colKey];
+                    }
+                    return col;
+                })
+            );
+        }
+
         let activeSortProperty = Object.keys(this.#sortBy).find(
             (key) => this.#sortBy[key] !== "none"
         );
