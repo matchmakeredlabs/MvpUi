@@ -1,0 +1,720 @@
+import bdoc from "./bdoc.js";
+import config from "/config.js";
+import bsession from "./bsession.js";
+import "./mm-loading.js";
+
+export default class MmCustomer extends HTMLElement {
+    static session = new bsession(config.backEndUrl, config.sessionTag);
+    static customerRoutes = [
+        "/api/customers",
+        "/api/customer",
+        "/customers",
+        "/customer",
+    ];
+    static userRoutes = ["/api/users", "/api/user", "/users", "/user"];
+
+    static principalTypeFromId = (principalId) =>
+        `${principalId || ""}`.includes(":") ? "Group" : "User";
+
+    static roleRanks = {
+        reader: 1,
+        editor: 2,
+        owner: 3,
+    };
+
+    static rolesForMax = (maxRole) => {
+        const maxRank = MmCustomer.roleRanks[maxRole] || 0;
+        return ["reader", "editor", "owner"].filter(
+            (role) => MmCustomer.roleRanks[role] <= maxRank
+        );
+    };
+
+    static fetchUsers = async () => {
+        for (const route of MmCustomer.userRoutes) {
+            const response = await MmCustomer.session.fetch(route);
+            if (response.status === 200) {
+                const json = await response.json();
+                return json.items || [];
+            }
+            if (response.status !== 404) return Promise.reject(response);
+        }
+        return Promise.reject(
+            new Response(null, {
+                status: 404,
+                statusText: "Users endpoint not found",
+            })
+        );
+    };
+
+    static getUserLabel = (user) => user?.fullName || user?.name || user?.id || "";
+
+    #customer;
+    #projects = [];
+    #users = [];
+    loadingElement;
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
+
+    static fetchCustomer = async (customerId) => {
+        for (const route of MmCustomer.customerRoutes) {
+            const response = await MmCustomer.session.fetch(
+                `${route}/${customerId}`
+            );
+            if (response.status === 200) return await response.json();
+            if (response.status !== 404) return Promise.reject(response);
+        }
+        return Promise.reject(
+            new Response(null, {
+                status: 404,
+                statusText: "Customers/Organizations endpoint not found",
+            })
+        );
+    };
+
+    static updateCustomer = async (customerId, customerObj) => {
+        for (const route of MmCustomer.customerRoutes) {
+            const response = await MmCustomer.session.fetch(
+                `${route}/${customerId}`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(customerObj),
+                }
+            );
+            if (response.status === 200) return await response.json();
+            if (response.status !== 404) return Promise.reject(response);
+        }
+
+        return Promise.reject(
+            new Response(null, {
+                status: 404,
+                statusText: "Customers/Organizations update endpoint not found",
+            })
+        );
+    };
+
+    static handleError = async (response) => {
+        try {
+            const body = await response.json();
+            if (body.error) alert(body.error);
+            else if (body.log?.[0]?.message) alert(body.log[0].message);
+            else alert(`Error: ${response.status} ${response.statusText}`);
+        } catch {
+            alert(`Error: ${response.status} ${response.statusText}`);
+        }
+    };
+
+    connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading organization..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
+        bdoc.append(
+            this.shadowRoot,
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/styles.css")
+            ),
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-group.css")
+            ),
+            bdoc.ele(
+                "div",
+                bdoc.class("headers-container"),
+                bdoc.ele("h2", "Organization"),
+                bdoc.ele(
+                    "h3",
+                    bdoc.attr("id", "customer-name-title"),
+                    bdoc.attr("style", "color: black; margin: 0;")
+                )
+            ),
+            this.loadingElement,
+            bdoc.ele(
+                "div",
+                bdoc.class("dropdowns-container"),
+                bdoc.attr("style", "display: none;"),
+                bdoc.ele(
+                    "mm-dropdown",
+                    bdoc.attr("id", "settings-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Organization Settings",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("id", "customer-form-container"),
+                        bdoc.attr("slot", "dropdown-body")
+                    )
+                ),
+                bdoc.ele(
+                    "mm-dropdown",
+                    bdoc.attr("id", "users-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Permissions",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("id", "roles-container"),
+                        bdoc.attr("slot", "dropdown-body")
+                    )
+                ),
+                bdoc.ele(
+                    "mm-dropdown",
+                    bdoc.attr("id", "projects-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Projects",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    ),
+                    bdoc.ele(
+                        "div",
+                        bdoc.attr("id", "members-container"),
+                        bdoc.attr("slot", "dropdown-body")
+                    )
+                )
+            ),
+            bdoc.script("mm-table.js"),
+            bdoc.script("mm-filter-table.js"),
+            bdoc.script("mm-dropdown.js")
+        );
+
+        this.#loadCustomer();
+    }
+
+    #getCustomerId() {
+        return (
+            new URLSearchParams(window.location.search).get("id") ||
+            this.getAttribute("id")
+        );
+    }
+
+    #cleanForSave(customer) {
+        const cleaned = { ...customer };
+        delete cleaned._canCreateProjects;
+        delete cleaned._canWriteCustomer;
+        delete cleaned._canManageCustomerSettings;
+        delete cleaned._roles;
+        delete cleaned._projects;
+        delete cleaned.members;
+        return cleaned;
+    }
+
+    #isPersonalCustomer() {
+        return this.#customer?.customerKind === "personal";
+    }
+
+    #isLockedPersonalRole(entry) {
+        if (!this.#isPersonalCustomer()) return false;
+
+        const entryId = `${entry?.id || ""}`.toLowerCase();
+        const personalOwnerId = `${this.#customer?.personalOwnerId || ""}`.toLowerCase();
+        const currentUserId = `${MmCustomer.session.getCachedUserID() || ""}`.toLowerCase();
+
+        return (
+            !!entryId &&
+            (entryId === personalOwnerId || entryId === currentUserId)
+        );
+    }
+
+    #maxAssignableRole() {
+        const acl = MmCustomer.session.getCachedAcl();
+        if (acl && ("admin" in acl || acl.adminorganization?.includes("WriteCustomer"))) {
+            return "owner";
+        }
+
+        if (this.#customer?._maxAssignableRole) {
+            return this.#customer._maxAssignableRole;
+        }
+
+        return this.#customer?._canWriteCustomer ? "editor" : "reader";
+    }
+
+    #canModifyRole(entry) {
+        const maxRank =
+            MmCustomer.roleRanks[this.#maxAssignableRole()] ||
+            MmCustomer.roleRanks.reader;
+        const entryRank = MmCustomer.roleRanks[entry?.role] || 0;
+        return entryRank <= maxRank;
+    }
+
+    async #loadCustomer() {
+        const customerId = this.#getCustomerId();
+        if (!customerId) {
+            window.location.href = "/c/Customers";
+            return;
+        }
+
+        const customer = await MmCustomer.fetchCustomer(customerId).catch(
+            async (response) => {
+                await MmCustomer.handleError(response);
+                return null;
+            }
+        );
+
+        if (!customer) {
+            this.loadingElement.hide();
+            return;
+        }
+
+        this.#customer = customer;
+        this.#users = [];
+
+        const projectIdsFromCustomer = Array.isArray(customer._projects)
+            ? customer._projects
+            : [];
+
+        this.#projects = projectIdsFromCustomer.map((id) => ({ id }));
+
+        this.shadowRoot.querySelector("#customer-name-title").textContent =
+            customer.name || customer.id;
+
+        this.#renderCustomerForm();
+        this.#renderRoles();
+        this.#renderMembers();
+
+        this.loadingElement.hide();
+        this.shadowRoot.querySelector(".dropdowns-container").style.display = "";
+
+        const settingsDropdown = this.shadowRoot.getElementById("settings-dropdown");
+        const usersDropdown = this.shadowRoot.getElementById("users-dropdown");
+        const projectsDropdown = this.shadowRoot.getElementById("projects-dropdown");
+
+        if (settingsDropdown && usersDropdown && projectsDropdown) {
+            settingsDropdown.classList.add("show");
+            usersDropdown.classList.add("show");
+            projectsDropdown.classList.add("show");
+
+            const settingsChevron = settingsDropdown.shadowRoot?.getElementById("chevron");
+            const usersChevron = usersDropdown.shadowRoot?.getElementById("chevron");
+            const projectsChevron = projectsDropdown.shadowRoot?.getElementById("chevron");
+
+            settingsChevron?.classList.add("down");
+            usersChevron?.classList.add("down");
+            projectsChevron?.classList.add("down");
+        }
+    }
+
+    async #saveRoles(updatedRoles) {
+        const updated = this.#cleanForSave({
+            ...this.#customer,
+            roles: updatedRoles,
+        });
+
+        const response = await MmCustomer.updateCustomer(
+            this.#getCustomerId(),
+            updated
+        ).catch(async (r) => {
+            await MmCustomer.handleError(r);
+            return null;
+        });
+
+        if (!response) return false;
+        await this.#loadCustomer();
+        return true;
+    }
+
+    #renderCustomerForm() {
+        const customer = this.#customer;
+        const container = this.shadowRoot.querySelector("#customer-form-container");
+        container.innerHTML = "";
+
+        const canWrite = !!customer._canWriteCustomer;
+        const canManageSettings = !!customer._canManageCustomerSettings;
+        const digitsOnlyNumber = (value) => {
+            const digits = `${value ?? ""}`.replace(/\D+/g, "");
+            return digits === "" ? 0 : Number(digits);
+        };
+        const blockNonDigitInput = (event) => {
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
+            const allowedKeys = new Set([
+                "Backspace",
+                "Delete",
+                "Tab",
+                "ArrowLeft",
+                "ArrowRight",
+                "ArrowUp",
+                "ArrowDown",
+                "Home",
+                "End",
+            ]);
+            if (allowedKeys.has(event.key)) return;
+            if (/^\d$/.test(event.key)) return;
+            event.preventDefault();
+        };
+        const sanitizeDigitsOnlyInput = ({ target }) => {
+            target.value = `${target.value ?? ""}`.replace(/\D+/g, "");
+        };
+
+        const nameInput = bdoc.ele(
+            "input",
+            bdoc.attr("type", "text"),
+            bdoc.attr("value", customer.name || ""),
+            bdoc.attr("id", "customer-name"),
+            canWrite ? null : bdoc.attr("disabled", "true")
+        );
+
+        const descInput = bdoc.ele(
+            "textarea",
+            bdoc.attr("id", "customer-description"),
+            canWrite ? null : bdoc.attr("disabled", "true"),
+            customer.description || ""
+        );
+
+        const allowedProjects = bdoc.ele(
+            "input",
+            bdoc.attr("type", "number"),
+            bdoc.attr("id", "customer-allowed-projects"),
+            bdoc.attr("min", "0"),
+            bdoc.attr("step", "1"),
+            bdoc.attr("inputmode", "numeric"),
+            bdoc.attr("pattern", "[0-9]*"),
+            bdoc.attr("value", customer.allowedProjects ?? 0),
+            bdoc.eventListener("keydown", blockNonDigitInput),
+            bdoc.eventListener("input", sanitizeDigitsOnlyInput),
+            canManageSettings ? null : bdoc.attr("disabled", "true")
+        );
+
+        const usersPerProject = bdoc.ele(
+            "input",
+            bdoc.attr("type", "number"),
+            bdoc.attr("id", "customer-users-per-project"),
+            bdoc.attr("min", "0"),
+            bdoc.attr("step", "1"),
+            bdoc.attr("inputmode", "numeric"),
+            bdoc.attr("pattern", "[0-9]*"),
+            bdoc.attr("value", customer.usersPerProject ?? 0),
+            bdoc.eventListener("keydown", blockNonDigitInput),
+            bdoc.eventListener("input", sanitizeDigitsOnlyInput),
+            canManageSettings ? null : bdoc.attr("disabled", "true")
+        );
+
+        const elePerCollection = bdoc.ele(
+            "input",
+            bdoc.attr("type", "number"),
+            bdoc.attr("id", "customer-ele-per-collection"),
+            bdoc.attr("min", "0"),
+            bdoc.attr("step", "1"),
+            bdoc.attr("inputmode", "numeric"),
+            bdoc.attr("pattern", "[0-9]*"),
+            bdoc.attr("value", customer.elePerCollection ?? 0),
+            bdoc.eventListener("keydown", blockNonDigitInput),
+            bdoc.eventListener("input", sanitizeDigitsOnlyInput),
+            canManageSettings ? null : bdoc.attr("disabled", "true")
+        );
+
+        const canUseApi = bdoc.ele(
+            "select",
+            bdoc.attr("id", "customer-can-use-api"),
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", "true"),
+                customer.canUseApi ? bdoc.attr("selected", "true") : null,
+                "Yes"
+            ),
+            bdoc.ele(
+                "option",
+                bdoc.attr("value", "false"),
+                !customer.canUseApi ? bdoc.attr("selected", "true") : null,
+                "No"
+            ),
+            canManageSettings ? null : bdoc.attr("disabled", "true")
+        );
+
+        const saveButton = bdoc.ele(
+            "button",
+            "Save Customer",
+            !canWrite ? bdoc.attr("disabled", "true") : null,
+            bdoc.eventListener("click", async () => {
+                const updated = this.#cleanForSave({
+                    ...this.#customer,
+                    name: nameInput.value.trim(),
+                    description: descInput.value.trim(),
+                    allowedProjects: digitsOnlyNumber(allowedProjects.value),
+                    usersPerProject: digitsOnlyNumber(usersPerProject.value),
+                    elePerCollection: digitsOnlyNumber(elePerCollection.value),
+                    canUseApi: canUseApi.value === "true",
+                });
+
+                const customerId = this.#getCustomerId();
+                const response = await MmCustomer.updateCustomer(
+                    customerId,
+                    updated
+                ).catch(async (r) => {
+                    await MmCustomer.handleError(r);
+                    return null;
+                });
+
+                if (!response) return;
+                this.#customer = { ...updated };
+                alert("Organization updated.");
+                this.#loadCustomer();
+            })
+        );
+
+        bdoc.append(
+            container,
+            bdoc.ele(
+                "div",
+                bdoc.attr(
+                    "style",
+                    "display:grid;grid-template-columns:12em 1fr;gap:0.5em;align-items:center;max-width:48em;"
+                ),
+                bdoc.ele("strong", "Name"),
+                nameInput,
+                bdoc.ele("strong", "Description"),
+                descInput,
+                bdoc.ele("strong", "Max Allowed Projects"),
+                allowedProjects,
+                bdoc.ele("strong", "Max Users Per Project"),
+                usersPerProject,
+                bdoc.ele("strong", "Max Elements Per Collection"),
+                elePerCollection,
+                bdoc.ele("strong", "Can Use API"),
+                canUseApi
+            ),
+            bdoc.ele("div", bdoc.attr("style", "margin-top:0.75em"), saveButton)
+        );
+    }
+
+    #renderRoles() {
+        const container = this.shadowRoot.querySelector("#roles-container");
+        container.innerHTML = "";
+
+        const canWrite = !!this.#customer._canWriteCustomer;
+        const rolesEditable = canWrite;
+        const assignableRoles = MmCustomer.rolesForMax(this.#maxAssignableRole());
+        const roleEntries = this.#customer.roles || [];
+        const usersLoaded = this.#users.length > 0;
+        const userOptions = usersLoaded
+            ? [
+                  bdoc.ele("option", bdoc.attr("value", ""), "Select a user"),
+                  ...this.#users.map((user) =>
+                      bdoc.ele(
+                          "option",
+                          bdoc.attr("value", user.id),
+                          MmCustomer.getUserLabel(user)
+                      )
+                  ),
+              ]
+            : [
+                  bdoc.ele(
+                      "option",
+                      bdoc.attr("value", ""),
+                      rolesEditable
+                          ? "Load users to add permissions"
+                          : "No users loaded"
+                  ),
+              ];
+
+        const newPrincipalIdSelect = bdoc.ele(
+            "select",
+            !rolesEditable || !usersLoaded ? bdoc.attr("disabled", "true") : null,
+            ...userOptions
+        );
+        const newRoleSelect = bdoc.ele(
+            "select",
+            !rolesEditable ? bdoc.attr("disabled", "true") : null,
+            ...assignableRoles.map((role) =>
+                bdoc.ele("option", bdoc.attr("value", role), role)
+            )
+        );
+        const addRoleButton = bdoc.ele(
+            "button",
+            "Add User Permission",
+            !rolesEditable || !usersLoaded ? bdoc.attr("disabled", "true") : null,
+            bdoc.eventListener("click", async () => {
+                const id = newPrincipalIdSelect.value.trim();
+                if (!id) return;
+                if (roleEntries.some((r) => r.id === id)) {
+                    alert("Principal already has a role.");
+                    return;
+                }
+                await this.#saveRoles([
+                    ...roleEntries,
+                    { id, role: newRoleSelect.value },
+                ]);
+            })
+        );
+        const loadUsersButton = bdoc.ele(
+            "button",
+            "Load Users",
+            !rolesEditable || usersLoaded ? bdoc.attr("disabled", "true") : null,
+            bdoc.eventListener("click", async () => {
+                this.#users = await MmCustomer.fetchUsers().catch(() => []);
+                this.#renderRoles();
+            })
+        );
+
+        if (rolesEditable) {
+            bdoc.append(
+                container,
+                bdoc.ele(
+                    "div",
+                    bdoc.attr(
+                        "style",
+                        "display:flex;gap:0.5em;align-items:center;flex-wrap:wrap;margin-bottom:0.75em"
+                    ),
+                    newPrincipalIdSelect,
+                    newRoleSelect,
+                    loadUsersButton,
+                    addRoleButton
+                )
+            );
+        }
+
+        const filterTable = bdoc.ele(
+            "mm-filter-table",
+            bdoc.attr("id", "users-filter-table"),
+            bdoc.attr("sort-properties", "ID,Type,Role"),
+            bdoc.attr("slot", "dropdown-body"),
+            bdoc.attr("first-col-width", "inherit")
+        );
+
+        filterTable.generateCols = () => ({
+            ID: (entry) => entry.id,
+            Type: (entry) => MmCustomer.principalTypeFromId(entry.id),
+            Role: (entry) => {
+                if (
+                    !rolesEditable ||
+                    this.#isLockedPersonalRole(entry) ||
+                    !this.#canModifyRole(entry)
+                ) {
+                    return entry.role || "";
+                }
+
+                return bdoc.ele(
+                    "select",
+                    ...assignableRoles.map((role) =>
+                        bdoc.ele(
+                            "option",
+                            bdoc.attr("value", role),
+                            entry.role === role
+                                ? bdoc.attr("selected", "true")
+                                : null,
+                            role
+                        )
+                    ),
+                    bdoc.eventListener("change", async (e) => {
+                        const updatedRoles = roleEntries.map((r) =>
+                            r.id === entry.id
+                                ? { ...r, role: e.target.value }
+                                : r
+                        );
+                        await this.#saveRoles(updatedRoles);
+                    })
+                );
+            },
+            Actions: (entry) => {
+                if (
+                    !rolesEditable ||
+                    this.#isLockedPersonalRole(entry) ||
+                    !this.#canModifyRole(entry)
+                ) {
+                    return "";
+                }
+
+                return bdoc.ele(
+                    "td",
+                    bdoc.attr(
+                        "style",
+                        "float: right; border: none; white-space: nowrap;"
+                    ),
+                    bdoc.ele(
+                        "button",
+                        bdoc.class("remove-button"),
+                        bdoc.attr(
+                            "style",
+                            "border-color: white; background-color: #D32F2F; border-radius: 5px; color: white; cursor: pointer;"
+                        ),
+                        "⨉ Remove",
+                        bdoc.eventListener("click", async () => {
+                            if (!confirm(`Remove role for ${entry.id}?`)) return;
+                            await this.#saveRoles(
+                                roleEntries.filter((r) => r.id !== entry.id)
+                            );
+                        })
+                    )
+                );
+            },
+        });
+
+        filterTable.customSorts = {
+            ID: (a, b) => (a.id > b.id ? 1 : -1),
+            Type: (a, b) =>
+                MmCustomer.principalTypeFromId(a.id).localeCompare(
+                    MmCustomer.principalTypeFromId(b.id)
+                ),
+            Role: (a, b) => {
+                const roleOrder = ["owner", "editor", "reader"];
+                return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
+            },
+        };
+
+        filterTable.customColStyles = {
+            Actions: "width: 1%;",
+        };
+
+        bdoc.append(container, filterTable);
+        filterTable.loadData(roleEntries);
+    }
+
+    #renderMembers() {
+        const container = this.shadowRoot.querySelector("#members-container");
+        container.innerHTML = "";
+
+        const projectIds =
+            this.#projects.length > 0
+                ? this.#projects.map((project) => project.id || project)
+                : Array.isArray(this.#customer._projects)
+                  ? this.#customer._projects
+                  : [];
+
+        if (!projectIds.length) {
+            bdoc.append(container, bdoc.ele("p", "No projects."));
+            return;
+        }
+
+        const projects = projectIds.map((projectId) => ({
+            id: projectId,
+        }));
+
+        const filterTable = bdoc.ele(
+            "mm-filter-table",
+            bdoc.attr("id", "projects-filter-table"),
+            bdoc.attr("sort-properties", "ID"),
+            bdoc.attr("first-col-width", "inherit")
+        );
+
+        filterTable.generateCols = () => ({
+            ID: (project) =>
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", `/c/Project?id=${project.id}`),
+                    project.id
+                ),
+        });
+
+        filterTable.customSorts = {
+            ID: (a, b) => (a.id > b.id ? 1 : -1),
+        };
+
+        bdoc.append(container, filterTable);
+        filterTable.loadData(projects);
+    }
+}
+
+customElements.define("mm-customer", MmCustomer);

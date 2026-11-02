@@ -1,0 +1,959 @@
+import bdoc from "./bdoc.js";
+import config from "/config.js";
+import bsession from "./bsession.js";
+import MmCustomer from "./mm-customer.js";
+import MmAddMemberForm from "./mm-add-member-form.js";
+import "./mm-loading.js";
+
+export default class MmProject extends HTMLElement {
+    static session = new bsession(config.backEndUrl, config.sessionTag);
+
+    groups = [];
+    users = [];
+
+    #project;
+
+    #permissions = new Set();
+
+    loadingElement;
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
+
+    static fetchProject = async (projectId) => {
+        const response = await MmProject.session.fetch(
+            "/api/projects/" + projectId
+        );
+        if (response.status !== 200) {
+            return Promise.reject(response);
+        }
+
+        return await response.json();
+
+        // what happens when user does not have perms for this project?
+    };
+
+    static renderCustomerLink = (customerId, customer) => {
+        const label = customer?.name || customer?.id || customerId;
+        return bdoc.ele(
+            "a",
+            bdoc.attr("href", `/c/Customer?id=${customerId}`),
+            label
+        );
+    };
+
+    static getGroupOwnerType = (group) =>
+        group.customerId || group.customer || group.ownerType === "customer"
+            ? "Organization"
+            : "Project";
+
+    static getGroupOwnerId = (group) =>
+        group.customerId ||
+        group.customer ||
+        group.project ||
+        group.projectId ||
+        group.org ||
+        group.id?.split(":")[0] ||
+        "";
+
+    static getGroupOwnedByLabel = (group) => {
+        const ownerType = MmProject.getGroupOwnerType(group);
+        const ownerId = MmProject.getGroupOwnerId(group);
+        return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
+    };
+
+    static renderGroupOwnedBy = (group, cachedAcl) => {
+        const ownerType = MmProject.getGroupOwnerType(group);
+        const ownerId = MmProject.getGroupOwnerId(group);
+
+        if (!ownerId) return ownerType;
+
+        if (ownerType === "Organization") {
+            return bdoc.ele(
+                "span",
+                `${ownerType}: `,
+                bdoc.ele(
+                    "a",
+                    bdoc.attr("href", `/c/Customer?id=${ownerId}`),
+                    ownerId
+                )
+            );
+        }
+
+        return bdoc.ele(
+            "span",
+            `${ownerType}: `,
+            ownerId in cachedAcl || "admin" in cachedAcl
+                ? bdoc.ele(
+                      "a",
+                      bdoc.attr("href", `/c/Project?id=${ownerId}`),
+                      ownerId
+                  )
+                : ownerId
+        );
+    };
+
+    static updateProject = async (projectId, projectObj) => {
+        const response = await MmProject.session.fetch(
+            "/api/projects/" + projectId,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(projectObj),
+            }
+        );
+
+        if (response.status !== 200) {
+            MmProject.handleError(response);
+            return Promise.reject();
+        }
+
+        return await response.json();
+    };
+
+    static removeEntityFromProject = async (projectId, entityId) => {
+        const currentProject = await MmProject.fetchProject(projectId);
+        const newMembers = currentProject.members.filter(
+            (member) => member.id !== entityId
+        );
+        if (newMembers.length === currentProject.members.length) {
+            alert(`${entityId} not found in project ${projectId}`);
+            return Promise.reject();
+        }
+
+        return await MmProject.updateProject(projectId, {
+            ...currentProject,
+            members: newMembers,
+        });
+    };
+
+    static deleteGroup = async (groupId) => {
+        const response = await MmProject.session.fetch(
+            "/api/groups/" + groupId,
+            {
+                method: "DELETE",
+            }
+        );
+        if (response.status !== 200) {
+            MmProject.handleError(response);
+            return Promise.reject();
+        }
+        return await response.json();
+    };
+
+    static updateEntityRoleInProject = async (projectId, entityId, newRole) => {
+        const currentProject = await MmProject.fetchProject(projectId);
+        const newMembers = currentProject.members.map((member) =>
+            member.id === entityId ? { ...member, role: newRole } : member
+        );
+
+        return await MmProject.updateProject(projectId, {
+            ...currentProject,
+            members: newMembers,
+        });
+    };
+
+    connectedCallback() {
+        this.loadingElement = bdoc.ele(
+            "mm-loading",
+            bdoc.attr("message", "Loading project..."),
+            bdoc.attr("style", "display: flex; margin: 2em auto;")
+        );
+
+        bdoc.append(
+            this.shadowRoot,
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/styles.css")
+            ),
+            bdoc.ele(
+                "link",
+                bdoc.attr("rel", "stylesheet"),
+                bdoc.attr("href", "/c/res/mm-project.css")
+            ),
+            bdoc.ele(
+                "div",
+                bdoc.class("headers-container"),
+                bdoc.ele("h2", `Project`)
+            ),
+            this.loadingElement,
+            bdoc.ele(
+                "div",
+                bdoc.class("dropdowns-container"),
+                bdoc.attr("style", "display: none;"),
+                bdoc.ele(
+                    "mm-dropdown",
+                    bdoc.attr("id", "users-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Users",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    )
+                ),
+                bdoc.ele(
+                    "mm-dropdown",
+                    bdoc.attr("id", "groups-dropdown"),
+                    bdoc.ele(
+                        "h3",
+                        "Groups",
+                        bdoc.attr("style", "margin: 0;"),
+                        bdoc.attr("slot", "button-text")
+                    )
+                )
+            ),
+
+            bdoc.script("mm-filter-table.js"),
+            bdoc.script("mm-dropdown.js"),
+            bdoc.script("mm-create-group-modal.js"),
+            bdoc.script("mm-add-member-modal.js")
+        );
+        this.#renderProject();
+    }
+
+    static handleError = async (response) => {
+        try {
+            const body = await response.json();
+            if (body.error) alert(body.error);
+            if (body.log) alert(body.log[0].message);
+        } catch (e) {
+            alert("An error occurred");
+        }
+    };
+    static splitUsersAndGroups = (project) => {
+        const users = [];
+        const groups = [];
+        for (let member of project.members) {
+            if (member.id.includes(":")) {
+                const [ownerId, ...groupIdParts] = member.id.split(":");
+                const groupId = groupIdParts.join(":");
+                const ownerType =
+                    member.customerId || member.customer ? "customer" : "project";
+                groups.push({
+                    ...member,
+                    project: member.project || (ownerType === "project" ? ownerId : ""),
+                    customerId:
+                        member.customerId ||
+                        member.customer ||
+                        (ownerType === "customer" ? ownerId : ""),
+                    ownerType,
+                    ownedByLabel: MmProject.getGroupOwnedByLabel({
+                        ...member,
+                        project: member.project || (ownerType === "project" ? ownerId : ""),
+                        customerId:
+                            member.customerId ||
+                            member.customer ||
+                            (ownerType === "customer" ? ownerId : ""),
+                        ownerType,
+                    }),
+                    groupId,
+                });
+            } else {
+                users.push(member);
+            }
+        }
+        return { users, groups };
+    };
+
+    #renderProject = async () => {
+        const projectId = new URLSearchParams(window.location.search).get("id");
+
+        if (!projectId) {
+            window.location.href = "/c/Projects";
+            return;
+        }
+
+        const project = await MmProject.fetchProject(
+            projectId
+        ).catch(() => {
+            window.location.href = "/c/Projects";
+            return null;
+        });
+        if (!project) return;
+
+        const customer = project.customerId
+            ? await MmCustomer.fetchCustomer(project.customerId).catch(
+                  () => null
+              )
+            : null;
+        const customerId = project.customerId || project.customer;
+
+        if (project._canUpdate) {
+            this.#permissions.add("update");
+        }
+
+        if (project._canWriteGroups) {
+            this.#permissions.add("writeGroups");
+        }
+
+        const { users, groups } =
+            MmProject.splitUsersAndGroups(project);
+        this.groups = groups;
+        this.users = users;
+
+        this.#project = project;
+
+        const cachedAcl = MmProject.session.getCachedAcl();
+        const maxAssignableRole = project._maxAssignableRole || "reader";
+        const maxAssignableRank =
+            MmAddMemberForm.roleRanks[maxAssignableRole] ||
+            MmAddMemberForm.roleRanks.reader;
+        const assignableRoles = MmAddMemberForm.rolesForMax(maxAssignableRole);
+        const canModifyRole = (member) => {
+            const roleRank = MmAddMemberForm.roleRanks[member?.role] || 0;
+            return roleRank <= maxAssignableRank;
+        };
+
+        const headerContainer =
+            this.shadowRoot.querySelector(".headers-container");
+
+        const descriptionContainer = bdoc.ele(
+            "div",
+            bdoc.id("description-container")
+        );
+        const infoContainer = bdoc.ele(
+            "div",
+            bdoc.class("info-container"),
+            customerId
+                ? bdoc.ele(
+                      "p",
+                      "Organization: ",
+                      MmProject.renderCustomerLink(
+                          customerId,
+                          customer
+                      )
+                  )
+                : null,
+            descriptionContainer
+        );
+
+        bdoc.append(
+            headerContainer,
+            bdoc.ele(
+                "h3",
+                `${project.name}`,
+                bdoc.attr("style", "color: black;")
+            ),
+            infoContainer
+        );
+
+        this.loadingElement.hide();
+        this.shadowRoot.querySelector(".dropdowns-container").style.display = "";
+
+        const descriptionEditButtons = bdoc.ele(
+            "div",
+            bdoc.class("edit-buttons"),
+            bdoc.ele(
+                "button",
+                "Save",
+                bdoc.eventListener("click", async () => {
+                    const description =
+                        this.shadowRoot.getElementById("description").innerText;
+                    const currentProject = await MmProject.fetchProject(
+                        projectId
+                    );
+                    if (description.trim() === currentProject.description.trim())
+                        return;
+                    MmProject.updateProject(projectId, {
+                        ...currentProject,
+                        description,
+                    }).then(() => {
+                        alert("Description updated successfully");
+                        descriptionEditButtons.style.display = "none";
+                        this.#project.description = description;
+                    });
+                })
+            ),
+            bdoc.ele(
+                "button",
+                "Cancel",
+                bdoc.eventListener("click", () => {
+                    descriptionContainer.innerHTML = "";
+                    bdoc.append(
+                        descriptionContainer,
+                        generateDescription(this.#project.description)
+                    );
+                    bdoc.append(descriptionContainer, descriptionEditButtons);
+                    descriptionEditButtons.style.display = "none";
+                })
+            )
+        );
+
+        const generateDescription = (description) => {
+            let text = "";
+            if (description) {
+                text = description;
+            }
+            const descEle = bdoc.ele("p", text, bdoc.id("description"));
+            if (this.#permissions.has("update")) {
+                descEle.contentEditable = true;
+                bdoc.append(
+                    descEle,
+                    bdoc.class("mmc_editable"),
+                    bdoc.eventListener("input", () => {
+                        descriptionEditButtons.style.display = "inline-flex";
+                    })
+                );
+            }
+            return descEle;
+        };
+
+        if (project.description && project.description.length > 0) {
+            bdoc.append(
+                descriptionContainer,
+                generateDescription(project.description)
+            );
+        } else {
+            if (this.#permissions.has("update")) {
+                bdoc.append(
+                    descriptionContainer,
+                    bdoc.ele(
+                        "button",
+                        "Add Description",
+                        bdoc.eventListener("click", () => {
+                            descriptionContainer.innerHTML = "";
+                            bdoc.append(
+                                descriptionContainer,
+                                generateDescription("")
+                            );
+                        })
+                    )
+                );
+            } else {
+                infoContainer.removeChild(descriptionContainer);
+            }
+        }
+
+        bdoc.append(descriptionContainer, descriptionEditButtons);
+        descriptionEditButtons.style.display = "none";
+
+        const addUserModal = bdoc.ele(
+            "mm-add-member-modal",
+            bdoc.attr("id", "add-user-modal"),
+            bdoc.attr("parent-type", "project"),
+            bdoc.attr("member-type", "user"),
+            bdoc.attr("parent-id", projectId),
+            bdoc.attr(
+                "allowed-roles",
+                assignableRoles.join(",")
+            )
+        );
+        const addGroupModal = bdoc.ele(
+            "mm-add-member-modal",
+            bdoc.attr("id", "add-group-modal"),
+            bdoc.attr("parent-type", "project"),
+            bdoc.attr("member-type", "group"),
+            bdoc.attr("parent-id", projectId),
+            bdoc.attr(
+                "allowed-roles",
+                assignableRoles.join(",")
+            )
+        );
+        bdoc.append(this.shadowRoot, addUserModal, addGroupModal);
+
+        Promise.all([
+            customElements.whenDefined("mm-filter-table"),
+            customElements.whenDefined("mm-add-member-modal"),
+            customElements.whenDefined("mm-create-group-modal"),
+        ]).then(() => {
+            const usersDropdown =
+                this.shadowRoot.getElementById("users-dropdown");
+            const groupsDropdown =
+                this.shadowRoot.getElementById("groups-dropdown");
+
+            const properties = {
+                group: {
+                    ["sort-properties"]: "name,Owned by,role",
+                    ["filter-properties"]: "ownedByLabel,role",
+                    ["filter-display-names"]: JSON.stringify({
+                        ownedByLabel: "Owned by",
+                    }),
+
+                    ["cols"]: {
+                        name: (group) =>
+                            bdoc.ele(
+                                "a",
+                                bdoc.attr("href", `/c/Group?id=${group.id}`),
+                                group.groupId
+                            ),
+                        role: (group) => group.role || "",
+                        ["Owned by"]: (group) =>
+                            MmProject.renderGroupOwnedBy(group, cachedAcl),
+                    },
+                    ["identifier"]: "groupId",
+                    ["button-group"]: null,
+                    ["add-button-text"]: "+ Add Group to Project",
+                    ["dropdown"]: groupsDropdown,
+                    ["get-obj"]: (group) => {
+                        const [ownerId, ...groupIdParts] = group.id.split(":");
+                        const groupId = groupIdParts.join(":");
+                        const ownerType =
+                            group.customerId || group.customer
+                                ? "customer"
+                                : "project";
+                        return {
+                            ...group,
+                            id: group.id,
+                            project:
+                                group.project ||
+                                group.projectId ||
+                                group.org ||
+                                (ownerType === "project" ? ownerId : ""),
+                            customerId:
+                                group.customerId ||
+                                group.customer ||
+                                (ownerType === "customer" ? ownerId : ""),
+                            ownerType,
+                            ownedByLabel: MmProject.getGroupOwnedByLabel({
+                                ...group,
+                                project:
+                                    group.project ||
+                                    group.projectId ||
+                                    group.org ||
+                                    (ownerType === "project" ? ownerId : ""),
+                                customerId:
+                                    group.customerId ||
+                                    group.customer ||
+                                    (ownerType === "customer" ? ownerId : ""),
+                                ownerType,
+                            }),
+                            groupId,
+                        };
+                    },
+                },
+                user: {
+                    ["sort-properties"]: "ID,role",
+                    ["filter-properties"]: "role",
+                    ["cols"]: {
+                        ID: (user) => user.id,
+                        role: (user) => user.role || "",
+                    },
+                    ["identifier"]: "id",
+                    ["button-group"]: null,
+                    ["add-button-text"]: "+ Add User to Project",
+                    ["dropdown"]: usersDropdown,
+                    ["get-obj"]: (user) => {
+                        return {
+                            ...user,
+                            id: user.id,
+                        };
+                    },
+                },
+            };
+
+            const getButtonGroupContainer = (type) =>
+                bdoc.ele(
+                    "div",
+                    bdoc.attr("style", "margin-left: 1em"),
+                    bdoc.attr("slot", "dropdown-body"),
+                    properties[type]["button-group"]
+                );
+
+            const generateTable = (type) => {
+                const filterTable = bdoc.ele(
+                    "mm-filter-table",
+                    bdoc.attr("id", `${type}s-filter-table`),
+                    bdoc.attr(
+                        "sort-properties",
+                        properties[type]["sort-properties"]
+                    ),
+                    bdoc.attr("slot", "dropdown-body"),
+                    bdoc.attr("first-col-width", "30%"),
+                    bdoc.attr("last-col-width", "1%")
+                );
+
+                if (properties[type]["filter-properties"]) {
+                    bdoc.append(
+                        filterTable,
+                        bdoc.attr(
+                            "filter-properties",
+                            properties[type]["filter-properties"]
+                        )
+                    );
+                }
+
+                if (properties[type]["filter-display-names"]) {
+                    bdoc.append(
+                        filterTable,
+                        bdoc.attr(
+                            "filter-display-names",
+                            properties[type]["filter-display-names"]
+                        )
+                    );
+                }
+
+                bdoc.append(properties[type]["dropdown"], filterTable);
+
+                const filterTableCols = properties[type]["cols"];
+
+                if (this.#permissions.has("update")) {
+                    const ownedBySameProjectRoles = [
+                        "none",
+                        ...assignableRoles,
+                    ];
+                    filterTableCols["role"] = (member) => {
+                        if (!canModifyRole(member)) {
+                            return member.role || "";
+                        }
+
+                        return bdoc.ele(
+                            "select",
+                            bdoc.class("role-select"),
+                            ...(type === "group" && member.project === projectId
+                                ? ownedBySameProjectRoles
+                                : assignableRoles
+                            ).map((role) => {
+                                if (
+                                    role === member.role ||
+                                    (role === "none" && !member.role)
+                                ) {
+                                    return bdoc.ele(
+                                        "option",
+                                        bdoc.attr("value", role),
+                                        bdoc.attr("selected"),
+                                        role
+                                    );
+                                }
+                                return bdoc.ele(
+                                    "option",
+                                    bdoc.attr("value", role),
+
+                                    role
+                                );
+                            }),
+                            bdoc.eventListener("change", (event) => {
+                                const newRole = event.target.value;
+
+                                if (
+                                    newRole === member.role ||
+                                    (newRole === "none" &&
+                                        (!member.role ||
+                                            member.role === "none"))
+                                ) {
+                                    return;
+                                }
+
+                                let promise;
+
+                                if (newRole === "none") {
+                                    promise =
+                                        MmProject.removeEntityFromProject(
+                                            projectId,
+                                            member.id
+                                        );
+                                } else if (
+                                    member.role &&
+                                    member.role !== "none"
+                                ) {
+                                    promise =
+                                        MmProject.updateEntityRoleInProject(
+                                            projectId,
+                                            member.id,
+                                            newRole
+                                        );
+                                } else {
+                                    promise = MmAddMemberForm.addMemberToEntity(
+                                        projectId,
+                                        { id: member.id, role: newRole },
+                                        type,
+                                        "project"
+                                    );
+                                }
+
+                                promise.then(
+                                    // on success, update the role in the table
+                                    () => {
+                                        this[`${type}s`] = this[`${type}s`].map(
+                                            (m) =>
+                                                m.id === member.id
+                                                    ? { ...m, role: newRole }
+                                                    : m
+                                        );
+                                        filterTable.loadData(this[`${type}s`]);
+                                    },
+                                    // on failure, keep the role the same
+                                    () => {
+                                        event.target.value =
+                                            member.role || "none";
+                                    }
+                                );
+                            })
+                        );
+                    };
+
+                    filterTableCols["Actions"] = (entity) => {
+                        if (!canModifyRole(entity)) {
+                            return "";
+                        }
+
+                        if (
+                            type === "group" &&
+                            entity.project === projectId &&
+                            !this.#permissions.has("writeGroups")
+                        ) {
+                            return "";
+                        }
+
+                        return type === "group" && entity.project === projectId
+                            ? bdoc.ele(
+                                  "td",
+                                  bdoc.attr(
+                                      "style",
+                                      "float: right; border: none; white-space: nowrap;"
+                                  ),
+
+                                  bdoc.ele(
+                                      "button",
+                                      bdoc.class("delete-button"),
+                                      bdoc.attr(
+                                          "style",
+                                          "border-color: white; background-color: #a82525; border-radius: 5px; color: white; cursor: pointer;"
+                                      ),
+                                      "🗑️ Delete",
+                                      bdoc.eventListener("click", () => {
+                                          const confirmRemove = confirm(
+                                              `Are you sure you want to delete the group ${
+                                                  entity[
+                                                      properties[type]
+                                                          .identifier
+                                                  ]
+                                              }? Deleting this group may impact the permissions of its members, which may include groups and users. This action cannot be undone.`
+                                          );
+                                          if (confirmRemove) {
+                                              MmProject.deleteGroup(
+                                                  entity.id
+                                              ).then(() => {
+                                                  this[`${type}s`] = this[
+                                                      `${type}s`
+                                                  ].filter(
+                                                      (e) => e.id !== entity.id
+                                                  );
+                                                  if (
+                                                      this[`${type}s`]
+                                                          .length === 0
+                                                  ) {
+                                                      properties[type][
+                                                          "dropdown"
+                                                      ].removeChild(
+                                                          filterTable
+                                                      );
+                                                      bdoc.append(
+                                                          properties[type][
+                                                              "dropdown"
+                                                          ],
+                                                          getButtonGroupContainer(
+                                                              type
+                                                          )
+                                                      );
+                                                  } else {
+                                                      filterTable.loadData(
+                                                          this[`${type}s`]
+                                                      );
+                                                  }
+                                              });
+                                          }
+                                      })
+                                  )
+                              )
+                            : bdoc.ele(
+                                  "td",
+                                  bdoc.attr(
+                                      "style",
+                                      "float: right; border: none; white-space: nowrap;"
+                                  ),
+
+                                  bdoc.ele(
+                                      "button",
+                                      bdoc.class("remove-button"),
+                                      bdoc.attr(
+                                          "style",
+                                          "border-color: white; background-color: #D32F2F; border-radius: 5px; color: white; cursor: pointer;"
+                                      ),
+                                      "⨉ Remove",
+                                      bdoc.eventListener("click", () => {
+                                          const confirmRemove = confirm(
+                                              `Are you sure you want to remove ${
+                                                  entity[
+                                                      properties[type]
+                                                          .identifier
+                                                  ]
+                                              } from the project?`
+                                          );
+                                          if (confirmRemove) {
+                                              MmProject.removeEntityFromProject(
+                                                  projectId,
+                                                  entity.id
+                                              ).then(() => {
+                                                  this[`${type}s`] = this[
+                                                      `${type}s`
+                                                  ].filter(
+                                                      (e) => e.id !== entity.id
+                                                  );
+                                                  if (
+                                                      this[`${type}s`]
+                                                          .length === 0
+                                                  ) {
+                                                      properties[type][
+                                                          "dropdown"
+                                                      ].removeChild(
+                                                          filterTable
+                                                      );
+                                                      bdoc.append(
+                                                          properties[type][
+                                                              "dropdown"
+                                                          ],
+                                                          getButtonGroupContainer(
+                                                              type
+                                                          )
+                                                      );
+                                                  } else {
+                                                      filterTable.loadData(
+                                                          this[`${type}s`]
+                                                      );
+                                                  }
+                                              });
+                                          }
+                                      })
+                                  )
+                              );
+                    };
+
+                    bdoc.append(filterTable, properties[type]["button-group"]);
+                }
+
+                filterTable.generateCols = () => filterTableCols;
+                filterTable.customSorts = {
+                    role: (a, b) => {
+                        const roleOrder = ["owner", "editor", "reader"];
+                        return (
+                            roleOrder.indexOf(a.role) -
+                            roleOrder.indexOf(b.role)
+                        );
+                    },
+                    ID: (a, b) => (a.id < b.id ? -1 : 1),
+                    name: (a, b) => (a.groupId < b.groupId ? -1 : 1),
+                    ["Owned by"]: (a, b) =>
+                        MmProject.getGroupOwnedByLabel(a).localeCompare(
+                            MmProject.getGroupOwnedByLabel(b)
+                        ),
+                };
+                filterTable.customColStyles = {
+                    ["Actions"]: "width: 1%;",
+                };
+                filterTable.loadData(this[`${type}s`]);
+            };
+
+            const ensureButtonGroup = (type) => {
+                if (!properties[type]["button-group"]) {
+                    properties[type]["button-group"] = bdoc.ele(
+                        "div",
+                        bdoc.class("button-group"),
+                        bdoc.attr("slot", "header")
+                    );
+                }
+                return properties[type]["button-group"];
+            };
+
+            const addCreateGroupButton = () => {
+                const createGroupModal = bdoc.ele(
+                    "mm-create-group-modal",
+                    bdoc.attr("project-id", project.id),
+                    bdoc.attr("parent-id", project.id),
+                    bdoc.attr("parent-type", "project")
+                );
+
+                createGroupModal.onSuccess = (variables, response, addedGroup) => {
+                    if (addedGroup) {
+                        this.groups.push(properties.group["get-obj"](variables));
+                        if (this.groups.length === 1) {
+                            generateTable("group");
+                        }
+                        const filterTable = this.shadowRoot.getElementById(
+                            "groups-filter-table"
+                        );
+                        filterTable.loadData(this.groups);
+                    }
+                };
+                bdoc.append(this.shadowRoot, createGroupModal);
+                bdoc.append(
+                    ensureButtonGroup("group"),
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("id", "create-group-button"),
+                        bdoc.class("header-button add-entity-button2"),
+                        "✐  Create New Group",
+                        bdoc.eventListener("click", () => {
+                            createGroupModal.show();
+                        })
+                    )
+                );
+            };
+
+            const addEntityButton = (type) => {
+                const addEntityModal = this.shadowRoot.getElementById(
+                    `add-${type}-modal`
+                );
+
+                addEntityModal.onSuccess = (variables) => {
+                    this[`${type}s`].push(
+                        properties[`${type}`]["get-obj"](variables)
+                    );
+                    if (this[`${type}s`].length === 1) {
+                        generateTable(type);
+                    }
+                    const filterTable = this.shadowRoot.getElementById(
+                        `${type}s-filter-table`
+                    );
+                    filterTable.loadData(this[`${type}s`]);
+                    addEntityModal.hide();
+                };
+
+                bdoc.append(
+                    ensureButtonGroup(type),
+                    bdoc.ele(
+                        "button",
+                        bdoc.attr("id", `add-${type}-button`),
+                        bdoc.class("header-button add-entity-button"),
+                        properties[type]["add-button-text"],
+                        bdoc.eventListener("click", () => {
+                            addEntityModal.show();
+                        })
+                    )
+                );
+            };
+
+            if (this.#permissions.has("writeGroups")) {
+                addCreateGroupButton();
+            }
+
+            if (this.#permissions.has("update")) {
+                addEntityButton("user");
+                addEntityButton("group");
+            }
+
+            if (this.users.length > 0) {
+                generateTable("user");
+            } else if (properties.user["button-group"]) {
+                bdoc.append(
+                    properties.user["dropdown"],
+                    getButtonGroupContainer("user")
+                );
+            }
+
+            if (this.groups.length > 0) {
+                generateTable("group");
+            } else if (properties.group["button-group"]) {
+                bdoc.append(
+                    properties.group["dropdown"],
+                    getButtonGroupContainer("group")
+                );
+            }
+        });
+    };
+}
+customElements.define("mm-project", MmProject);

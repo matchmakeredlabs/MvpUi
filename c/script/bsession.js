@@ -1,3 +1,5 @@
+import auth from "./mmx_auth.js";
+
 export default class bsession {
     constructor(baseUrl, tag) {
         this.baseUrl = baseUrl;
@@ -8,40 +10,130 @@ export default class bsession {
     // and the Authorization (sent) headers. It also defaults to the configured back-end origin.
     // Path must start with a slash and must not include a domain name.
     // Options is the same as used with conventional fetch.
-    async fetch(path, options = null) {
+    async fetch(path, options = null, sessionOptions = {}) {
         const url = this.baseUrl + path;
+        const sessionKey = "bsession_" + this.tag;
 
         // Shallow clone the options so that we can add headers without changing the original
-        const req = Object.assign({headers: {}}, options)
+        const req = Object.assign({ headers: {} }, options);
 
         // Add the token if it exists
-        const token = localStorage.getItem('bsession_' + this.tag);
+        const token = localStorage.getItem(sessionKey);
         if (token) {
             console.log("Bearer-Retrieve=" + token);
             req.headers = Object.assign(
-                {"Authorization": "Bearer " + token},
-                req.headers);
+                { Authorization: "Bearer " + token },
+                req.headers
+            );
         }
 
         // Call the api
-        const response = await fetch(url, req);
 
-        // Retrieve any updated token
-        const info = response.headers.get('Authentication-Info');
-        if (info) {
-            for (let part of info.split(',')) {
-                part = part.trim();
-                let eq = part.search('=');
-                if (eq < 0) continue;
-                if (part.substring(0, eq).trim().toLowerCase() != 'bearer-update') continue;
-                console.log("Bearer-Update=" + part.substring(eq + 1).trim());
-                localStorage.setItem('bsession_' + this.tag, part.substring(eq + 1).trim());
-                break; // If there's more than one, keep the first
+        try {
+            const response = await fetch(url, req);
+
+            // Retrieve any updated token
+            const info = response.headers.get("Authentication-Info");
+            if (info) {
+                for (let part of info.split(",")) {
+                    part = part.trim();
+                    let eq = part.search("=");
+                    if (eq < 0) continue;
+                    if (
+                        part.substring(0, eq).trim().toLowerCase() !=
+                        "bearer-update"
+                    )
+                        continue;
+                    console.log(
+                        "Bearer-Update=" + part.substring(eq + 1).trim()
+                    );
+                    localStorage.setItem(
+                        "bsession_" + this.tag,
+                        part.substring(eq + 1).trim()
+                    );
+                    break; // If there's more than one, keep the first
+                }
             }
-        }
 
-        return response;
+            if (response.status === 401) {
+                localStorage.removeItem(sessionKey);
+                if (sessionOptions.redirectOnUnauthorized !== false) {
+                    alert("Session expired. Please log in again.");
+                    auth.redirectToLogin();
+                }
+            }
+
+            return response;
+        } catch (err) {
+            // Network/CORS/server connectivity errors should not force-logout users.
+            // Keep the session token and let callers handle UI-specific error messages.
+
+            throw err;
+        }
     }
 
+    getCachedAclBitFlags = () => {
+        const cachedPermsURI = localStorage.getItem("bsession_" + this.tag);
+        if (!cachedPermsURI) return null;
 
+        let cachedPerms = decodeURIComponent(cachedPermsURI);
+
+        const perms = {};
+
+        const originIndex = cachedPerms.indexOf("&o=");
+        if (originIndex < 0) return null;
+
+        // Delete the origin and signature values after the ACL scopes.
+        cachedPerms = cachedPerms.substring(0, originIndex);
+
+        for (const line of cachedPerms.split(";")) {
+            if (line.substring(0, 4) === "acl=") {
+                continue;
+            }
+            const [scope, permsBitFlag] = line.split(":");
+            if (!scope || !permsBitFlag) continue;
+            perms[scope] = parseInt(`0x${permsBitFlag}`);
+        }
+
+        return perms;
+    };
+
+    // sample: acl=20250226T230945Z%3Btestuserorg%3Aff&o=http%3A%2F%2Flocalhost%3A4000&un=testuser&x=20250226T231023Z&m=32grk9_LTZVUa0hMY1YP02e6Nsprr217SL0UVgTWd
+
+    getCachedUserID = () => {
+        const userId = auth.getUserid();
+        if (!userId) return null;
+        return userId;
+    };
+
+    static privileges = {
+        None: 0,
+        ReadDescriptor: 0x0001,
+        WriteDescriptor: 0x0002,
+        ReadUser: 0x0004,
+        WriteUser: 0x0008,
+        ReadGroup: 0x0010,
+        WriteGroup: 0x0020,
+        ReadProject: 0x0040,
+        WriteProject: 0x0080,
+        ReadCustomer: 0x0100,
+        WriteCustomer: 0x0200,
+        All: 0x03ff,
+    };
+
+    getCachedAcl = () => {
+        const cachedPerms = this.getCachedAclBitFlags();
+        if (!cachedPerms) return null;
+
+        const perms = {};
+        for (const [scope, permsBitFlag] of Object.entries(cachedPerms)) {
+            for (const [key, value] of Object.entries(bsession.privileges)) {
+                if (permsBitFlag & value) {
+                    if (!perms[scope]) perms[scope] = [];
+                    perms[scope].push(key);
+                }
+            }
+        }
+        return perms;
+    };
 }

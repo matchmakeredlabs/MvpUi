@@ -1,0 +1,110 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+
+    .header-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 97%;
+
+        padding-right: 1em;
+    }
+
+
+    .button-group {
+        display: flex;
+        flex-direction: row;
+        margin-right: 2em;
+        gap: 1em;
+    }
+
+    .dropdowns-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+        height: 88%;
+    }
+
+    .list-table-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        margin: 20px;
+        overflow: hidden;
+    }
+
+    .list-table-container mm-filter-table {
+        height: 100%;
+    }
+
+    .header-button {
+
+        color: white;
+        border: none;
+
+        height: 35px;
+
+        padding: 8px 16px;
+
+        cursor: pointer;
+        border-radius: 4px;
+
+        text-wrap: nowrap;
+        width: min-content;
+
+    }
+
+    .header-button.add-entity-button {
+        background-color: #5D9732;
+    }
+
+    .header-button.add-entity-button:hover {
+        background-color: #497528;
+    }
+
+    .header-button.add-entity-button2 {
+        background-color: #D18316;
+    }
+
+    .header-button.add-entity-button2:hover {
+        background-color: #905a0f;
+    }
+
+    .header-button.cancel-button {
+        background-color: #D32F2F;
+    }
+
+    .header-button.cancel-button:hover {
+        background-color: #B71C1C;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1em;
+    }
+
+}
+
+mm-add-group,
+mm-add-user {
+    padding: 1em;
+    padding-bottom: 0;
+}
+
+
+
+
+// mm-table {
+//     flex: 1 1 auto;
+//     // height: 80%;
+// }
