@@ -607,8 +607,8 @@ class MmMatchSets extends HTMLElement {
 
                 collectionsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Responding"]: "min-width: 40px; max-width: 40px; width: 40px; text-align: center; padding: 0;",
-                    ["Anchored"]: "min-width: 40px; max-width: 40px; width: 40px; text-align: center; padding: 0;",
+                    ["Responding"]: "width: 40px; text-align: center; padding: 0;",
+                    ["Anchored"]: "width: 40px; text-align: center; padding: 0;",
                     ["Note"]: "width: 15%",
                 };
 
@@ -848,8 +848,8 @@ class MmMatchSets extends HTMLElement {
 
                 customSetsTable.customColStyles = {
                     ["Described"]: "width: 1%",
-                    ["Responding"]: "min-width: 40px; max-width: 40px; width: 40px; text-align: center; padding: 0;",
-                    ["Anchored"]: "min-width: 40px; max-width: 40px; width: 40px; text-align: center; padding: 0;",
+                    ["Responding"]: "width: 40px; text-align: center; padding: 0;",
+                    ["Anchored"]: "width: 40px; text-align: center; padding: 0;",
                     ["Note"]: "width: 15%",
                 };
 

@@ -110,7 +110,7 @@ export default class MmCreateSets extends HTMLElement {
             filterTable.addCustomStylesheets(["/c/res/mm-create-sets.css"]);
 
             filterTable.customColStyles = {
-                ["Select"]: "min-width: 18px; max-width: 18px; width: 18px; text-align: center; padding: 0;",
+                ["Select"]: "width: 18px; text-align: center; padding: 0;",
             };
 
             const createSetButton = bdoc.ele(
