@@ -43,9 +43,10 @@ export default class MmCreateSets extends HTMLElement {
                         ["_projectId"]: "Project",
                     })
                 ),
+                bdoc.attr("first-col-width", "16px"),
                 bdoc.attr(
                     "sort-properties",
-                    "Select,Name,Subject,Publisher,Project,% Described,Note"
+                    "Name,Subject,Publisher,Project,% Described,Note"
                 ),
                 bdoc.attr("display-properties", "subject,publisher,note")
             ),
@@ -110,7 +111,8 @@ export default class MmCreateSets extends HTMLElement {
             filterTable.addCustomStylesheets(["/c/res/mm-create-sets.css"]);
 
             filterTable.customColStyles = {
-                ["Select"]: "width: 18px; text-align: center; padding: 0;",
+                select:
+                    "width: 16px; min-width: 16px; max-width: 16px; padding: 0; text-align: center; overflow: hidden; font-size: 0; box-sizing: border-box;",
             };
 
             const createSetButton = bdoc.ele(
@@ -136,7 +138,10 @@ export default class MmCreateSets extends HTMLElement {
                 select: (collection, root) =>
                     bdoc.ele(
                         "td",
-                        bdoc.attr("style", "text-align: center; padding: 0;"),
+                        bdoc.attr(
+                            "style",
+                            "width: 16px; min-width: 16px; max-width: 16px; text-align: center; padding: 0; box-sizing: border-box;"
+                        ),
                         bdoc.ele(
                             "input",
                             bdoc.attr("type", "checkbox"),
