@@ -578,10 +578,7 @@ class MmMatchSets extends HTMLElement {
                             }
 
                             if (property === "note") {
-                                if (currentValue.length > 30) {
-                                    return currentValue.slice(0, 27) + "...";
-                                }
-                                return currentValue;
+                                return MmCollections.renderNote(collection);
                             }
 
                             if (currentValue.length > 15 && !currentValue.includes(" ")) {
@@ -891,10 +888,7 @@ class MmMatchSets extends HTMLElement {
                             }
 
                             if (property === "note") {
-                                if (currentValue.length > 30) {
-                                    return currentValue.slice(0, 27) + "...";
-                                }
-                                return currentValue;
+                                return MmCollections.renderNote(item);
                             }
 
                             if (currentValue.length > 15 && !currentValue.includes(" ")) {

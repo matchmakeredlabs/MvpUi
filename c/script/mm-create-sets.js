@@ -2,6 +2,8 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmCollections from "./mm-collections.js";
+import "./mm-prompt-modal.js";
+import { showMessage } from "./mm-message-modal.js";
 
 export default class MmCreateSets extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -50,6 +52,7 @@ export default class MmCreateSets extends HTMLElement {
                 ),
                 bdoc.attr("display-properties", "subject,publisher,note")
             ),
+            bdoc.ele("mm-prompt-modal"),
             bdoc.ele(
                 "script",
                 bdoc.attr("type", "module"),
@@ -134,6 +137,27 @@ export default class MmCreateSets extends HTMLElement {
 
             filterTable.addCustomHeaderElements([createSetButton]);
 
+            const editNote = async (collection) => {
+                const promptModal = this.shadowRoot.querySelector(
+                    "mm-prompt-modal"
+                );
+                try {
+                    const note = await MmCollections.editCollectionNote(
+                        collection,
+                        promptModal
+                    );
+                    if (note === null) return;
+                    filterTable.loadData(collections);
+                } catch (error) {
+                    await showMessage({
+                        title: "Note Error",
+                        message:
+                            error?.message ||
+                            "Unable to update the collection note.",
+                    });
+                }
+            };
+
             filterTable.generateCols = (displayProperties) => ({
                 select: (collection, root) =>
                     bdoc.ele(
@@ -187,10 +211,10 @@ export default class MmCreateSets extends HTMLElement {
                         }
 
                         if (property === "note") {
-                            if (currentValue.length > 30) {
-                                return currentValue.slice(0, 27) + "...";
-                            }
-                            return currentValue;
+                            return MmCollections.renderNote(
+                                item,
+                                item._canUpdate !== false ? editNote : null
+                            );
                         }
 
                         if (currentValue.length > 15 && !currentValue.includes(" ")) {

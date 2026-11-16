@@ -695,10 +695,7 @@ export default class MmViewCustomSets extends HTMLElement {
                             }
 
                             if (property === "note") {
-                                if (currentValue.length > 30) {
-                                    return currentValue.slice(0, 27) + "...";
-                                }
-                                return currentValue;
+                                return MmCollections.renderNote(item);
                             }
 
                             return currentValue;

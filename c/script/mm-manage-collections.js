@@ -2,6 +2,8 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmCollections from "./mm-collections.js";
+import "./mm-prompt-modal.js";
+import { showMessage } from "./mm-message-modal.js";
 
 export default class ManageCollections extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -36,7 +38,7 @@ export default class ManageCollections extends HTMLElement {
             ),
             bdoc.ele(
                 "mm-filter-table",
-                bdoc.attr("filter-properties", "subject,publisher,_projectId"),
+                bdoc.attr("filter-properties", "subject,publisher,_projectId,note"),
                 bdoc.attr(
                     "filter-display-names",
                     JSON.stringify({
@@ -45,10 +47,11 @@ export default class ManageCollections extends HTMLElement {
                 ),
                 bdoc.attr(
                     "sort-properties",
-                    "name,subject,publisher,Project,% Described"
+                    "name,subject,publisher,Project,% Described,note"
                 ),
-                bdoc.attr("display-properties", "subject,publisher")
+                bdoc.attr("display-properties", "subject,publisher,note")
             ),
+            bdoc.ele("mm-prompt-modal"),
             bdoc.ele("mm-create-collection-modal"),
             bdoc.ele("mm-upload-collection-modal"),
             bdoc.script("mm-filter-table.js"),
@@ -116,7 +119,28 @@ export default class ManageCollections extends HTMLElement {
                 )
             );
 
-            const filterTableCols = {
+            const editNote = async (collection) => {
+                const promptModal = this.shadowRoot.querySelector(
+                    "mm-prompt-modal"
+                );
+                try {
+                    const note = await MmCollections.editCollectionNote(
+                        collection,
+                        promptModal
+                    );
+                    if (note === null) return;
+                    filterTable.loadData(editableCollections);
+                } catch (error) {
+                    await showMessage({
+                        title: "Note Error",
+                        message:
+                            error?.message ||
+                            "Unable to update the collection note.",
+                    });
+                }
+            };
+
+            const filterTableCols = (displayProperties) => ({
                 name: (collection) =>
                     bdoc.ele(
                         "a",
@@ -126,8 +150,32 @@ export default class ManageCollections extends HTMLElement {
                         ),
                         collection.name
                     ),
-                subject: (collection) => collection.subject || "Null",
-                publisher: (collection) => collection.publisher || "Null",
+                ...displayProperties.reduce((acc, property) => {
+                    acc[property] = (item) => {
+                        let currentValue = item[property];
+                        if (
+                            currentValue === null ||
+                            currentValue === "" ||
+                            currentValue === undefined
+                        ) {
+                            currentValue = "Null";
+                        }
+
+                        if (property === "note") {
+                            return MmCollections.renderNote(item, editNote);
+                        }
+
+                        if (
+                            typeof currentValue === "string" &&
+                            currentValue.length > 15 &&
+                            !currentValue.includes(" ")
+                        ) {
+                            return currentValue.slice(0, 12) + "...";
+                        }
+                        return currentValue;
+                    };
+                    return acc;
+                }, {}),
                 // ["Creation Date"]: (collection) => collection.datePublished,
 
                 Project: (collection) => collection._projectId || "Null",
@@ -135,15 +183,20 @@ export default class ManageCollections extends HTMLElement {
                     const percent = collection.percentDescribed;
                     return `${percent}%`;
                 },
-            };
+            });
 
-            filterTable.generateCols = () => filterTableCols;
+            filterTable.generateCols = filterTableCols;
             filterTable.customSorts = {
                 name: (a, b) => (a.name < b.name ? -1 : 1),
                 ["% Described"]: (a, b) => {
                     return a.percentDescribed - b.percentDescribed;
                 },
                 Project: (a, b) => (a._projectId < b._projectId ? -1 : 1),
+                note: (a, b) => {
+                    const aNote = a.note || "";
+                    const bNote = b.note || "";
+                    return aNote.localeCompare(bNote);
+                },
             };
 
             for (const collection of editableCollections) {

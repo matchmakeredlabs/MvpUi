@@ -34,9 +34,12 @@ export default class MmPromptModal extends HTMLElement {
         cancelText = "Cancel",
         expectedValue = null,
         showNoteInput = false,
+        showValueInput = true,
         defaultValue = "",
     } = {}) {
         this.#settle(null);
+        this.#input = null;
+        this.#noteInput = null;
 
         const form = document.createElement("form");
         form.style.display = "grid";
@@ -54,19 +57,21 @@ export default class MmPromptModal extends HTMLElement {
             form.append(copy);
         }
 
-        const inputLabel = document.createElement("label");
-        inputLabel.style.display = "grid";
-        inputLabel.style.gap = "0.25rem";
-        inputLabel.textContent = label;
+        if (showValueInput) {
+            const inputLabel = document.createElement("label");
+            inputLabel.style.display = "grid";
+            inputLabel.style.gap = "0.25rem";
+            inputLabel.textContent = label;
 
-        this.#input = document.createElement("input");
-        this.#input.type = "text";
-        this.#input.value = initialValue;
-        this.#input.placeholder = placeholder;
-        this.#input.autocomplete = "off";
-        this.#input.required = true;
-        inputLabel.append(this.#input);
-        form.append(inputLabel);
+            this.#input = document.createElement("input");
+            this.#input.type = "text";
+            this.#input.value = initialValue;
+            this.#input.placeholder = placeholder;
+            this.#input.autocomplete = "off";
+            this.#input.required = true;
+            inputLabel.append(this.#input);
+            form.append(inputLabel);
+        }
 
         if (showNoteInput) {
             const noteLabel = document.createElement("label");
@@ -110,20 +115,27 @@ export default class MmPromptModal extends HTMLElement {
 
         form.addEventListener("submit", (event) => {
             event.preventDefault();
-            const value = this.#input.value.trim();
-            if (!value) {
-                this.#error.textContent = "A value is required.";
-                this.#input.focus();
-                return;
-            }
-            if (expectedValue !== null && value !== expectedValue) {
-                this.#error.textContent = `Type "${expectedValue}" to confirm.`;
-                this.#input.focus();
-                return;
+            const value = this.#input ? this.#input.value.trim() : "";
+            if (showValueInput) {
+                if (!value) {
+                    this.#error.textContent = "A value is required.";
+                    this.#input.focus();
+                    return;
+                }
+                if (expectedValue !== null && value !== expectedValue) {
+                    this.#error.textContent = `Type "${expectedValue}" to confirm.`;
+                    this.#input.focus();
+                    return;
+                }
             }
 
             const result = showNoteInput
-                ? { name: value, note: this.#noteInput.value.trim() }
+                ? {
+                      name: value,
+                      note: this.#noteInput
+                          ? this.#noteInput.value.trim()
+                          : "",
+                  }
                 : value;
             this.#settle(result);
             this.#modal.hide();
@@ -135,7 +147,9 @@ export default class MmPromptModal extends HTMLElement {
         });
 
         this.#modal.show();
-        requestAnimationFrame(() => this.#input.focus());
+        requestAnimationFrame(() =>
+            (this.#input || this.#noteInput)?.focus()
+        );
         return result;
     }
 

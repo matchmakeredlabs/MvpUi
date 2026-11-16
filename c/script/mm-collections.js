@@ -1,6 +1,7 @@
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
+import "./mm-tooltip.js";
 
 export default class MmCollections extends HTMLElement {
     static session = new bsession(config.backEndUrl, config.sessionTag);
@@ -74,6 +75,81 @@ export default class MmCollections extends HTMLElement {
             item._projectId = new Set(values);
         }
         return item;
+    };
+
+    static renderNote = (item, onEdit = null) => {
+        const note = item.note;
+        if (note === null || note === "" || note === undefined) {
+            return "Null";
+        }
+
+        const noteText = String(note);
+        const displayText =
+            noteText.length > 30 ? noteText.slice(0, 27) + "..." : noteText;
+
+        const tooltip = bdoc.ele(
+            "mm-tooltip",
+            bdoc.attr("style", "display: inline-block;"),
+            bdoc.ele(
+                "span",
+                bdoc.attr("slot", "tooltip-button"),
+                displayText
+            ),
+            bdoc.ele(
+                "span",
+                bdoc.attr("slot", "tooltip-content"),
+                noteText
+            )
+        );
+
+        if (onEdit) {
+            tooltip.addEventListener("click", () => onEdit(item));
+        }
+
+        return tooltip;
+    };
+
+    static updateCollectionNote = async (collectionId, note) => {
+        const response = await MmCollections.session.fetch(
+            `/api/collections/${encodeURIComponent(collectionId)}`
+        );
+        if (!response.ok) return Promise.reject(response);
+        const collection = (await response.json()).collection || [];
+        const root =
+            collection.find((descriptor) => descriptor.id === collectionId) ||
+            collection[0];
+        if (!root) {
+            return Promise.reject(new Error("Collection not found."));
+        }
+
+        const updateResponse = await MmCollections.session.fetch(
+            "/api/descriptors",
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...root, note }),
+            }
+        );
+        if (!updateResponse.ok) return Promise.reject(updateResponse);
+        return updateResponse;
+    };
+
+    static editCollectionNote = async (collection, promptModal) => {
+        const result = await promptModal.ask({
+            title: "Edit Note",
+            message: `Add or update the note for "${collection.name}".`,
+            showValueInput: false,
+            showNoteInput: true,
+            defaultValue: collection.note || "",
+            confirmText: "Save",
+            cancelText: "Cancel",
+        });
+        if (result === null) return null;
+
+        const note = result.note || "";
+        await MmCollections.updateCollectionNote(collection.id, note);
+        collection.note = note;
+        return note;
     };
 
     static duplicateCollection = async (collectionId) => {
@@ -198,10 +274,7 @@ export default class MmCollections extends HTMLElement {
                         }
 
                         if (property === "note") {
-                            if (currentValue.length > 30) {
-                                return currentValue.slice(0, 27) + "...";
-                            }
-                            return currentValue;
+                            return MmCollections.renderNote(item);
                         }
 
                         if (currentValue.length > 15 && !currentValue.includes(" ")) {
