@@ -2,6 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmElementCard from "./mm-element-card.js";
+import MmCollections from "./mm-collections.js";
 import "./mm-prompt-modal.js";
 import { confirmMessage, showMessage } from "./mm-message-modal.js";
 import "./mm-loading.js";
@@ -361,6 +362,45 @@ export default class EditCollection extends HTMLElement {
                     removeElementButton
                 );
             };
+            if (topLevelEle._canUpdate) {
+                bdoc.append(
+                    topLevelButtons,
+                    bdoc.ele(
+                        "button",
+                        "Duplicate",
+                        bdoc.attr(
+                            "style",
+                            "background-color: #4a90e2; color: white; cursor: pointer; border: none; border-radius: 2px; background-image: none; width: auto; height: auto; padding: 0 6px;"
+                        ),
+                        bdoc.eventListener("click", async () => {
+                            if (
+                                !confirm(
+                                    `Duplicate collection "${topLevelEle.name}"?`
+                                )
+                            ) {
+                                return;
+                            }
+                            const loading = this.shadowRoot.querySelector(
+                                "mm-loading[overlay]"
+                            );
+                            loading.show("Duplicating collection...");
+                            try {
+                                const result =
+                                    await MmCollections.duplicateCollection(
+                                        topLevelEle.id
+                                    );
+                                window.location.href = `/c/EditCollection?id=${result.collectionId}`;
+                            } catch (response) {
+                                loading.hide();
+                                await this.handleError(response);
+                            } finally {
+                                loading.hide();
+                            }
+                        })
+                    )
+                );
+            }
+
             bdoc.append(
                 topLevelButtons,
                 generateCustomDescriptorElement(topLevelEle, true)

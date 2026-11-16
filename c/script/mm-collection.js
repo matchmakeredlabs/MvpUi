@@ -25,7 +25,9 @@ class MmCollection extends HTMLElement {
         visibleUnselected: false,
         renderInline: true,
         placeLeft: false,
+        editableName: false,
         generateCustomDescriptorElement: () => {},
+        onNameCommit: async () => {},
     };
     originalDescriptorEleDisplayStyle;
 
@@ -116,9 +118,10 @@ class MmCollection extends HTMLElement {
             `li[feid="${referencedDescriptor._intId}"]`
         );
         if (descriptorEle) {
-            const span = descriptorEle.querySelector("span");
-            span.innerText =
-                MmCollection.generateDescriptorText(referencedDescriptor);
+            MmCollection.updateDescriptorLabel(
+                descriptorEle,
+                referencedDescriptor
+            );
         }
         const keysToUpdate = [];
         for (const key of MmCollection.updateFields) {
@@ -306,7 +309,7 @@ class MmCollection extends HTMLElement {
     }
 
     clearSelections = () => {
-        const spans = this.shadowRoot.querySelectorAll("span");
+        const spans = this.shadowRoot.querySelectorAll(".descriptor-label");
         spans.forEach((span) => {
             span.style.fontWeight = "normal";
         });
@@ -326,8 +329,10 @@ class MmCollection extends HTMLElement {
 
             const eleLi = this.#getLi(target);
 
-            const selectedSpan = eleLi.querySelector("span");
-            selectedSpan.style.fontWeight = "bold";
+            const selectedSpan = eleLi.querySelector(".descriptor-label");
+            if (selectedSpan) {
+                selectedSpan.style.fontWeight = "bold";
+            }
 
             const selectedCustomEle = eleLi.querySelector("[custom-ele]");
             if (selectedCustomEle) {
@@ -487,25 +492,78 @@ class MmCollection extends HTMLElement {
                 }
                 contractBtn.disabled = false;
             }
-            this.clickSelect(origin)({ target: li.querySelector("span") });
+            this.clickSelect(origin)({
+                target: li.querySelector(".descriptor-label"),
+            });
             // origin.select(target, this.descriptors[target.parentElement.feid]);
         };
 
-    static generateDescriptorText = (descriptor) => {
+    static generateDescriptorMeta = (descriptor) => {
+        const description = descriptor.description || "";
         const abstr =
-            descriptor.description.length < 50
-                ? descriptor.description
-                : descriptor.description.substring(0, 50) + "...";
+            description.length < 50
+                ? description
+                : description.substring(0, 50) + "...";
 
-        let spanText = descriptor.name;
+        let meta = "";
         if (descriptor.datePublished) {
-            spanText += ", " + descriptor.datePublished;
+            meta += ", " + descriptor.datePublished;
         }
         if (abstr.length > 0) {
-            spanText += " - " + abstr;
+            meta += " - " + abstr;
         }
 
-        return spanText;
+        return meta;
+    };
+
+    static generateDescriptorText = (descriptor) => {
+        return (descriptor.name || "") + MmCollection.generateDescriptorMeta(descriptor);
+    };
+
+    static updateDescriptorLabel = (descriptorEle, descriptor) => {
+        const nameSpan = descriptorEle.querySelector(".descriptor-name");
+        if (nameSpan) {
+            if (document.activeElement !== nameSpan) {
+                nameSpan.textContent = descriptor.name || "";
+            }
+            const metaText = MmCollection.generateDescriptorMeta(descriptor);
+            let metaSpan = descriptorEle.querySelector(".descriptor-meta");
+            if (metaText) {
+                if (metaSpan) {
+                    metaSpan.textContent = metaText;
+                } else {
+                    nameSpan.after(
+                        bdoc.ele("span", bdoc.class("descriptor-meta"), metaText)
+                    );
+                }
+            } else if (metaSpan) {
+                metaSpan.remove();
+            }
+            return;
+        }
+
+        const span = descriptorEle.querySelector(".descriptor-label");
+        if (span) {
+            span.innerText = MmCollection.generateDescriptorText(descriptor);
+        }
+    };
+
+    startEditingName = (_intId) => {
+        const li = this.shadowRoot.querySelector(`li[feid="${_intId}"]`);
+        const nameSpan = li?.querySelector(".descriptor-name");
+        if (!li || !nameSpan) {
+            return;
+        }
+
+        this.clickSelect(this)({ target: nameSpan });
+        requestAnimationFrame(() => {
+            nameSpan.focus();
+            const range = document.createRange();
+            range.selectNodeContents(nameSpan);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        });
     };
 
     static makeElement = (cn, origin) => {
@@ -550,11 +608,27 @@ class MmCollection extends HTMLElement {
         // li.appendChild(button);
         bdoc.append(buttonContainer, button);
 
+        const nameSpan = bdoc.ele(
+            "span",
+            bdoc.class("descriptor-name"),
+            cn.name || ""
+        );
+        const metaText = MmCollection.generateDescriptorMeta(cn);
         const span = bdoc.ele(
             "span",
+            bdoc.class("descriptor-label"),
             bdoc.eventListener("click", origin.clickSelect(origin)),
-            MmCollection.generateDescriptorText(cn)
+            nameSpan,
+            metaText
+                ? bdoc.ele("span", bdoc.class("descriptor-meta"), metaText)
+                : null
         );
+
+        if (origin.customDescriptorEleOptions.editableName) {
+            MmCollection.enableInlineNameEdit(nameSpan, origin, () => {
+                return origin.descriptors[cid];
+            });
+        }
         const customDescriptorEle =
             origin.customDescriptorEleOptions.generateCustomDescriptorElement(
                 cn

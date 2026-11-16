@@ -76,6 +76,15 @@ export default class MmCollections extends HTMLElement {
         return item;
     };
 
+    static duplicateCollection = async (collectionId) => {
+        const response = await MmCollections.session.fetch(
+            `/api/collections/${encodeURIComponent(collectionId)}/duplicate`,
+            { method: "POST" }
+        );
+        if (!response.ok) return Promise.reject(response);
+        return await response.json();
+    };
+
     connectedCallback() {
         bdoc.append(
             this.shadowRoot,

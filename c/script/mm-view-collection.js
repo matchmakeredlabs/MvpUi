@@ -2,6 +2,7 @@ import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import MmMatchProfileModal from "./mm-match-profile-modal.js";
+import MmCollections from "./mm-collections.js";
 import "./mm-loading.js";
 import {
     convertJsonToCsv,
@@ -341,6 +342,42 @@ export default class ViewCollection extends HTMLElement {
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
         const topLevelEle = this.#collection[0];
+
+        if (topLevelEle._canUpdate) {
+            const exportButtons = this.shadowRoot.querySelector(
+                ".export-buttons"
+            );
+            bdoc.append(
+                exportButtons,
+                bdoc.ele(
+                    "button",
+                    bdoc.class("export-button duplicate"),
+                    bdoc.attr(
+                        "style",
+                        "margin-right: 25px; background-color: #4a90e2;"
+                    ),
+                    "Duplicate Collection",
+                    bdoc.eventListener("click", async () => {
+                        if (
+                            !confirm(
+                                `Duplicate collection "${topLevelEle.name}"?`
+                            )
+                        ) {
+                            return;
+                        }
+                        try {
+                            const result =
+                                await MmCollections.duplicateCollection(
+                                    topLevelEle.id
+                                );
+                            window.location.href = `/c/Browse?id=${result.collectionId}`;
+                        } catch (response) {
+                            await this.handleError(response);
+                        }
+                    })
+                )
+            );
+        }
 
         const topLevelButtons = bdoc.ele(
             "div",
