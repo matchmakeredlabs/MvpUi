@@ -35,7 +35,7 @@ export default class EditCollection extends HTMLElement {
 
     static fetchCollection = async (collectionId) => {
         const response = await EditCollection.session.fetch(
-            `/api/collections/${collectionId}`
+            `/api/collections/${encodeURIComponent(collectionId)}`
         );
         if (response.status !== 200) {
             return Promise.reject(response);
@@ -120,6 +120,7 @@ export default class EditCollection extends HTMLElement {
 
         if (!collectionId) {
             window.location.href = "/c/ManageCollections";
+            return;
         }
 
         let loadedCollection;
@@ -145,9 +146,28 @@ export default class EditCollection extends HTMLElement {
 
         const browseTree = this.shadowRoot.querySelector("#mmx_browse_tree");
 
-        const topLevelEle = loadedCollection[0];
+        const descriptors = Array.isArray(loadedCollection)
+            ? loadedCollection
+            : loadedCollection
+              ? [loadedCollection]
+              : [];
 
-        console.log(topLevelEle);
+        const topLevelEle =
+            descriptors.find(
+                (descriptor) => descriptor.id === collectionId
+            ) ||
+            descriptors.find((descriptor) => descriptor._intId === 0) ||
+            descriptors[0];
+
+        if (!topLevelEle) {
+            this.loadingElement.hide();
+            await showMessage({
+                title: "Collection Not Found",
+                message: "The requested collection could not be found.",
+            });
+            window.location.href = "/c/ManageCollections";
+            return;
+        }
 
         bdoc.append(
             this.shadowRoot.querySelector(".public-checkbox-container"),
@@ -425,7 +445,7 @@ export default class EditCollection extends HTMLElement {
 
             bdoc.append(headerContainer, collectionEle.expandContractButtons);
 
-            collectionEle.loadDescriptors(loadedCollection);
+            collectionEle.loadDescriptors(descriptors);
         });
     };
 }
