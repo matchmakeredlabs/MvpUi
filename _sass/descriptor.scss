@@ -11,3 +11,15 @@
 .mmc_descriptor.mm_active {
     border-color: $mm-red;
 }
+
+.toggle-button-bionic-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid $mm-darkblue;
+}
+
+.toggle-button-container {
+    display: flex;
+    flex-direction: row;
+}

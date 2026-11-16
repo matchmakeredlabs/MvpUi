@@ -1,0 +1,17 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    .propagate-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 2px;
+
+        span {
+            font-size: 14px;
+        }
+    }
+}

@@ -1,0 +1,9 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+}

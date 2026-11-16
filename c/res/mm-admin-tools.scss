@@ -1,0 +1,59 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+
+    .header-button {
+    
+            color: white;
+            border: none;
+    
+            padding: 8px 16px;
+    
+            cursor: pointer;
+            border-radius: 4px;
+    
+            text-wrap: nowrap;
+            width: min-content;
+    
+            margin-top: 1em;
+        }
+
+    .header-button.add-entity-button {
+        background-color: #5D9732;
+    }
+
+    .header-button.add-entity-button:hover {
+        background-color: #497528;
+    }
+
+    .header-button.cancel-button {
+        background-color: #D32F2F;
+    }
+
+    .header-button.cancel-button:hover {
+        background-color: #B71C1C;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1em;
+    }
+
+}
+
+mm-create-user-form {
+    padding: 1em;
+    padding-bottom: 0;
+}
+
+
+
+
+// mm-table {
+//     flex: 1 1 auto;
+//     // height: 80%;
+// }

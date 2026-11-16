@@ -1,5 +1,5 @@
 main {
-    height: calc(100vh - 9rem);
+    height: calc(100vh - 10rem);
     overflow: auto; // This will add a scrollbar to the main content if it exceeds the viewport height.
     padding-bottom: 1em; // Replace (size of footer) with the actual height of your footer.
 }
@@ -7,10 +7,21 @@ main {
 // Assign this to <main> or something with a specified height.
 .mm_columns {
     display: flex;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Left column only — keeps right column untouched */
+.mm_columns > div:first-child {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;   /* crucial for flex scrolling */
+  overflow: hidden;/* avoid a second scrollbar on the column itself */
 }
 
 .mm_columns>div {
     flex: 1 1 0;
+    min-width: 0;
     height: 100%;
     overflow-y: auto;
     margin-right: 1em;    
@@ -25,7 +36,7 @@ main {
 }
 
 .mm_columns_body {
-    height: calc(100vh - 17rem);
+    height: calc(100vh - 20rem);
 }
 
 .mm_flex_vert {
@@ -53,6 +64,36 @@ main {
     cursor: pointer;
     border-radius: 4px; /* Add border radius for rounded corners */
     float: right;
+}
+
+#match-console-button:hover {
+    background-color: #367d39
+;
+}
+
+
+#match-collections-button {
+    background-color: #0068b3;
+    color: white;
+    border: none; /* Remove border */
+    padding: 8px 16px; /* Adjust padding as needed */
+    cursor: pointer;
+    border-radius: 4px; /* Add border radius for rounded corners */
+    margin: 10px;
+    float: right;
+}
+
+#match-collections-button:hover {
+    background-color: #045a8d;
+}
+
+#match-collections-button:disabled {
+
+    opacity: 0.5; 
+    cursor: not-allowed; /* Change cursor to indicate disabled state */
+}
+#match-collections-button:hover:disabled {
+    background-color: #0068b3;
 }
 
 .button-container_console {

@@ -1,0 +1,123 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: block;
+    height: 96%;
+
+    .top-level-buttons {
+        display: inline-flex;
+        max-height: 25px;
+        margin-right: 0.5em;
+    }
+
+    .top-level-header {
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.5em;
+
+        button {
+            background-image: none;
+            width: auto;
+            height: auto;
+        }
+
+        h2 {
+                cursor: pointer;
+            }
+    }
+
+    .top-level-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        padding-right: 1em;
+        
+    }
+
+    .expand-contract-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25em;
+    }
+
+    #expand-contract-buttons {
+        min-width: 120px;
+    }
+
+    #expand-contract-buttons .expand-contract-button {
+        padding: 4px;
+        font-size: 12px;
+        font-family: inherit;
+        text-align: center;
+        text-decoration: none;
+        color: #000;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        box-sizing: border-box;
+        border-radius: 4px;
+        outline: none;
+        margin: 1px;
+        background-image: none;
+        width: auto;
+        height: auto;
+    }
+
+    #expand-contract-buttons .expand-contract-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .custom-set-date {
+        margin: 0.15em 0 0;
+        color: #444;
+        font-size: 0.9em;
+    }
+
+    .expand-public-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25em;
+    }
+    .public-checkbox-container {
+        margin: 1.2em 0 0.5em 1em;
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 1em;
+        height: 25px;
+    }
+
+    input[type="checkbox"]#public-checkbox  {
+        height: 14px;
+        width: 14px;
+        position: relative;
+        opacity: 1;
+    }
+
+    .export-button {
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin: 10px;
+        float: right;
+    }
+    .export-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    } 
+    .export-button.matches {
+        background-color: #0068b3;
+    }
+    .export-button.collection {
+        background-color: #5D9732;
+    }
+    .export-button.collection:hover {
+        background-color: #467125;
+    }
+}

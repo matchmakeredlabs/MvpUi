@@ -1,0 +1,125 @@
+---
+# Front matter to cause this to be processed by Jekyll into .css 
+--- 
+@import "globals.scss";
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    --svg-chevron-right: #{url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.0' viewBox='0 0 100 100'%3E%3Cpolygon points='22,8 22,3 79,50 22,98 22,93 74,50' stroke='white' fill='white' stroke-width='10' /%3E%3C/svg%3E")};
+
+    // select {
+    //     border: none;
+    //     background: none;
+    //     padding: 0px;
+    //     font-size: 16px;
+    // }
+
+    .chevron {
+        margin-left: 0.5em;
+        margin-top: 0.1em;
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        background-image: var(--svg-chevron-right);
+        background-repeat: no-repeat;
+        background-origin: padding-box;
+        background-size: contain;
+
+        transition: transform 0.4s ease;
+    }
+
+    .chevron.none {
+        // transform: rotate(90deg);
+        opacity: 0;
+    }
+    .chevron.asc {
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+    .chevron.desc {
+        opacity: 1;
+        transform: rotate(-90deg);
+    }
+
+    .sort-header {
+        // display: flex;
+        // justify-content: space-between;
+        // align-items: center;
+        // padding: 0.5em 1em;
+        cursor: pointer;
+    }
+}
+
+.table-name {
+    width: 60%;
+}
+
+.table-count {
+    margin: 0 0 0.5rem;
+    position: relative;
+    z-index: 2;
+    background-color: white;
+    color: #444;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.table-content {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.table-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: 1200px;
+    overflow: auto;
+    border-radius: 8px;
+    background-color: white;
+    position: relative;
+    isolation: isolate;
+}
+
+table {
+    width: 100%;
+    min-width: 350px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto;
+}
+
+th {
+    background-color: #0068b3;
+    color: white;
+    padding: 15px 20px;
+    text-align: left;
+    position: sticky;
+    top: -1px;
+    z-index: 10;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    text-overflow: ellipsis;
+    overflow: hidden;
+
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
