@@ -1,3 +1,4 @@
+import { getApiErrorMessage, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -16,21 +17,7 @@ export default class EditCollection extends HTMLElement {
 
     #lastSelectedElement = null;
 
-    handleError = async (response) => {
-        console.log(response);
-        let message = "An error occurred.";
-        try {
-            const body = await response.json();
-            message =
-                body.log?.[0]?.message ||
-                body.error ||
-                body.message ||
-                body.Message ||
-                body.title ||
-                message;
-        } catch (e) {}
-        await showMessage({ title: "Request Error", message });
-    };
+    handleError = async (error) => { await showMessage({ title: "Request failed", message: await getApiErrorMessage(error) }); };
 
     static fetchCollection = async (collectionId) => {
         const response = await EditCollection.session.fetch(
@@ -39,7 +26,7 @@ export default class EditCollection extends HTMLElement {
         if (response.status !== 200) {
             return Promise.reject(response);
         }
-        return (await response.json()).collection;
+        return (await readJsonResponse(response)).collection;
     };
 
     static deleteElement = async (elementId) => {

@@ -1,3 +1,4 @@
+import { apiFetch, getApiErrorMessage } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import "./mm-loading.js";
@@ -93,7 +94,7 @@ class MmForgotPasswordForm extends HTMLElement {
 
         this.#setBusy(true);
         try {
-            const response = await fetch(`${config.backEndUrl}/api/password-resets`, {
+            const response = await apiFetch(`${config.backEndUrl}/api/password-resets`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -106,8 +107,8 @@ class MmForgotPasswordForm extends HTMLElement {
 
             form.reset();
             this.#setMessage("If an account exists for that email, a reset link has been sent.");
-        } catch {
-            this.#setMessage("Could not reach the server.", true);
+        } catch (error) {
+            this.#setMessage(await getApiErrorMessage(error, "Could not reach the server."), true);
         } finally {
             this.#setBusy(false);
         }
@@ -135,22 +136,7 @@ class MmForgotPasswordForm extends HTMLElement {
         messageNode.style.visibility = "visible";
     }
 
-    async #errorMessage(response) {
-        try {
-            const body = await response.json();
-            return (
-                body.message ||
-                body.detail ||
-                body.title ||
-                body.error ||
-                body.errors?.[0]?.detail ||
-                body.errors?.[0]?.title ||
-                "Password reset failed."
-            );
-        } catch {
-            return "Password reset failed.";
-        }
-    }
+    async #errorMessage(response) { return getApiErrorMessage(response, "Password reset failed."); }
 }
 
 customElements.define("mm-forgot-password-form", MmForgotPasswordForm);

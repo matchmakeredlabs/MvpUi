@@ -1,3 +1,4 @@
+import { readJsonResponse, getApiErrorMessage, showApiError } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
@@ -37,7 +38,7 @@ export default class MmMatchProfileSelect extends HTMLElement {
                 return Promise.reject();
             }
         }
-        return await response.json();
+        return await readJsonResponse(response);
     }
 
     static async updateSettings(oldSettings, newSettings) {
@@ -122,7 +123,8 @@ export default class MmMatchProfileSelect extends HTMLElement {
                 await this.renderMatchProfiles();
                 this.onLoadAction();
             })
-            .catch((error) => {
+            .catch(async (error) => {
+                await showApiError(error);
                 this.onLoadAction(error);
             });
     }
@@ -166,7 +168,7 @@ export default class MmMatchProfileSelect extends HTMLElement {
         if (response.status !== 200) {
             await showMessage({
                 title: "Match Profile Error",
-                message: "Unable to update match profile.",
+                message: await getApiErrorMessage(response, "Unable to update match profile."),
             });
             return Promise.reject();
         }
@@ -200,7 +202,7 @@ export default class MmMatchProfileSelect extends HTMLElement {
         if (response.status !== 200) {
             await showMessage({
                 title: "Match Profile Error",
-                message: "Unable to delete match profile.",
+                message: await getApiErrorMessage(response, "Unable to delete match profile."),
             });
             return Promise.reject();
         }
@@ -240,7 +242,7 @@ export default class MmMatchProfileSelect extends HTMLElement {
         if (response.status !== 200) {
             await showMessage({
                 title: "Match Profile Error",
-                message: "Unable to add match profile.",
+                message: await getApiErrorMessage(response, "Unable to add match profile."),
             });
             return Promise.reject();
         }

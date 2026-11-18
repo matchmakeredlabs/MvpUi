@@ -1,3 +1,4 @@
+import { readJsonResponse, readTextResponse } from "./api-errors.js";
 // Add internal elements to shadow
 // Create an internal stylesheet using:
 //   const sheet = new CSSStyleSheet();
@@ -121,7 +122,7 @@ class MmUser extends HTMLElement {
         this.#userid = userid;
 
         const response = await MmUser.session.fetch("/api/users/" + encodeURIComponent(userid));
-        const data = await response.json();
+        const data = await readJsonResponse(response);
         // Error handling should be added to the above by way of a try/catch block
 
         const shadow = this.shadowRoot;
@@ -151,7 +152,7 @@ class MmUser extends HTMLElement {
         );
 
         // Need better error handling here.
-        const text = await response.text();
+        const text = await readTextResponse(response);
         alert(text);
     }
 }

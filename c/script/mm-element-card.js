@@ -1,3 +1,4 @@
+import { showApiError } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -53,15 +54,7 @@ export default class MmElementCard extends HTMLElement {
         }
     }
 
-    static handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            if (body.log) alert(body.log[0].message);
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    static handleError = async (error) => { await showApiError(error); };
 
     static StripKeyPrefix(key) {
         let slash = key.lastIndexOf("/");

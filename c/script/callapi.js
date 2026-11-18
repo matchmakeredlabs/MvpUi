@@ -1,4 +1,5 @@
 import bsession from "./bsession.js";
+import { apiFetch } from "./api-errors.js";
 import config from "../../config.js";
 
 const session = new bsession(config.backEndUrl, config.sessionTag);
@@ -18,7 +19,7 @@ async function sendRequest(e) {
         req.body = form.body.value;
     }
     const token = form.token.value;
-    let fetchFunc = fetch;
+    let fetchFunc = apiFetch;
     if (token) {
         req.headers["Authorization"] = "Bearer " + token;
     } else {

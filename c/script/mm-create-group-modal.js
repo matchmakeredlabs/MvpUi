@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -45,21 +46,7 @@ class MmCreateGroupModal extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        try {
-            const body = await response.json();
-
-            if (body.log) {
-                alert(body.log[0].message);
-            } else if (body.error) {
-                alert(body.error);
-            } else {
-                alert("An error occurred");
-            }
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     show = () => {
         customElements.whenDefined("mm-modal").then(() => {
@@ -118,7 +105,7 @@ class MmCreateGroupModal extends HTMLElement {
                                     .querySelector("#owner").value !==
                                     this.#projectId)
                         ) {
-                            const body = await response.json();
+                            const body = await readJsonResponse(response);
                             const newVariables = {
                                 id: body.id,
                             };
@@ -152,7 +139,7 @@ class MmCreateGroupModal extends HTMLElement {
                             .querySelector("#owner").value ===
                             this.#projectId
                     ) {
-                        const body = await response.json();
+                        const body = await readJsonResponse(response);
                         onSuccess(
                             {
                                 ...variables,
@@ -165,7 +152,7 @@ class MmCreateGroupModal extends HTMLElement {
                             true
                         );
                     } else {
-                        onSuccess(variables, await response.json(), false);
+                        onSuccess(variables, await readJsonResponse(response), false);
                     }
                 }
             };

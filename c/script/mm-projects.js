@@ -1,3 +1,5 @@
+import { showApiError } from "./api-errors.js";
+import { readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -54,13 +56,14 @@ export default class MmProjects extends HTMLElement {
 
     static fetchProjects = async () => {
         const response = await MmProjects.session.fetch("/api/projects");
-        return (await response.json()).items;
+        return (await readJsonResponse(response)).items;
     };
 
     static fetchCustomers = async () => {
         try {
             return await MmCustomers.fetchCustomers();
-        } catch {
+        } catch (error) {
+            await showApiError(error);
             return [];
         }
     };

@@ -1,3 +1,4 @@
+import { createApiError, readJsonResponse, showApiError, getApiErrorMessage } from "./api-errors.js";
 /* MatchMaker Prototype Web Controls
  * Eventually this will likely become a proper JavaScript module.
  * which is a better way to isolate things than using the
@@ -118,13 +119,9 @@ export default class Mmx {
     static LoadJsonAsync(url, callback, arg) {
         return session
             .fetch(url)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(
-                        `Request failed with status ${response.status}.`
-                    );
-                }
-                return response.json();
+            .then(async (response) => {
+                if (!response.ok) { throw await createApiError(response); }
+                return readJsonResponse(response);
             })
             .then((json) => callback(json, arg));
     }
@@ -146,10 +143,10 @@ export default class Mmx {
         );
     }
 
-    static ShowLoadError(container, message, error) {
+    static async ShowLoadError(container, message, error) {
         console.error(error);
         if (!container) return;
-        container.replaceChildren(bdoc.ele("p", message));
+        container.replaceChildren(bdoc.ele("p", await getApiErrorMessage(error, message)));
     }
 
     static CopyProperties(dst, src) {
@@ -308,7 +305,7 @@ export default class Mmx {
             };
             session
                 .fetch(url, options)
-                .then((response) => response.json())
+                .then((response) => readJsonResponse(response))
                 .then((json) => {
                     console.log(json);
                     Mmx.SearchStatements_Callback(json);
@@ -794,7 +791,7 @@ export default class Mmx {
         mmx_dict.keyTable.innerHTML = "";
         if (!key) return;
         const response = await session.fetch("/key/" + Mmx.StripKeyPrefix(key));
-        const data = await response.json();
+        const data = await readJsonResponse(response);
 
         for (let val of data.statements) {
             mmx_dict.keyTable.appendChild(
@@ -872,7 +869,7 @@ export default class Mmx {
             };
             session
                 .fetch(url, options)
-                .then((response) => response.json())
+                .then((response) => readJsonResponse(response))
                 .then((json) => {
                     console.log(json);
                     Mmx.SearchStatements_Callback(json);
@@ -944,8 +941,8 @@ export default class Mmx {
         return Mmx.LoadJsonAsync(
             url,
             Mmx.SearchDescriptorsByKey_Callback
-        ).catch((error) => {
-            Mmx.ShowLoadError(
+        ).catch(async (error) => {
+            await Mmx.ShowLoadError(
                 mmx_dict.descriptorMatchResults,
                 "Unable to load matches.",
                 error
@@ -998,8 +995,8 @@ export default class Mmx {
         return Mmx.LoadJsonAsync(
             url,
             Mmx.SearchDescriptorsById_Callback
-        ).catch((error) => {
-            Mmx.ShowLoadError(
+        ).catch(async (error) => {
+            await Mmx.ShowLoadError(
                 mmx_dict.keywordSearchResult,
                 "Unable to load the descriptor.",
                 error
@@ -1187,7 +1184,7 @@ export default class Mmx {
         let data = await session.fetch(
             "/api/collections/" + value.mainEntityId
         );
-        data = await data.json();
+        data = await readJsonResponse(data);
 
         let collectionObject = {};
         let nodeParents = {};
@@ -1278,7 +1275,7 @@ export default class Mmx {
 
     static async LoadLrmiFormFromDatabase(id) {
         let response = await session.fetch("/api/descriptors/" + id);
-        let data = await response.json();
+        let data = await readJsonResponse(response);
         let desc = data.descriptors[0];
         this.LoadLrmiForm(desc);
     }
@@ -1476,10 +1473,7 @@ export default class Mmx {
         if (response.ok) {
             alert("Saved!");
         } else {
-            const text = await response.text();
-            alert(
-                `Save error: ${response.status} ${response.statusText}: ${text}`
-            );
+            await showApiError(response);
         }
     }
 
@@ -1514,7 +1508,7 @@ export default class Mmx {
                 (nextPrev ? "next" : "prev") +
                 (nokey ? "?skipWithKey" : "")
         );
-        const data = await response.json();
+        const data = await readJsonResponse(response);
         if (data.success) {
             Mmx.LoadLrmiFormFromDatabase(data.id);
         } else {

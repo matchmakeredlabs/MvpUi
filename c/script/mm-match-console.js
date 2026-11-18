@@ -1,3 +1,4 @@
+import { readJsonResponse, ensureApiResponse, showApiError } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "../../config.js";
@@ -413,8 +414,9 @@ export default class MmMatchConsole extends HTMLElement {
             const response = await MmMatchConsole.session.fetch(
                 `/api/descriptors/${id}`
             );
+            await ensureApiResponse(response);
             if (response.status === 200) {
-                const result = await response.json();
+                const result = await readJsonResponse(response);
 
                 if (
                     result &&
@@ -492,7 +494,7 @@ export default class MmMatchConsole extends HTMLElement {
         )}&eleType=${eleType}&${weights}`;
 
         const response = await MmMatchConsole.session.fetch(url);
-        const result = await response.json();
+        const result = await readJsonResponse(response);
 
         result.descriptors = result.descriptors.filter(
             (desc) => desc.id !== id
@@ -617,6 +619,7 @@ export default class MmMatchConsole extends HTMLElement {
                     message: `${currentMatchProfileName} has been updated.`,
                 });
             } catch (error) {
+                if (error) await showApiError(error);
             } finally {
                 loading.hide();
             }
@@ -656,6 +659,7 @@ export default class MmMatchConsole extends HTMLElement {
                     message: `${profileName} has been saved.`,
                 });
             } catch (error) {
+                if (error) await showApiError(error);
                 MmMatchProfileSelect.setCurrentMatchProfileName(
                     oldMatchProfileName
                 );
@@ -701,6 +705,7 @@ export default class MmMatchConsole extends HTMLElement {
                     message: `${profileToDelete} has been deleted.`,
                 });
             } catch (error) {
+                if (error) await showApiError(error);
             } finally {
                 loading.hide();
             }

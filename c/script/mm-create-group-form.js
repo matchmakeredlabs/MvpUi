@@ -1,3 +1,5 @@
+import { showApiError } from "./api-errors.js";
+import { readJsonResponse, ensureApiResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
@@ -42,8 +44,8 @@ export default class MmCreateGroupForm extends HTMLElement {
     #preloadOwners = async () => {
         if (!this.#ownersPreloadPromise) {
             this.#ownersPreloadPromise = Promise.all([
-                MmCustomers.fetchCustomers().catch(() => []),
-                MmProjects.fetchProjects().catch(() => []),
+                MmCustomers.fetchCustomers().catch(async error => { await showApiError(error); return []; }),
+                MmProjects.fetchProjects().catch(async error => { await showApiError(error); return []; }),
             ])
                 .then(([customers, projects]) => {
                     this.#cachedCustomers = customers || [];
@@ -130,7 +132,7 @@ export default class MmCreateGroupForm extends HTMLElement {
         }
         const originalResponse = createGroupResponse.clone();
         try {
-            const group = await createGroupResponse.json();
+            const group = await readJsonResponse(createGroupResponse);
 
             const parentResponse = await MmAddMemberForm.addMemberToEntity(
                 groupOwnerId,
@@ -139,17 +141,18 @@ export default class MmCreateGroupForm extends HTMLElement {
                 groupOwnerType
             );
             if (!parentResponse || !parentResponse.ok) {
-                await MmCreateGroupForm.session.fetch(
+                await ensureApiResponse(await MmCreateGroupForm.session.fetch(
                     "/api/groups/" + group.id,
                     {
                         method: "DELETE",
                     }
-                );
+                ));
                 return parentResponse;
             }
 
             return originalResponse;
-        } catch {
+        } catch (error) {
+            await showApiError(error);
             return originalResponse;
         }
     };

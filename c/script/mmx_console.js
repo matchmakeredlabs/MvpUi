@@ -1,3 +1,4 @@
+import { readJsonResponse } from "./api-errors.js";
 import bdoc from "/c/script/bdoc.js";
 import config from "/config.js";
 import bsession from "/c/script/bsession.js";
@@ -159,7 +160,7 @@ async function updateMatches(formEle) {
     console.log(url);
 
     const response = await session.fetch(url);
-    const result = await response.json();
+    const result = await readJsonResponse(response);
 
     // document.getElementById("matchKey").innerHTML = `${result.descriptors[0].name} - ${result.descriptors[0].provenance} - ${result.descriptors[0].description} <br> Palet Key: ${key}`
     let ele = document.getElementById("matchResult");

@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -17,20 +18,7 @@ export default class MmViewCustomSet extends HTMLElement {
 
     #currentCustomSetName;
 
-    handleError = async (response) => {
-        let message = "An error occurred.";
-        try {
-            const body = await response.json();
-            message =
-                body.log?.[0]?.message ||
-                body.error ||
-                body.message ||
-                body.Message ||
-                body.title ||
-                message;
-        } catch (e) {}
-        await showMessage({ title: "Save Error", message });
-    };
+    handleError = async (error) => { await showMessage({ title: "Request failed", message: await getApiErrorMessage(error) }); };
 
     #collection;
 
@@ -84,6 +72,7 @@ export default class MmViewCustomSet extends HTMLElement {
             settings = await MmMatchProfileSelect.getSettings();
         } catch (error) {
             loading.hide();
+            await this.handleError(error);
             return;
         }
         loading.hide();

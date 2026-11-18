@@ -1,3 +1,4 @@
+import { readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -12,7 +13,7 @@ export default class MmCollections extends HTMLElement {
 
     static fetchCollections = async () => {
         const response = await MmCollections.session.fetch("/api/collections");
-        const collections = (await response.json()).collections || [];
+        const collections = (await readJsonResponse(response)).collections || [];
         return MmCollections.normalizeProjectIds(collections);
     };
 

@@ -1,3 +1,4 @@
+import { apiFetch } from "./api-errors.js";
 import auth from "./mmx_auth.js";
 
 export default class bsession {
@@ -20,7 +21,6 @@ export default class bsession {
         // Add the token if it exists
         const token = localStorage.getItem(sessionKey);
         if (token) {
-            console.log("Bearer-Retrieve=" + token);
             req.headers = Object.assign(
                 { Authorization: "Bearer " + token },
                 req.headers
@@ -30,7 +30,7 @@ export default class bsession {
         // Call the api
 
         try {
-            const response = await fetch(url, req);
+            const response = await apiFetch(url, req);
 
             // Retrieve any updated token
             const info = response.headers.get("Authentication-Info");
@@ -44,9 +44,6 @@ export default class bsession {
                         "bearer-update"
                     )
                         continue;
-                    console.log(
-                        "Bearer-Update=" + part.substring(eq + 1).trim()
-                    );
                     localStorage.setItem(
                         "bsession_" + this.tag,
                         part.substring(eq + 1).trim()

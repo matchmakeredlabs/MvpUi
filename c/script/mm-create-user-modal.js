@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 
 class MmCreateUserModal extends HTMLElement {
@@ -8,21 +9,7 @@ class MmCreateUserModal extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        try {
-            const body = await response.json();
-
-            if (body.log) {
-                alert(body.log[0].message);
-            } else if (body.error) {
-                alert(body.error);
-            } else {
-                alert("An error occurred");
-            }
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     show = () => {
         customElements.whenDefined("mm-modal").then(() => {
@@ -96,7 +83,7 @@ class MmCreateUserModal extends HTMLElement {
                         return;
                     }
 
-                    this.onSuccess(variables, await response.json());
+                    this.onSuccess(variables, await readJsonResponse(response));
                     createUserModal.hide();
                 }
             };

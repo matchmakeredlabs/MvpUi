@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -31,31 +32,7 @@ class MmCreateElementModal extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        let message = `Request failed: ${response.status} ${response.statusText}`;
-
-        try {
-            const responseText = await response.text();
-            if (responseText) {
-                try {
-                    const body = JSON.parse(responseText);
-
-                    message =
-                        body.log?.[0]?.message ??
-                        body.error ??
-                        body.message ??
-                        body.ExceptionMessage ??
-                        body.exceptionMessage ??
-                        body.title ??
-                        message;
-                } catch {
-                    message = responseText;
-                }
-            }
-        } catch {}
-
-        alert(message);
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     show = () => {
         customElements.whenDefined("mm-modal").then(() => {
@@ -103,7 +80,7 @@ class MmCreateElementModal extends HTMLElement {
                         return;
                     }
 
-                    onSuccess(variables, await response.json());
+                    onSuccess(variables, await readJsonResponse(response));
                 }
             };
 

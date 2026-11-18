@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -55,21 +56,7 @@ class MmStatementGeneration extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        try {
-            const body = await response.json();
-
-            if (body.log) {
-                alert(body.log[0].message);
-            } else if (body.error) {
-                alert(body.error);
-            } else {
-                alert("An error occurred");
-            }
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     connectedCallback() {
         this.similarStatementsTable = bdoc.ele(
@@ -118,7 +105,7 @@ class MmStatementGeneration extends HTMLElement {
                         return;
                     }
 
-                    onSuccess(variables, await response.json());
+                    onSuccess(variables, await readJsonResponse(response));
                 }
             };
 

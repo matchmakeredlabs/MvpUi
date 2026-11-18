@@ -1,3 +1,4 @@
+import { apiFetch, getApiErrorMessage, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import "./mm-loading.js";
@@ -46,13 +47,13 @@ class MmAccountConfirmation extends HTMLElement {
 
         let response;
         try {
-            response = await fetch(`${config.backEndUrl}/api/account-registrations/confirm`, {
+            response = await apiFetch(`${config.backEndUrl}/api/account-registrations/confirm`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ token }),
             });
-        } catch {
-            this.#setMessage("Could not reach the server.", true);
+        } catch (error) {
+            this.#setMessage(await getApiErrorMessage(error, "Could not reach the server."), true);
             return;
         }
 
@@ -61,7 +62,7 @@ class MmAccountConfirmation extends HTMLElement {
             return;
         }
 
-        const body = await response.json();
+        const body = await readJsonResponse(response);
         this.#setMessage("Account confirmed. You can sign in now.");
         const messageNode = this.shadowRoot.getElementById("confirm_msg");
         messageNode.append(
@@ -82,22 +83,7 @@ class MmAccountConfirmation extends HTMLElement {
         messageNode.hidden = false;
     }
 
-    async #errorMessage(response) {
-        try {
-            const body = await response.json();
-            return (
-                body.message ||
-                body.detail ||
-                body.title ||
-                body.error ||
-                body.errors?.[0]?.detail ||
-                body.errors?.[0]?.title ||
-                "Account confirmation failed."
-            );
-        } catch {
-            return "Account confirmation failed.";
-        }
-    }
+    async #errorMessage(response) { return getApiErrorMessage(response, "Account confirmation failed."); }
 }
 
 customElements.define("mm-account-confirmation", MmAccountConfirmation);

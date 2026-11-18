@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import "./mm-loading.js";
 import config from "/config.js";
@@ -11,15 +12,7 @@ export default class MmSelectSubset extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            if (body.log) alert(body.log[0].message);
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     #collection;
 
@@ -32,7 +25,7 @@ export default class MmSelectSubset extends HTMLElement {
         if (response.status !== 200) {
             return Promise.reject(response);
         }
-        return (await response.json()).collection;
+        return (await readJsonResponse(response)).collection;
     };
 
     savePreviewCustomSet = () => {
@@ -213,12 +206,8 @@ export default class MmSelectSubset extends HTMLElement {
 
         this.#collection = await MmSelectSubset.fetchCollection(
             collectionId
-        ).catch((response) => {
-            if (response.status === 404) {
-                alert("Collection not found");
-            } else {
-                this.handleError(response);
-            }
+        ).catch(async (response) => {
+            await this.handleError(response);
             window.location.href = "/c/Collections";
         });
 

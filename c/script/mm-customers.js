@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -44,7 +45,7 @@ export default class MmCustomers extends HTMLElement {
         for (const route of MmCustomers.customerRoutes) {
             const response = await MmCustomers.session.fetch(route);
             if (response.status === 200) {
-                const data = await response.json();
+                const data = await readJsonResponse(response);
                 return data.items || [];
             }
             // Only try alternate routes when endpoint is truly missing.
@@ -59,16 +60,7 @@ export default class MmCustomers extends HTMLElement {
         );
     };
 
-    static handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            else if (body.log?.[0]?.message) alert(body.log[0].message);
-            else alert(`Error: ${response.status} ${response.statusText}`);
-        } catch {
-            alert(`Error: ${response.status} ${response.statusText}`);
-        }
-    };
+    static handleError = async (error) => { await showApiError(error); };
 
     connectedCallback() {
         bdoc.append(

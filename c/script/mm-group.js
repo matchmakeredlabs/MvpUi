@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse, ensureApiResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -54,7 +55,8 @@ export default class MmGroup extends HTMLElement {
     static fetchCustomers = async () => {
         try {
             return await MmCustomers.fetchCustomers();
-        } catch {
+        } catch (error) {
+            await showApiError(error);
             return [];
         }
     };
@@ -89,7 +91,7 @@ export default class MmGroup extends HTMLElement {
             return Promise.reject(response);
         }
 
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     static updateGroup = async (groupId, groupObj) => {
@@ -109,7 +111,7 @@ export default class MmGroup extends HTMLElement {
             return Promise.reject();
         }
 
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     static renderLinkIfCachedPermsOnProject = (projectId, cachedAcl) => {
@@ -278,11 +280,7 @@ export default class MmGroup extends HTMLElement {
         this.#renderGroup();
     }
 
-    static handleError = async (response) => {
-        const body = await response.json();
-        if (body.error) alert(body.error);
-        if (body.log) alert(body.log[0].message);
-    };
+    static handleError = async (error) => { await showApiError(error); };
 
     static splitUsersAndGroups = (group) => {
         const users = [];
@@ -311,7 +309,8 @@ export default class MmGroup extends HTMLElement {
             return;
         }
 
-        const group = await MmGroup.fetchGroup(groupId).catch(() => {
+        const group = await MmGroup.fetchGroup(groupId).catch(async (error) => {
+            await showApiError(error);
             window.location.href = "/c/Groups";
             return null;
         });
@@ -471,7 +470,8 @@ export default class MmGroup extends HTMLElement {
                                 .fetch(MmGroup.getGroupRoute(groupId, group), {
                                     method: "DELETE",
                                 })
-                                .then(() => {
+                                .then(async (response) => {
+                                    await ensureApiResponse(response);
                                     window.location.href = "/c/Groups.html";
                                 });
                         }

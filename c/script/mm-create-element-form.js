@@ -1,3 +1,4 @@
+import { createApiError, readJsonResponse, readTextResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import MmProjects from "./mm-projects.js";
@@ -156,7 +157,7 @@ export default class MmCreateElementForm extends HTMLElement {
         if (typeof element === "string") {
             body = element;
         } else if (element instanceof Blob) {
-            body = await element.text();
+            body = await readTextResponse(element);
         } else {
             body = JSON.stringify(element);
         }
@@ -199,27 +200,9 @@ export default class MmCreateElementForm extends HTMLElement {
                 { method: "GET" }
             );
 
-            if (!response.ok) {
-                let message = `${response.status} ${response.statusText}`;
-                const responseText = await response.text();
+            if (!response.ok) { throw await createApiError(response); }
 
-                if (responseText) {
-                    try {
-                        const body = JSON.parse(responseText);
-                        message =
-                            body.log?.[0]?.message ??
-                            body.error ??
-                            body.message ??
-                            message;
-                    } catch {
-                        message = responseText;
-                    }
-                }
-
-                throw new Error(message);
-            }
-
-            const body = await response.json();
+            const body = await readJsonResponse(response);
             if (!body?.tag || typeof body.tag !== "string") {
                 throw new Error("The server did not return a generated tag.");
             }

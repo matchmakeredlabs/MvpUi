@@ -1,3 +1,4 @@
+import { createApiError, readJsonResponse, getApiErrorMessage, showApiError } from "./api-errors.js";
 /* MatchMaker Prototype Web Controls
  * Eventually this will likely become a proper JavaScript module.
  * which is a better way to isolate things than using the
@@ -106,7 +107,7 @@ class Mmx {
     static LoadJsonAsync(url, callback, arg) {
         session
             .fetch(url)
-            .then((response) => response.json())
+            .then((response) => readJsonResponse(response))
             .then((json) => callback(json, arg));
     }
 
@@ -523,13 +524,9 @@ class Mmx {
                     },
                     signal: paginationController.signal,
                 })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Statement pagination failed (${response.status}).`
-                        );
-                    }
-                    return response.json();
+                .then(async (response) => {
+                    if (!response.ok) { throw await createApiError(response); }
+                    return readJsonResponse(response);
                 })
                 .then(({ statements, nextOffset }) => {
                     if (
@@ -562,12 +559,12 @@ class Mmx {
                         Number.isInteger(nextOffset) &&
                         nextOffset > paginationRequest.offset;
                 })
-                .catch((error) => {
+                .catch(async (error) => {
                     if (
                         error.name !== "AbortError" &&
                         mmx_dict.paginationRequest === paginationRequest
                     ) {
-                        console.error(error);
+                        await showApiError(error);
                     }
                 })
                 .finally(() => {
@@ -994,10 +991,8 @@ class Mmx {
         mmx_dict.keyTable.innerHTML = "";
         if (!key) return;
         const response = await session.fetch("/key/" + Mmx.StripKeyPrefix(key));
-        if (!response.ok) {
-            throw new Error(`Palet key request failed (${response.status}).`);
-        }
-        const data = await response.json();
+        if (!response.ok) { throw await createApiError(response); }
+        const data = await readJsonResponse(response);
         if (!Array.isArray(data.statements)) {
             throw new Error("Palet key response did not contain statements.");
         }
@@ -1182,13 +1177,9 @@ class Mmx {
                 },
                 signal: controller.signal,
             })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(
-                        `Statement search failed (${response.status}).`
-                    );
-                }
-                return response.json();
+            .then(async (response) => {
+                if (!response.ok) { throw await createApiError(response); }
+                return readJsonResponse(response);
             })
             .then((json) => {
                 if (
@@ -1214,7 +1205,7 @@ class Mmx {
                 Mmx.SearchStatements_Callback(json);
                 return json;
             })
-            .catch((error) => {
+            .catch(async (error) => {
                 if (
                     error.name !== "AbortError" &&
                     token === mmx_dict.searchToken &&
@@ -1223,7 +1214,7 @@ class Mmx {
                 ) {
                     console.error(error);
                     searchResults.textContent =
-                        "Unable to load statement search results.";
+                        await getApiErrorMessage(error, "Unable to load statement search results.");
                     searchResults.style.textAlign = "left";
                 }
                 return null;
@@ -1504,10 +1495,10 @@ class Mmx {
         }
 
         const keyPromise = Mmx.LoadKeyIntoDescriptorSearchForm(value.key).catch(
-            (error) => {
+            async (error) => {
                 console.error(error);
                 mmx_dict.keyTable.replaceChildren(
-                    bdoc.ele("p", "Unable to load the descriptor's Palet key.")
+                    bdoc.ele("p", await getApiErrorMessage(error, "Unable to load the descriptor's Palet key."))
                 );
             }
         );
@@ -1528,19 +1519,17 @@ class Mmx {
                     "/api/collections/" + value.mainEntityId
                 );
                 if (response.ok) {
-                    const collectionData = await response.json();
+                    const collectionData = await readJsonResponse(response);
                     if (Array.isArray(collectionData.collection)) {
                         data = collectionData;
                     }
                 } else {
-                    console.error(
-                        `Descriptor context request failed (${response.status}).`
-                    );
+                    await showApiError(response);
                 }
             } catch (error) {
                 // Collection context is supplementary. A failure here should not
                 // prevent the descriptor itself from being displayed or edited.
-                console.error("Unable to load descriptor context.", error);
+                await showApiError(error, "Unable to load descriptor context.");
             }
         }
 
@@ -1683,7 +1672,7 @@ class Mmx {
             mmx_dict.descriptorInFlight = false;
             console.error(error);
             container.replaceChildren(
-                bdoc.ele("p", "Unable to load the descriptor.")
+                bdoc.ele("p", await getApiErrorMessage(error, "Unable to load the descriptor."))
             );
             throw error;
         }
@@ -1710,12 +1699,8 @@ class Mmx {
     static async LoadLrmiFormFromDatabase(id, container, loading) {
         try {
             const response = await session.fetch("/api/descriptors/" + id);
-            if (!response.ok) {
-                throw new Error(
-                    `Descriptor request failed (${response.status}).`
-                );
-            }
-            const data = await response.json();
+            if (!response.ok) { throw await createApiError(response); }
+            const data = await readJsonResponse(response);
             const desc = data.descriptors?.[0];
             if (!desc) throw new Error("Descriptor response was empty.");
 
@@ -1725,7 +1710,7 @@ class Mmx {
             mmx_dict.descriptorInFlight = false;
             console.error(error);
             container.replaceChildren(
-                bdoc.ele("p", "Unable to load the descriptor.")
+                bdoc.ele("p", await getApiErrorMessage(error, "Unable to load the descriptor."))
             );
             throw error;
         }
@@ -1934,15 +1919,7 @@ class Mmx {
             alert("Saved!");
             await Mmx.SearchStatements();
         } else {
-            try {
-                const text = await response.text();
-                alert(
-                    `Save error: ${response.status} ${response.statusText}: ${text}`
-                );
-            } catch (error) {
-                alert("Save error");
-                console.log(error);
-            }
+            await showApiError(response);
         }
     }
 
@@ -1989,7 +1966,7 @@ class Mmx {
                     (nextPrev ? "next" : "prev") +
                     (nokey ? "?skipWithKey" : "")
             );
-            const data = await response.json();
+            const data = await readJsonResponse(response);
             if (data.success) {
                 document.getElementById("mmid_search").value = "";
                 mmx_dict.stmtSearchResultsDict = {};

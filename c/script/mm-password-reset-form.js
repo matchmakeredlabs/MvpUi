@@ -1,3 +1,4 @@
+import { apiFetch, getApiErrorMessage } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import { enablePasswordVisibility } from "./mm-password-visibility.js";
@@ -90,7 +91,7 @@ class MmPasswordResetForm extends HTMLElement {
 
         this.#setBusy(true);
         try {
-            const response = await fetch(`${config.backEndUrl}/api/password-resets/confirm`, {
+            const response = await apiFetch(`${config.backEndUrl}/api/password-resets/confirm`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ token, newPassword }),
@@ -106,8 +107,8 @@ class MmPasswordResetForm extends HTMLElement {
             const messageNode = this.shadowRoot.getElementById("reset_msg");
             messageNode.append(" ", bdoc.ele("a", bdoc.attr("href", "/c/Login"), "Sign in"));
             this.shadowRoot.getElementById("reset-submit").disabled = true;
-        } catch {
-            this.#setMessage("Could not reach the server.", true);
+        } catch (error) {
+            this.#setMessage(await getApiErrorMessage(error, "Could not reach the server."), true);
         } finally {
             this.#setBusy(false);
         }
@@ -138,22 +139,7 @@ class MmPasswordResetForm extends HTMLElement {
         messageNode.style.visibility = "visible";
     }
 
-    async #errorMessage(response) {
-        try {
-            const body = await response.json();
-            return (
-                body.message ||
-                body.detail ||
-                body.title ||
-                body.error ||
-                body.errors?.[0]?.detail ||
-                body.errors?.[0]?.title ||
-                "Password reset failed."
-            );
-        } catch {
-            return "Password reset failed.";
-        }
-    }
+    async #errorMessage(response) { return getApiErrorMessage(response, "Password reset failed."); }
 }
 
 customElements.define("mm-password-reset-form", MmPasswordResetForm);

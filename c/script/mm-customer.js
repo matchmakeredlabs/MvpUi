@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -33,7 +34,7 @@ export default class MmCustomer extends HTMLElement {
         for (const route of MmCustomer.userRoutes) {
             const response = await MmCustomer.session.fetch(route);
             if (response.status === 200) {
-                const json = await response.json();
+                const json = await readJsonResponse(response);
                 return json.items || [];
             }
             if (response.status !== 404) return Promise.reject(response);
@@ -63,7 +64,7 @@ export default class MmCustomer extends HTMLElement {
             const response = await MmCustomer.session.fetch(
                 `${route}/${customerId}`
             );
-            if (response.status === 200) return await response.json();
+            if (response.status === 200) return await readJsonResponse(response);
             if (response.status !== 404) return Promise.reject(response);
         }
         return Promise.reject(
@@ -84,7 +85,7 @@ export default class MmCustomer extends HTMLElement {
                     body: JSON.stringify(customerObj),
                 }
             );
-            if (response.status === 200) return await response.json();
+            if (response.status === 200) return await readJsonResponse(response);
             if (response.status !== 404) return Promise.reject(response);
         }
 
@@ -96,16 +97,7 @@ export default class MmCustomer extends HTMLElement {
         );
     };
 
-    static handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            else if (body.log?.[0]?.message) alert(body.log[0].message);
-            else alert(`Error: ${response.status} ${response.statusText}`);
-        } catch {
-            alert(`Error: ${response.status} ${response.statusText}`);
-        }
-    };
+    static handleError = async (error) => { await showApiError(error); };
 
     connectedCallback() {
         this.loadingElement = bdoc.ele(
@@ -554,7 +546,7 @@ export default class MmCustomer extends HTMLElement {
             "Load Users",
             !rolesEditable || usersLoaded ? bdoc.attr("disabled", "true") : null,
             bdoc.eventListener("click", async () => {
-                this.#users = await MmCustomer.fetchUsers().catch(() => []);
+                this.#users = await MmCustomer.fetchUsers().catch(async error => { await showApiError(error); return []; });
                 this.#renderRoles();
             })
         );

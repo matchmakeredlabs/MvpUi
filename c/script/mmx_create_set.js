@@ -1,3 +1,4 @@
+import { readJsonResponse } from "./api-errors.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
 import bdoc from "./bdoc.js";
@@ -145,7 +146,7 @@ function sortByIdAttribute(attribute) {
 // ex. listOfFilters = ['subject', 'publisher']
 async function initialLoad(listToFilter, listToSort, displayProperties) {
   let response = await session.fetch("/api/collections");
-  let data = await response.json();
+  let data = await readJsonResponse(response);
   window.data = data;
   let table = document.getElementById("table-titles");
 

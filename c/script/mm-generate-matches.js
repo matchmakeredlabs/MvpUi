@@ -1,3 +1,4 @@
+import { createApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -459,11 +460,11 @@ class MmGenerateMatches extends HTMLElement {
                             if (!collection?.id) {
                                 return;
                             }
-                            const response = await (
+                            const response = await readJsonResponse((
                                 await MmGenerateMatches.session.fetch(
                                     "/api/collections/" + collection.id
                                 )
-                            ).json();
+                            ));
 
                             this.#collectionElements[collection.id] =
                                 response.collection;
@@ -572,11 +573,9 @@ class MmGenerateMatches extends HTMLElement {
             }
         );
 
-        if (!response.ok) {
-            throw new Error(`Unable to generate matches: ${response.status}`);
-        }
+        if (!response.ok) { throw await createApiError(response); }
 
-        const responseJson = await response.json();
+        const responseJson = await readJsonResponse(response);
 
         return responseJson;
     };

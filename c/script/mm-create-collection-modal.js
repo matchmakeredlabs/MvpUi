@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -12,25 +13,7 @@ class MmCreateCollectionModal extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    handleError = async (response) => {
-        try {
-            const body = await response.json();
-
-            if (body.log) {
-                alert(body.log[0].message);
-            } else if (body.error) {
-                alert(body.error);
-            } else if (body.message) {
-                alert(body.message);
-            } else {
-                alert(
-                    `An error occurred: ${response.status} ${response.statusText}`
-                );
-            }
-        } catch (e) {
-            alert(`An error occurred: ${response.status} ${response.statusText}`);
-        }
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     show = () => {
         customElements.whenDefined("mm-modal").then(() => {
@@ -78,7 +61,7 @@ class MmCreateCollectionModal extends HTMLElement {
                         return;
                     }
 
-                    onSuccess(variables, await response.json());
+                    onSuccess(variables, await readJsonResponse(response));
                 }
             };
 

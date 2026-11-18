@@ -1,3 +1,4 @@
+import { createApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -296,7 +297,7 @@ export default class MmCollection {
 
   static async LoadFromId(id) {
     let response = await session.fetch("/api/collections/" + id);
-    let data = await response.json();
+    let data = await readJsonResponse(response);
 
     window.currentCollection = data.collection;
 
@@ -324,11 +325,8 @@ export default class MmCollection {
         Accept: "application/json",
       },
     });
-    if (response.status >= 400) {
-      let text = await response.text();
-      throw new Error(`${response.status} ${response.statusText}: ${text}`);
-    }
-    const data = await response.json();
+    if (response.status >= 400) { throw await createApiError(response); }
+    const data = await readJsonResponse(response);
     return new MmCollection(data.collection);
   }
 
@@ -342,11 +340,8 @@ export default class MmCollection {
       },
       body: file,
     });
-    if (response.status >= 400) {
-      let text = await response.text();
-      throw new Error(`${response.status} ${response.statusText}: ${text}`);
-    }
-    const data = await response.json();
+    if (response.status >= 400) { throw await createApiError(response); }
+    const data = await readJsonResponse(response);
     return new MmCollection(data.collection);
   }
 

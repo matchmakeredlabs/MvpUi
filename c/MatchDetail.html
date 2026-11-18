@@ -15,6 +15,7 @@ title: Match Detail
 <script type="module" src="/c/script/mmx_match.js"></script>
 
 <script type="module">
+    import { readJsonResponse } from "/c/script/api-errors.js";
     import config from '/config.js';
     import bsession from '/c/script/bsession.js';
     const session = new bsession(config.backEndUrl, config.sessionTag);
@@ -32,7 +33,7 @@ title: Match Detail
 
         let url = `/descriptors?searchKey=${encodeURIComponent(key)}&eleType=${eleType}&algDetail`;
         const response = await session.fetch(url);
-        const result = await response.json();
+        const result = await readJsonResponse(response);
 
         let ele = document.getElementById("matchResult");
         ele.innerHTML = "";

@@ -1,3 +1,4 @@
+import { createApiError, readTextResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -71,13 +72,10 @@ export default class MmGroups extends HTMLElement {
 
     static fetchGroups = async () => {
         const response = await MmGroups.session.fetch("/api/groups");
-        const text = await response.text();
+        const text = await readTextResponse(response);
         const body = text ? JSON.parse(text) : {};
 
-        if (!response.ok) {
-            const message = body.Message || body.message || body.title || text || response.statusText;
-            throw new Error(`HTTP ${response.status} ${response.statusText}: ${message}`);
-        }
+        if (!response.ok) { throw await createApiError(response); }
 
         return body.items || [];
     };

@@ -1,3 +1,4 @@
+import { showApiError } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -48,11 +49,7 @@ class MmAddMemberModal extends HTMLElement {
 
     onSuccess = () => {};
 
-    handleError = async (response) => {
-        const body = await response.json();
-        if (body.error) alert(body.error);
-        if (body.log) alert(body.log[0].message);
-    };
+    handleError = async (error) => { await showApiError(error); };
 
     connectedCallback() {
         bdoc.append(

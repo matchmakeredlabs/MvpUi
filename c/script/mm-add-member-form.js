@@ -1,3 +1,5 @@
+import { showApiError } from "./api-errors.js";
+import { readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
@@ -44,7 +46,7 @@ export default class MmAddMemberForm extends HTMLElement {
             "/api/projects/" + projectId
         );
 
-        return await response.json();
+        return await readJsonResponse(response);
         // what happens when user does not have perms for this project?
     };
 
@@ -53,12 +55,12 @@ export default class MmAddMemberForm extends HTMLElement {
             MmAddMemberForm.getGroupRoute(groupId)
         );
 
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     static fetchGroups = async () => {
         const response = await MmAddMemberForm.session.fetch("/api/groups");
-        return (await response.json()).items || [];
+        return (await readJsonResponse(response)).items || [];
     };
 
     static fetchCustomer = async (customerId) => {
@@ -66,7 +68,7 @@ export default class MmAddMemberForm extends HTMLElement {
             "/api/customers/" + customerId
         );
 
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     onSettled = () => {};
@@ -124,9 +126,9 @@ export default class MmAddMemberForm extends HTMLElement {
     #preloadGroupChoices = async () => {
         if (!this.#groupChoicesPreloadPromise) {
             this.#groupChoicesPreloadPromise = Promise.all([
-                MmAddMemberForm.fetchGroups().catch(() => []),
-                MmCustomers.fetchCustomers().catch(() => []),
-                MmProjects.fetchProjects().catch(() => []),
+                MmAddMemberForm.fetchGroups().catch(async error => { await showApiError(error); return []; }),
+                MmCustomers.fetchCustomers().catch(async error => { await showApiError(error); return []; }),
+                MmProjects.fetchProjects().catch(async error => { await showApiError(error); return []; }),
             ]).then(([groups, customers, projects]) => {
                 this.#cachedGroups = groups || [];
                 this.#cachedCustomers = customers || [];

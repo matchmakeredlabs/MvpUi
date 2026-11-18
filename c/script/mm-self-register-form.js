@@ -1,3 +1,4 @@
+import { apiFetch, getApiErrorMessage } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import { enablePasswordVisibility } from "./mm-password-visibility.js";
@@ -125,7 +126,7 @@ class MmSelfRegisterForm extends HTMLElement {
 
         this.#setBusy(true);
         try {
-            const response = await fetch(
+            const response = await apiFetch(
                 `${config.backEndUrl}/api/account-registrations`,
                 {
                     method: "POST",
@@ -156,8 +157,8 @@ class MmSelfRegisterForm extends HTMLElement {
                     detail: { email, confirmationRequired: true },
                 })
             );
-        } catch {
-            this.#setMessage("Could not reach the server.", true);
+        } catch (error) {
+            this.#setMessage(await getApiErrorMessage(error, "Could not reach the server."), true);
         } finally {
             this.#setBusy(false);
         }
@@ -181,22 +182,7 @@ class MmSelfRegisterForm extends HTMLElement {
         messageNode.style.visibility = "visible";
     }
 
-    async #errorMessage(response) {
-        try {
-            const body = await response.json();
-            return (
-                body.message ||
-                body.detail ||
-                body.title ||
-                body.error ||
-                body.errors?.[0]?.detail ||
-                body.log?.[0]?.message ||
-                "Registration failed."
-            );
-        } catch {
-            return "Registration failed.";
-        }
-    }
+    async #errorMessage(response) { return getApiErrorMessage(response, "Registration failed."); }
 }
 
 customElements.define("mm-self-register-form", MmSelfRegisterForm);

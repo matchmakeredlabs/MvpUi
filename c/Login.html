@@ -27,6 +27,7 @@ autht: "anonymous"
 </div>
 
 <script type="module">
+import { getApiErrorMessage } from "/c/script/api-errors.js";
 
 import config from '/config.js';
 import bsession from '/c/script/bsession.js';
@@ -55,34 +56,13 @@ async function login(un, pw) {
 }
 
 async function getLoginError(response) {
-    let body = null;
-    try {
-        body = await response.json();
-    } catch {
-        // Status-specific messages below cover empty or non-JSON responses.
-    }
-
-    const backendMessage =
-        body?.errors?.[0]?.detail ||
-        body?.message ||
-        body?.detail ||
-        body?.error;
-
-    switch (response.status) {
-        case 400:
-            return backendMessage || "Enter a valid username and password.";
-        case 401:
-            return "The username or password is incorrect.";
-        case 403:
-            return backendMessage || "This account is not permitted to sign in.";
-        case 429:
-            return "Too many sign-in attempts. Wait a moment and try again.";
-        default:
-            if (response.status >= 500) {
-                return "The sign-in service is currently unavailable. Try again shortly.";
-            }
-            return backendMessage || `Sign in failed (${response.status}).`;
-    }
+    const fallback = ({
+        400: "Enter a valid username and password.",
+        401: "The username or password is incorrect.",
+        403: "This account is not permitted to sign in.",
+        429: "Too many sign-in attempts. Wait a moment and try again."
+    })[response.status] || "The sign-in service is currently unavailable. Try again shortly.";
+    return getApiErrorMessage(response, fallback);
 }
 
 function setLoginMessage(message, isError = true) {
@@ -124,10 +104,8 @@ async function submitLogin(event) {
 
         isRedirecting = true;
         window.location.replace("/c/index");
-    } catch {
-        setLoginMessage(
-            "Could not reach the sign-in service. Check your connection and try again."
-        );
+    } catch (error) {
+        setLoginMessage(await getApiErrorMessage(error));
     } finally {
         if (!isRedirecting) {
             setLoginBusy(false);

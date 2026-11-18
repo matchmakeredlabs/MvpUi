@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -30,7 +31,7 @@ export default class MmProject extends HTMLElement {
             return Promise.reject(response);
         }
 
-        return await response.json();
+        return await readJsonResponse(response);
 
         // what happens when user does not have perms for this project?
     };
@@ -112,7 +113,7 @@ export default class MmProject extends HTMLElement {
             return Promise.reject();
         }
 
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     static removeEntityFromProject = async (projectId, entityId) => {
@@ -142,7 +143,7 @@ export default class MmProject extends HTMLElement {
             MmProject.handleError(response);
             return Promise.reject();
         }
-        return await response.json();
+        return await readJsonResponse(response);
     };
 
     static updateEntityRoleInProject = async (projectId, entityId, newRole) => {
@@ -216,15 +217,7 @@ export default class MmProject extends HTMLElement {
         this.#renderProject();
     }
 
-    static handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            if (body.log) alert(body.log[0].message);
-        } catch (e) {
-            alert("An error occurred");
-        }
-    };
+    static handleError = async (error) => { await showApiError(error); };
     static splitUsersAndGroups = (project) => {
         const users = [];
         const groups = [];
@@ -270,7 +263,8 @@ export default class MmProject extends HTMLElement {
 
         const project = await MmProject.fetchProject(
             projectId
-        ).catch(() => {
+        ).catch(async (error) => {
+            await showApiError(error);
             window.location.href = "/c/Projects";
             return null;
         });
@@ -278,7 +272,7 @@ export default class MmProject extends HTMLElement {
 
         const customer = project.customerId
             ? await MmCustomer.fetchCustomer(project.customerId).catch(
-                  () => null
+                  async (error) => { await showApiError(error); return null; }
               )
             : null;
         const customerId = project.customerId || project.customer;

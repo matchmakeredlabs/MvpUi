@@ -1,3 +1,4 @@
+import { showApiError } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import config from "/config.js";
 import bsession from "./bsession.js";
@@ -97,10 +98,7 @@ class MmAdminTools extends HTMLElement {
             createUserForm.onSettled = async (variables, response) => {
                 if (response) {
                     if (response.status !== 200) {
-                        console.log(response);
-                        alert(
-                            `Failed to create user with id ${variables["name"]}`
-                        );
+                        await showApiError(response);
                         return;
                     }
                     alert(

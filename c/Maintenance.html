@@ -8,14 +8,19 @@ title: Maintenance
 </ul>
 <div id="result"></div>
 
-<script>
-    async function DeleteDemoDescriptors() {
-        let res = await fetch("/Descriptors?provenance=Demo", {
+<script type="module">
+    import { apiFetch, ensureApiResponse, getApiErrorMessage } from "/c/script/api-errors.js";
+    window.DeleteDemoDescriptors = async function () {
+        try {
+        let res = await apiFetch("/Descriptors?provenance=Demo", {
             method: "DELETE"
         });
-        console.log("Delete called.")
+        await ensureApiResponse(res);
         if (res.ok) {
             document.getElementById("result").textContent = await res.text();
         }
-    }
+        } catch (error) {
+            document.getElementById("result").textContent = await getApiErrorMessage(error);
+        }
+    };
 </script>

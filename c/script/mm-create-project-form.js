@@ -1,3 +1,4 @@
+import { showApiError, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
@@ -16,7 +17,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         for (const route of MmCreateProjectForm.customerRoutes) {
             const response = await MmCreateProjectForm.session.fetch(route);
             if (response.status === 200) {
-                const json = await response.json();
+                const json = await readJsonResponse(response);
                 return json.items || [];
             }
             if (response.status !== 404) return Promise.reject(response);
@@ -29,16 +30,7 @@ export default class MmCreateProjectForm extends HTMLElement {
         );
     };
 
-    static handleError = async (response) => {
-        try {
-            const body = await response.json();
-            if (body.error) alert(body.error);
-            else if (body.log?.[0]?.message) alert(body.log[0].message);
-            else alert(`Error: ${response.status} ${response.statusText}`);
-        } catch {
-            alert(`Error: ${response.status} ${response.statusText}`);
-        }
-    };
+    static handleError = async (error) => { await showApiError(error); };
 
     constructor() {
         super();

@@ -1,3 +1,4 @@
+import { readJsonResponse } from "./api-errors.js";
 ﻿import bdoc from './bdoc.js';
 import config from '/config.js';
 import bsession from './bsession.js';
@@ -9,7 +10,7 @@ class MmFramework {
 
     static async load(url) {
         let response = await session.fetch(url);
-        let data = await response.json();
+        let data = await readJsonResponse(response);
         return new MmFramework(data.statements);
     }
 
@@ -93,7 +94,7 @@ class MmFramework {
     }
 
     async onUriExists(response) {
-        let json = await response.json();
+        let json = await readJsonResponse(response);
 
         let detail = document.getElementById("mmx_browse_detail");
         if (!detail) return;
@@ -159,7 +160,7 @@ class MmFramework {
     }
 
     async onDescriptorExists(response, button) {
-        let json = await response.json();
+        let json = await readJsonResponse(response);
         if (json.exists) {
             console.log("uriExists: true");
             button.classList.add("mmb_desc");

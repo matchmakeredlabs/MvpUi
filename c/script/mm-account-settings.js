@@ -1,3 +1,4 @@
+import { getApiErrorMessage, readJsonResponse } from "./api-errors.js";
 import bdoc from "./bdoc.js";
 import bsession from "./bsession.js";
 import config from "/config.js";
@@ -202,10 +203,10 @@ class MmAccountSettings extends HTMLElement {
                     }),
                 }
             );
-        } catch {
+        } catch (error) {
             this.#setMessage(
                 "password-message",
-                "Could not reach the server.",
+                await getApiErrorMessage(error, "Could not reach the server."),
                 true
             );
             return;
@@ -251,13 +252,13 @@ class MmAccountSettings extends HTMLElement {
                 return;
             }
 
-            const user = await response.json();
+            const user = await readJsonResponse(response);
             this.shadowRoot.getElementById("full-name").value =
                 user.fullName || "";
-        } catch {
+        } catch (error) {
             this.#setMessage(
                 "full-name-message",
-                "Could not reach the server.",
+                await getApiErrorMessage(error, "Could not reach the server."),
                 true
             );
         } finally {
@@ -307,14 +308,14 @@ class MmAccountSettings extends HTMLElement {
                 return;
             }
 
-            const body = await response.json();
+            const body = await readJsonResponse(response);
             this.shadowRoot.getElementById("full-name").value =
                 body.fullName || fullName;
             this.#setMessage("full-name-message", "Full name changed.");
-        } catch {
+        } catch (error) {
             this.#setMessage(
                 "full-name-message",
-                "Could not reach the server.",
+                await getApiErrorMessage(error, "Could not reach the server."),
                 true
             );
         } finally {
@@ -339,14 +340,7 @@ class MmAccountSettings extends HTMLElement {
         messageNode.classList.toggle("error", isError);
     }
 
-    async #errorMessage(response, fallback) {
-        try {
-            const body = await response.json();
-            return body.message || body.detail || body.title || fallback;
-        } catch {
-            return fallback;
-        }
-    }
+    async #errorMessage(response, fallback) { return getApiErrorMessage(response, fallback); }
 }
 
 customElements.define("mm-account-settings", MmAccountSettings);
