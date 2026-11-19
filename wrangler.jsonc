@@ -1,0 +1,43 @@
+{
+    // The dev configuration is the default. It is treated as unreliable and under development.
+    // Personal variants can be created under dev using "wrangler deploy" with the option "--preview-alias <name>"
+    "name": "dev",
+    "compatibility_date": "2026-11-18",
+    "build": { "command": "sh ./writeSiteConfig.sh https://backstage.matchmakeredlabs.net" },
+    "assets": { "directory": "./_site" },
+    "routes": [
+        { "pattern": "dev.matchmakeredlabs.net", "custom_domain": true }
+    ],
+    "env": {
+        "dev": {
+            // No overrides
+        },
+        "preview": {
+            "name": "preview",
+            "routes": [
+                { "pattern": "preview.matchmakeredlabs.net", "custom_domain": true }
+            ]
+        },
+        "test": {
+            "name": "test",
+            "routes": [
+                { "pattern": "test.matchmakeredlabs.net", "custom_domain": true }
+            ]
+        },
+        // Eventually this will be replaced by app.matchmakeredlabs.net.
+        "preprod": {
+            "name": "prod",
+            "routes": [
+                { "pattern": "preprod.matchmakeredlabs.net", "custom_domain": true }
+            ],
+            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" },
+        },
+        "prod": {
+            "name": "prod",
+            "routes": [
+                { "pattern": "prod.matchmakeredlabs.net", "custom_domain": true }
+            ],
+            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" },
+        }
+    }   
+}
