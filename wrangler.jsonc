@@ -1,7 +1,7 @@
 {
     // The dev configuration is the default. It is treated as unreliable and under development.
     // Personal variants can be created under dev using "wrangler deploy" with the option "--preview-alias <name>"
-    "name": "dev",
+    "name": "mm",
     "compatibility_date": "2026-11-18",
     "build": { "command": "sh ./writeSiteConfig.sh https://backstage.matchmakeredlabs.net" },
     "assets": { "directory": "./_site" },
@@ -10,7 +10,11 @@
     ],
     "env": {
         "dev": {
-            // No overrides
+            // No overrides here. Nevertheless, configured to prevent wrangler warnings.
+            "name": "dev",
+            "routes": [
+                { "pattern": "dev.matchmakeredlabs.net", "custom_domain": true }
+            ]
         },
         "preview": {
             "name": "preview",
@@ -18,26 +22,26 @@
                 { "pattern": "preview.matchmakeredlabs.net", "custom_domain": true }
             ]
         },
-        "test": {
-            "name": "test",
+        "stage": {
+            "name": "stage",
             "routes": [
-                { "pattern": "test.matchmakeredlabs.net", "custom_domain": true }
+                { "pattern": "stage2.matchmakeredlabs.net", "custom_domain": true }
             ]
         },
         // Eventually this will be replaced by app.matchmakeredlabs.net.
         "preprod": {
-            "name": "prod",
+            "name": "preprod",
             "routes": [
                 { "pattern": "preprod.matchmakeredlabs.net", "custom_domain": true }
             ],
-            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" },
+            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" }
         },
-        "prod": {
-            "name": "prod",
+        "app": {
+            "name": "app",
             "routes": [
-                { "pattern": "prod.matchmakeredlabs.net", "custom_domain": true }
+                { "pattern": "app.matchmakeredlabs.net", "custom_domain": true }
             ],
-            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" },
+            "build": { "command": "sh ./writeSiteConfig.sh https://kitchen.matchmakeredlabs.net" }
         }
     }   
 }

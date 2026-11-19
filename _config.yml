@@ -5,10 +5,14 @@ title: MatchMaker MVP UI
 domain: mm.dicax.org
 layout: default
 exclude:
-  - README.md
-  - LICENSE
-  - docker-compose.yml
   - .gitignore
+  - CNAME
+  - docker-compose.yml
+  - jekylld.sh
+  - LICENSE
+  - README.md
+  - wrangler.jsonc
+  - writeSiteConfig.sh
   - .sass-cache/
   - .jekyll-cache/
   - .vs/

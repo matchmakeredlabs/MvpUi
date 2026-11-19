@@ -8,13 +8,13 @@ export MSYS_NO_PATHCONV=1
 cd "$(dirname "$0")"
 
 usage() {
-  echo "Usage: $0 {dev|build}" >&2
-  echo "  dev    Serve the site at http://localhost:4000 with live reload" >&2
+  echo "Usage: $0 {serve|build}" >&2
+  echo "  serve  Serve the site at http://localhost:4000 with live reload" >&2
   echo "  build  Build the site to the _site directory" >&2
 }
 
 case "${1:-}" in
-  dev)
+  serve)
     docker run --rm \
       --volume "$(pwd):/srv/jekyll" \
       --publish 4000:4000 \
